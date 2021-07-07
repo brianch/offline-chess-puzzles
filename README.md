@@ -23,4 +23,4 @@ The search is a bit slow but I think it's important to use the cvs directly so e
 - Highlight the last move before the puzzle starts (so we can easily see if an en passant is allowed, for example)<br/>
 
 ## License:
-Distributed under the MIT License.
+Distributed under the MIT License. See `LICENSE` for more information.
