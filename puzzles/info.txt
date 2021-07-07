@@ -1,0 +1,3 @@
+Here you should copy the file "lichess_db_puzzle.csv" available in https://database.lichess.org/#puzzles (Creative Commons CC0 license)
+
+The file is too big so I can't upload it here directly (and anyway, downloading it yourself you can be sure it's the most recent version)

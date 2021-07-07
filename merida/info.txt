@@ -1,0 +1,1 @@
+These images were copied from the lichess repo (https://github.com/ornicar/lila/tree/master/public/piece/merida) then converted to png and optimized with pngquant.

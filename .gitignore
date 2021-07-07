@@ -1,0 +1,4 @@
+/target
+/puzzles/lichess_db_puzzle.csv
+.vscode/
+Cargo.lock
