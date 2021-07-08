@@ -10,7 +10,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-const SQUARE_SIZE: u16 = 68;
+const SQUARE_SIZE: u16 = 60;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PositionGUI {
@@ -408,10 +408,10 @@ impl Default for OfflinePuzzles {
             theme : TaticsThemes::default(),
 
             slider_min_rating_state: slider::State::new(),
-            slider_min_rating_value: 50,
+            slider_min_rating_value: 0,
 
             slider_max_rating_state: slider::State::new(),
-            slider_max_rating_value: 50,
+            slider_max_rating_value: 1000,
 
             btn_search_state: button::State::new(),
 
