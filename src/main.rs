@@ -1,6 +1,6 @@
 use iced::{button, container, slider, pick_list, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Sandbox, Settings, Text, Image};
 
-use chess::*;
+use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File};
 use std::str::FromStr;
 
 use rand::thread_rng;
@@ -9,8 +9,31 @@ use rand::seq::SliceRandom;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
 
-const SQUARE_SIZE: u16 = 60;
+lazy_static!{
+    static ref SETTINGS: OfflinePuzzlesConfig = load_config();
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct OfflinePuzzlesConfig {
+    square_size: u16,
+    puzzle_db_location: String,
+    piece_theme: String,
+    search_results_limit: usize,
+}
+
+impl ::std::default::Default for OfflinePuzzlesConfig {
+    fn default() -> Self {
+        Self {
+            square_size: 60,
+            puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
+            piece_theme: String::from("merida"),
+            search_results_limit: 20000,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PositionGUI {
@@ -441,6 +464,22 @@ fn check_promotion(notation: &str) -> Option<Piece> {
     promotion
 }
 
+fn load_config() -> OfflinePuzzlesConfig {
+    let config;
+    let file = std::fs::File::open("settings.json");
+    match file {
+        Ok(file) => {
+            let reader = std::io::BufReader::new(file);
+            let config_json = serde_json::from_reader(reader);
+            match config_json {
+                Ok(cfg) => config = cfg,
+                Err(_) => config = OfflinePuzzlesConfig::default()
+            }
+        } Err(_) => config = OfflinePuzzlesConfig::default()
+    }
+    config
+}
+
 impl Sandbox for OfflinePuzzles {
     type Message = Message;
 
@@ -544,53 +583,53 @@ impl Sandbox for OfflinePuzzles {
             } (_, Message::ClickSearch) => {
                 let reader = csv::ReaderBuilder::new()
                         .has_headers(false)
-                        .from_path("puzzles/lichess_db_puzzle.csv");
+                        .from_path(&SETTINGS.puzzle_db_location);
 
-                if reader.is_ok() {
-                    let mut reader = reader.unwrap();
-                    self.puzzles.clear();
-                    self.current_puzzle_move = 1;
-                    self.current_puzzle = 0;
+                match reader {
+                    Ok(mut reader) => {
+                        self.puzzles.clear();
+                        self.current_puzzle_move = 1;
+                        self.current_puzzle = 0;
 
-                    for result in reader.deserialize() {
-                        if result.is_ok() {
-                            let record: Puzzle = result.unwrap();
-                            
-                            if record.rating >= self.slider_min_rating_value && record.rating <= self.slider_max_rating_value {
-                                if self.theme == TaticsThemes::All ||
-                                        record.themes.to_lowercase().contains(&self.theme.to_string().to_lowercase()) {
+                        for result in reader.deserialize::<Puzzle>() {
+                            if let Ok(record) = result {                                
+                                if record.rating >= self.slider_min_rating_value && record.rating <= self.slider_max_rating_value &&
+                                        (self.theme == TaticsThemes::All ||
+                                        record.themes.to_lowercase().contains(&self.theme.to_string().to_lowercase())) {
                                     self.puzzles.push(record);
                                 }
                             }
+                            if self.puzzles.len() == SETTINGS.search_results_limit {
+                                break;
+                            }
                         }
-                        if self.puzzles.len() == 20000 {
-                            break;
-                        }
-                    }
-                    if !self.puzzles.is_empty() {
-                        self.puzzles.shuffle(&mut thread_rng());
-                        self.from_square = None;
+                        if !self.puzzles.is_empty() {
+                            self.puzzles.shuffle(&mut thread_rng());
+                            self.from_square = None;
 
-                        self.board = Board::from_str(&self.puzzles[0].fen).unwrap();
-                        let puzzle_moves: Vec<&str> = self.puzzles[0].moves.split_whitespace().collect();
+                            self.board = Board::from_str(&self.puzzles[0].fen).unwrap();
+                            let puzzle_moves: Vec<&str> = self.puzzles[0].moves.split_whitespace().collect();
 
-                        // The last opponent's move is in the "moves" field of the cvs,
-                        // so we need to apply it.
-                        let movement = ChessMove::new(
-                                Square::from_str(&puzzle_moves[0][..2]).unwrap(),
-                                Square::from_str(&puzzle_moves[0][2..4]).unwrap(), check_promotion(&puzzle_moves[0]));
+                            // The last opponent's move is in the "moves" field of the cvs,
+                            // so we need to apply it.
+                            let movement = ChessMove::new(
+                                    Square::from_str(&puzzle_moves[0][..2]).unwrap(),
+                                    Square::from_str(&puzzle_moves[0][2..4]).unwrap(), check_promotion(&puzzle_moves[0]));
 
-                        self.board = self.board.make_move_new(movement);
+                            self.board = self.board.make_move_new(movement);
 
-                        if self.board.side_to_move() == Color::White {
-                            self.puzzle_status = String::from("white to move!");
+                            if self.board.side_to_move() == Color::White {
+                                self.puzzle_status = String::from("white to move!");
+                            } else {
+                                self.puzzle_status = String::from("Black to move!");
+                            }
                         } else {
-                            self.puzzle_status = String::from("Black to move!");
+                            // Just putting the default position to make it obvious the search ended.
+                            self.board = Board::default();
+                            self.puzzle_status = String::from("Sorry, no puzzle found");
                         }
-                    } else {
-                        // Just putting the default position to make it obvious the search ended.
-                        self.board = Board::default();
-                        self.puzzle_status = String::from("Sorry, no puzzle found");
+                    } Err(_) => {
+                        self.puzzle_status = String::from("Problem reading the puzzle DB");
                     }
                 }
             } (_, Message::SelectPiecePromotion(piece)) => {
@@ -616,35 +655,36 @@ impl Sandbox for OfflinePuzzles {
             let piece = self.board.piece_on(pos.posgui_to_square());
             let color = self.board.color_on(pos.posgui_to_square());
             let mut text = "";
-            if piece.is_some() {
+
+            if let Some(piece) = piece {
                 if color.unwrap() == Color::White {
-                    text = match piece.unwrap() {
-                        Piece::Pawn => "wP.png",
-                        Piece::Rook => "wR.png",
-                        Piece::Knight => "wN.png",
-                        Piece::Bishop => "wB.png",
-                        Piece::Queen => "wQ.png",
-                        Piece::King => "wK.png"
+                    text = match piece {
+                        Piece::Pawn => "/wP.png",
+                        Piece::Rook => "/wR.png",
+                        Piece::Knight => "/wN.png",
+                        Piece::Bishop => "/wB.png",
+                        Piece::Queen => "/wQ.png",
+                        Piece::King => "/wK.png"
                     };
                 } else {
-                    text = match piece.unwrap() {
-                        Piece::Pawn => "bP.png",
-                        Piece::Rook => "bR.png",
-                        Piece::Knight => "bN.png",
-                        Piece::Bishop => "bB.png",
-                        Piece::Queen => "bQ.png",
-                        Piece::King => "bK.png"
+                    text = match piece {
+                        Piece::Pawn => "/bP.png",
+                        Piece::Rook => "/bR.png",
+                        Piece::Knight => "/bN.png",
+                        Piece::Bishop => "/bB.png",
+                        Piece::Queen => "/bQ.png",
+                        Piece::King => "/bK.png"
                     };
                 }
             }
             
             row = row.push(Button::new(button,
-                Image::new(String::from("merida/") + text)
+                Image::new(String::from(&SETTINGS.piece_theme) + text)
                         .width(Length::Fill)
                         .height(Length::Fill)
                 )
-                .width(Length::Units(SQUARE_SIZE))
-                .height(Length::Units(SQUARE_SIZE))
+                .width(Length::Units(SETTINGS.square_size))
+                .height(Length::Units(SETTINGS.square_size))
                 .on_press(Message::SelectSquare(pos))
                 .style(ChessSquare::from((pos, self.from_square == Some(pos))))
             );
@@ -719,23 +759,23 @@ impl Sandbox for OfflinePuzzles {
         i = 0;
         for button in &mut self.btns_promotion {
             let piece;
-            let image;
+            let mut image = String::from(&SETTINGS.piece_theme);
             match i {
                 0 => {
                     piece = Piece::Rook;
-                    image = String::from("merida/wR.png");
+                    image.push_str("/wR.png");
                 }
                 1 => {
                     piece = Piece::Knight;
-                    image = String::from("merida/wN.png");
+                    image.push_str("/wN.png");
                 }
                 2 => {
                     piece = Piece::Bishop;
-                    image = String::from("merida/wB.png");
+                    image.push_str("/wB.png");
                 }
                 _ => {
                     piece = Piece::Queen;
-                    image = String::from("merida/wQ.png");
+                    image.push_str("/wQ.png");
                 }
             };
             row_promotion = row_promotion.push(Row::new().spacing(0).align_items(Align::Center).push(Button::new(button,
@@ -743,8 +783,8 @@ impl Sandbox for OfflinePuzzles {
                         .width(Length::Fill)
                         .height(Length::Fill)
                 )
-                .width(Length::Units(SQUARE_SIZE/2))
-                .height(Length::Units(SQUARE_SIZE/2))
+                .width(Length::Units(SETTINGS.square_size/2))
+                .height(Length::Units(SETTINGS.square_size/2))
                 .on_press(Message::SelectPiecePromotion(piece))
                 .style(PromotionStyle)
             ));
@@ -772,8 +812,8 @@ fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
             size: (
-                (SQUARE_SIZE * 8) as u32,
-                (SQUARE_SIZE * 8) as u32 + 180
+                (SETTINGS.square_size * 8) as u32,
+                (SETTINGS.square_size * 8) as u32 + 180
             ),
             resizable: true,
             ..iced::window::Settings::default()
