@@ -1,5 +1,5 @@
-use iced::{button, container, slider, pick_list, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Sandbox, Settings, Text, Image};
-
+use iced::{button, container, slider, pick_list, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Sandbox, Settings, Text};
+use iced::Font;
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File};
 use std::str::FromStr;
 
@@ -11,6 +11,11 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
+
+pub const FREE_SERIF: Font = Font::External {
+    name: "Free Serif",
+    bytes: include_bytes!("../FreeSerif.otf"),
+};
 
 lazy_static!{
     static ref SETTINGS: OfflinePuzzlesConfig = load_config();
@@ -659,29 +664,33 @@ impl Sandbox for OfflinePuzzles {
             if let Some(piece) = piece {
                 if color.unwrap() == Color::White {
                     text = match piece {
-                        Piece::Pawn => "/wP.png",
-                        Piece::Rook => "/wR.png",
-                        Piece::Knight => "/wN.png",
-                        Piece::Bishop => "/wB.png",
-                        Piece::Queen => "/wQ.png",
-                        Piece::King => "/wK.png"
+                        Piece::Pawn => "♙",
+                        Piece::Rook => "♖",
+                        Piece::Knight => "♘",
+                        Piece::Bishop => "♗",
+                        Piece::Queen => "♕",
+                        Piece::King => "♔"
                     };
                 } else {
                     text = match piece {
-                        Piece::Pawn => "/bP.png",
-                        Piece::Rook => "/bR.png",
-                        Piece::Knight => "/bN.png",
-                        Piece::Bishop => "/bB.png",
-                        Piece::Queen => "/bQ.png",
-                        Piece::King => "/bK.png"
+                        Piece::Pawn => "♟",
+                        Piece::Rook => "♜",
+                        Piece::Knight => "♞",
+                        Piece::Bishop => "♝",
+                        Piece::Queen => "♛",
+                        Piece::King => "♚"
                     };
                 }
             }
             
             row = row.push(Button::new(button,
-                Image::new(String::from(&SETTINGS.piece_theme) + text)
+                Text::new(text)
+                        .horizontal_alignment(HorizontalAlignment::Center)
+                        .vertical_alignment(VerticalAlignment::Center)
                         .width(Length::Fill)
                         .height(Length::Fill)
+                        .font(FREE_SERIF)
+                        .size(SETTINGS.square_size)
                 )
                 .width(Length::Units(SETTINGS.square_size))
                 .height(Length::Units(SETTINGS.square_size))
@@ -759,29 +768,33 @@ impl Sandbox for OfflinePuzzles {
         i = 0;
         for button in &mut self.btns_promotion {
             let piece;
-            let mut image = String::from(&SETTINGS.piece_theme);
+            let text;
             match i {
                 0 => {
                     piece = Piece::Rook;
-                    image.push_str("/wR.png");
+                    text = "♖";
                 }
                 1 => {
                     piece = Piece::Knight;
-                    image.push_str("/wN.png");
+                    text = "♘";
                 }
                 2 => {
                     piece = Piece::Bishop;
-                    image.push_str("/wB.png");
+                    text = "♗";
                 }
                 _ => {
                     piece = Piece::Queen;
-                    image.push_str("/wQ.png");
+                    text = "♕";
                 }
             };
             row_promotion = row_promotion.push(Row::new().spacing(0).align_items(Align::Center).push(Button::new(button,
-                Image::new(String::from(image))
+                Text::new(text)
+                        .horizontal_alignment(HorizontalAlignment::Center)
+                        .vertical_alignment(VerticalAlignment::Center)
                         .width(Length::Fill)
                         .height(Length::Fill)
+                        .font(FREE_SERIF)
+                        .size(SETTINGS.square_size/2)
                 )
                 .width(Length::Units(SETTINGS.square_size/2))
                 .height(Length::Units(SETTINGS.square_size/2))
