@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use iced::{button, container, slider, pick_list, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Sandbox, Settings, Text, Image};
 
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File};
