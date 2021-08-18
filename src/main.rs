@@ -164,11 +164,11 @@ pub enum TaticsThemes {
     Mate, MateIn1, MateIn2, MateIn3, MateIn4, MateIn5, AnastasiaMate, ArabianMate, BackRankMate, BodenMate, DoubleBishopMate, DovetailMate, HookMate, SmotheredMate,
     Castling, EnPassant, Promotion, UnderPromotion, Equality, Advantage, Crushing,
     OneMove, Short, Long, VeryLong,
-    Master, MasterVsMaster, SuperGM, OfPlayer
+    Master, MasterVsMaster, SuperGM
 }
 
 impl TaticsThemes {
-    const ALL: [TaticsThemes; 62] = [
+    const ALL: [TaticsThemes; 61] = [
         TaticsThemes::All,
         TaticsThemes::Opening, TaticsThemes::Middlegame, TaticsThemes::Endgame, TaticsThemes::RookEndgame,
         TaticsThemes::BishopEndgame, TaticsThemes::PawnEndgame, TaticsThemes::KnightEndgame,
@@ -195,7 +195,7 @@ impl TaticsThemes {
 
         TaticsThemes::OneMove, TaticsThemes::Short, TaticsThemes::Long, TaticsThemes::VeryLong,
 
-        TaticsThemes::Master, TaticsThemes::MasterVsMaster, TaticsThemes::SuperGM, TaticsThemes::OfPlayer
+        TaticsThemes::Master, TaticsThemes::MasterVsMaster, TaticsThemes::SuperGM
     ];
 }
 
@@ -278,7 +278,6 @@ impl std::fmt::Display for TaticsThemes {
                 TaticsThemes::Master => "master",
                 TaticsThemes::MasterVsMaster => "masterVsMaster",
                 TaticsThemes::SuperGM => "superGM",
-                TaticsThemes::OfPlayer => "of-player",
 
             }
         )
