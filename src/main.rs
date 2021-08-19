@@ -131,6 +131,30 @@ impl PositionGUI {
         };
         Square::make_square(rank, file)
     }
+
+    pub fn chesssquare_to_posgui(square: Square) -> PositionGUI {
+        let col = match square.get_file() {
+            File::A => 0,
+            File::B => 1,
+            File::C => 2,
+            File::D => 3,
+            File::E => 4,
+            File::F => 5,
+            File::G => 6,
+            File::H => 7,
+        };
+        let row = match square.get_rank() {
+            Rank::First => 0,
+            Rank::Second => 1,
+            Rank::Third => 2,
+            Rank::Fourth => 3,
+            Rank::Fifth => 4,
+            Rank::Sixth => 5,
+            Rank::Seventh => 6,
+            Rank::Eighth => 7,
+        };
+        PositionGUI::new(row,col)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -399,6 +423,8 @@ pub struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
     board: Board,
     squares: [button::State; 64],
+    last_move_from: Option<PositionGUI>,
+    last_move_to: Option<PositionGUI>,
 
     theme_list: pick_list::State<TaticsThemes>,
     theme: TaticsThemes,
@@ -427,6 +453,8 @@ impl Default for OfflinePuzzles {
             from_square: None,
             board: Board::default(),
             squares: [button::State::default(); 64],
+            last_move_from: None,
+            last_move_to: None,
 
             theme_list: pick_list::State::default(),
             theme : TaticsThemes::default(),
@@ -530,8 +558,7 @@ impl Sandbox for OfflinePuzzles {
 
                     // If the move is correct we can apply it to the board
                     if is_mate || (move_made == correct_move) {
-                        //We can savely do these unwraps as we know it's a valid position
-                        
+                       
                         self.board = self.board.make_move_new(move_made);
                         self.current_puzzle_move += 1;
 
@@ -552,6 +579,9 @@ impl Sandbox for OfflinePuzzles {
                                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                                     Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), check_promotion(&puzzle_moves[0]));
             
+                                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+        
                                 self.board = self.board.make_move_new(movement);
 
                                 if self.board.side_to_move() == Color::White {
@@ -565,6 +595,9 @@ impl Sandbox for OfflinePuzzles {
                                 Square::from_str(&String::from(&correct_moves[self.current_puzzle_move][..2])).unwrap(),
                                 Square::from_str(&String::from(&correct_moves[self.current_puzzle_move][2..4])).unwrap(), check_promotion(&correct_moves[self.current_puzzle_move]));
 
+                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+    
                             self.board = self.board.make_move_new(movement);
                             self.current_puzzle_move += 1;
                             self.puzzle_status = String::from("Correct! What now?");
@@ -617,6 +650,9 @@ impl Sandbox for OfflinePuzzles {
                                     Square::from_str(&puzzle_moves[0][..2]).unwrap(),
                                     Square::from_str(&puzzle_moves[0][2..4]).unwrap(), check_promotion(&puzzle_moves[0]));
 
+                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+
                             self.board = self.board.make_move_new(movement);
 
                             if self.board.side_to_move() == Color::White {
@@ -627,6 +663,8 @@ impl Sandbox for OfflinePuzzles {
                         } else {
                             // Just putting the default position to make it obvious the search ended.
                             self.board = Board::default();
+                            self.last_move_from = None;
+                            self.last_move_to = None;
                             self.puzzle_status = String::from("Sorry, no puzzle found");
                         }
                     } Err(_) => {
@@ -678,7 +716,9 @@ impl Sandbox for OfflinePuzzles {
                     };
                 }
             }
-            
+
+            let selected = self.from_square == Some(pos) || self.last_move_from == Some(pos) || self.last_move_to == Some(pos);
+
             row = row.push(Button::new(button,
                 Image::new(String::from(&SETTINGS.piece_theme) + text)
                         .width(Length::Fill)
@@ -687,7 +727,7 @@ impl Sandbox for OfflinePuzzles {
                 .width(Length::Units(SETTINGS.square_size))
                 .height(Length::Units(SETTINGS.square_size))
                 .on_press(Message::SelectSquare(pos))
-                .style(ChessSquare::from((pos, self.from_square == Some(pos))))
+                .style(ChessSquare::from((pos, selected)))
             );
 
             i += 1;
