@@ -425,6 +425,7 @@ pub struct OfflinePuzzles {
     squares: [button::State; 64],
     last_move_from: Option<PositionGUI>,
     last_move_to: Option<PositionGUI>,
+    is_playing: bool,
 
     theme_list: pick_list::State<TaticsThemes>,
     theme: TaticsThemes,
@@ -455,6 +456,7 @@ impl Default for OfflinePuzzles {
             squares: [button::State::default(); 64],
             last_move_from: None,
             last_move_to: None,
+            is_playing: false,
 
             theme_list: pick_list::State::default(),
             theme : TaticsThemes::default(),
@@ -563,7 +565,7 @@ impl Sandbox for OfflinePuzzles {
                         self.current_puzzle_move += 1;
 
                         if self.current_puzzle_move == correct_moves.len() {
-                            if self.current_puzzle < self.puzzles.len() {
+                            if self.current_puzzle < self.puzzles.len() - 1 {
                                 // The previous puzzle ended, and we still have puzzles available,
                                 // so we prepare the next one.
                                 self.current_puzzle += 1;
@@ -589,6 +591,12 @@ impl Sandbox for OfflinePuzzles {
                                 } else {
                                     self.puzzle_status = String::from("Black to move!");
                                 }
+                            } else {
+                                self.board = Board::default();
+                                self.last_move_from = None;
+                                self.last_move_to = None;
+                                self.is_playing = false;
+                                self.puzzle_status = String::from("All puzzles done for this search!");
                             }
                         } else {
                             movement = ChessMove::new(
@@ -660,11 +668,13 @@ impl Sandbox for OfflinePuzzles {
                             } else {
                                 self.puzzle_status = String::from("Black to move!");
                             }
+                            self.is_playing = true;
                         } else {
                             // Just putting the default position to make it obvious the search ended.
                             self.board = Board::default();
                             self.last_move_from = None;
                             self.last_move_to = None;
+                            self.is_playing = false;
                             self.puzzle_status = String::from("Sorry, no puzzle found");
                         }
                     } Err(_) => {
