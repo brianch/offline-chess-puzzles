@@ -525,7 +525,9 @@ impl Sandbox for OfflinePuzzles {
     fn update(&mut self, message: Message) {
         match (self.from_square, message) {
             (None, Message::SelectSquare(pos)) => {
-                self.from_square = Some(pos);
+                if self.is_playing && self.board.color_on(pos.posgui_to_square()) == Some(self.board.side_to_move()) {
+                    self.from_square = Some(pos);
+                }
             } (Some(from), Message::SelectSquare(to)) if from != to => {
                 self.from_square = None;
                 
@@ -611,7 +613,11 @@ impl Sandbox for OfflinePuzzles {
                             self.puzzle_status = String::from("Correct! What now?");
                         }
                     } else {
-                        self.puzzle_status = String::from("Ops! Wrong move...");
+                        if self.board.side_to_move() == Color::White {
+                            self.puzzle_status = String::from("Ops! Wrong move... White to play.");
+                        } else {
+                            self.puzzle_status = String::from("Ops! Wrong move... Black to play.");
+                        }
                     }
                 }
             } (Some(_), Message::SelectSquare(to)) => {
