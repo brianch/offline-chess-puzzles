@@ -31,7 +31,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
         Self {
             square_size: 60,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
-            piece_theme: String::from("merida"),
+            piece_theme: String::from("cburnett"),
             search_results_limit: 20000,
         }
     }

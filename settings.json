@@ -1,6 +1,6 @@
 {
   "square_size": 60,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",
-  "piece_theme": "merida",
+  "piece_theme": "cburnett",
   "search_results_limit": 20000
 }

@@ -15,10 +15,6 @@ To play you just adjust the search to your needs, press "search" and a puzzle wi
 If the move is a promotion you need to select the piece to promote to in the botton of the screen before moving the pawn.<br/><br/>
 The search is a bit slow but I think it's important to use the cvs directly so users can easily replace the file if needed.
 
-## TODO:<br/>
-- Externalize some strings (puzzle db filename, name of the image directory, limit of search results, etc.).<br/>
-- Maybe allow the selection of multiple themes at once.<br/>
-- Highlight the last move before the puzzle starts (so we can easily see if an en passant is allowed, for example)<br/>
-
 ## License:
-Distributed under the MIT License. See `LICENSE` for more information.
+The code is distributed under the MIT License. See `LICENSE` for more information.
+The images in the "cburnett" directory are from Colin M.L. Burnett and used under the CC-BY-SA 3.0 unported license (there's a link to the original files in the file license.txt in that directory).
