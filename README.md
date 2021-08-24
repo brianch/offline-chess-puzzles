@@ -16,5 +16,5 @@ If the move is a promotion you need to select the piece to promote to in the bot
 The search is a bit slow but I think it's important to use the cvs directly so users can easily replace the file if needed.
 
 ## License:
-The code is distributed under the MIT License. See `LICENSE` for more information.
-The images in the "cburnett" directory are from Colin M.L. Burnett and used under the CC-BY-SA 3.0 unported license (there's a link to the original files in the file license.txt in that directory).
+- The code is distributed under the MIT License. See `LICENSE` for more information.<br/>
+- The images in the "cburnett" directory are from Colin M.L. Burnett and used under the CC-BY-SA 3.0 unported license (there's a link to the original files in the file license.txt in that directory).
