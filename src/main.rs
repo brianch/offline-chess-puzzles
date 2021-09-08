@@ -371,11 +371,13 @@ impl Application for OfflinePuzzles {
                 self.login_tab.update(message);
                 Command::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
+                self.from_square = None;
                 if let Some(puzzles_vec) = puzzles_vec {
                     if !puzzles_vec.is_empty() {
                         self.puzzles = puzzles_vec;
                         self.puzzles.shuffle(&mut thread_rng());
-                        //self.from_square = None;
+                        self.current_puzzle_move = 1;
+                        self.current_puzzle = 0;
 
                         self.board = Board::from_str(&self.puzzles[0].fen).unwrap();
                         let puzzle_moves: Vec<&str> = self.puzzles[0].moves.split_whitespace().collect();
