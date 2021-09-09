@@ -2,6 +2,12 @@ lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameMode {
+    Puzzle,
+    Analysis,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OfflinePuzzlesConfig {
     pub square_size: u16,
