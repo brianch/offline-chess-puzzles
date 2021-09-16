@@ -16,7 +16,7 @@ pub enum SettingsMessage {
 }
 
 #[derive(Debug, Clone)]
-pub struct LoginTab {
+pub struct SettingsTab {
     square_size_value: String,
     square_size: text_input::State,
 
@@ -32,9 +32,9 @@ pub struct LoginTab {
     settings_status: String,
 }
 
-impl LoginTab {
+impl SettingsTab {
     pub fn new() -> Self {
-        LoginTab {
+        SettingsTab {
             square_size_value: config::SETTINGS.square_size.to_string(),
             square_size: text_input::State::default(),
 
@@ -94,7 +94,7 @@ impl LoginTab {
     }
 }
 
-impl Tab for LoginTab {
+impl Tab for SettingsTab {
     type Message = Message;
 
     fn title(&self) -> String {
