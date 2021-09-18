@@ -1,4 +1,4 @@
-use iced::{button, container, slider, pick_list, Command, Container, Align, Length, HorizontalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Text, Image};
+use iced::{button, container, slider, pick_list, Command, Container, Align, Length, VerticalAlignment, HorizontalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Text};
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::{Tab, Message, config, styles};
@@ -348,29 +348,33 @@ impl Tab for SearchTab {
         let mut i = 0;
         for button in &mut self.btns_promotion {
             let piece;
-            let mut image = String::from(&config::SETTINGS.piece_theme);
+            let text;
             match i {
                 0 => {
                     piece = Piece::Rook;
-                    image.push_str("/wR.png");
+                    text = "♜";
                 }
                 1 => {
                     piece = Piece::Knight;
-                    image.push_str("/wN.png");
+                    text = "♞";
                 }
                 2 => {
                     piece = Piece::Bishop;
-                    image.push_str("/wB.png");
+                    text = "♝";
                 }
                 _ => {
                     piece = Piece::Queen;
-                    image.push_str("/wQ.png");
+                    text = "♛";
                 }
             };
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Align::Center).push(Button::new(button,
-                Image::new(String::from(image))
+                Text::new(text)
+                        .horizontal_alignment(HorizontalAlignment::Center)
+                        .vertical_alignment(VerticalAlignment::Center)
                         .width(Length::Fill)
                         .height(Length::Fill)
+                        .font(config::FREE_SERIF)
+                        .size(config::SETTINGS.square_size)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))

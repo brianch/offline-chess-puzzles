@@ -1,8 +1,14 @@
+use iced::Font;
 use crate::{styles};
 
 lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
 }
+
+pub const FREE_SERIF: Font = Font::External {
+    name: "Free Serif",
+    bytes: include_bytes!("../FreeSerif.otf"),
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {

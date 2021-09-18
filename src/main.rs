@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use iced::{executor, button, Command, Clipboard, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Row, Column, Element, Application, Settings, Text, Image, Radio};
+use iced::{executor, button, Command, Clipboard, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Row, Column, Element, Application, Settings, Text, Radio};
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
@@ -505,21 +505,21 @@ impl Application for OfflinePuzzles {
             if let Some(piece) = piece {
                 if color.unwrap() == Color::White {
                     text = match piece {
-                        Piece::Pawn => "/wP.png",
-                        Piece::Rook => "/wR.png",
-                        Piece::Knight => "/wN.png",
-                        Piece::Bishop => "/wB.png",
-                        Piece::Queen => "/wQ.png",
-                        Piece::King => "/wK.png"
+                        Piece::Pawn => "♙",
+                        Piece::Rook => "♖",
+                        Piece::Knight => "♘",
+                        Piece::Bishop => "♗",
+                        Piece::Queen => "♕",
+                        Piece::King => "♔" 
                     };
                 } else {
                     text = match piece {
-                        Piece::Pawn => "/bP.png",
-                        Piece::Rook => "/bR.png",
-                        Piece::Knight => "/bN.png",
-                        Piece::Bishop => "/bB.png",
-                        Piece::Queen => "/bQ.png",
-                        Piece::King => "/bK.png"
+                        Piece::Pawn => "♟",
+                        Piece::Rook => "♜",
+                        Piece::Knight => "♞",
+                        Piece::Bishop => "♝",
+                        Piece::Queen => "♛",
+                        Piece::King => "♚"
                     };
                 }
             }
@@ -535,9 +535,13 @@ impl Application for OfflinePuzzles {
                 };
 
             board_row = board_row.push(Button::new(button,
-                Image::new(String::from(&config::SETTINGS.piece_theme) + text)
-                        .width(Length::Fill)
-                        .height(Length::Fill)
+                Text::new(text)
+                        .horizontal_alignment(HorizontalAlignment::Center)
+                        .vertical_alignment(VerticalAlignment::Center)
+                        .width(Length::Shrink)
+                        .height(Length::Shrink)
+                        .font(config::FREE_SERIF)
+                        .size(self.settings.square_size + 10)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
