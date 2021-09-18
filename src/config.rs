@@ -1,3 +1,5 @@
+use crate::{styles};
+
 lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
 }
@@ -8,12 +10,15 @@ pub enum GameMode {
     Analysis,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OfflinePuzzlesConfig {
     pub square_size: u16,
     pub puzzle_db_location: String,
     pub piece_theme: String,
     pub search_results_limit: usize,
+    pub board_theme: styles::BoardStyle,
+    pub light_squares_color: [f32; 3],
+    pub dark_squares_color: [f32; 3],
 }
 
 impl ::std::default::Default for OfflinePuzzlesConfig {
@@ -23,11 +28,16 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
             piece_theme: String::from("cburnett"),
             search_results_limit: 20000,
+            board_theme: styles::BoardStyle::Default,
+            // Saving the colors as well, so the user may set custom ones by changing
+            // the config file directly.
+            light_squares_color: styles::BoardStyle::Default.light_sqr(),
+            dark_squares_color: styles::BoardStyle::Default.dark_sqr(),
         }
     }
 }
 
-fn load_config() -> OfflinePuzzlesConfig {
+pub fn load_config() -> OfflinePuzzlesConfig {
     let config;
     let file = std::fs::File::open("settings.json");
     match file {

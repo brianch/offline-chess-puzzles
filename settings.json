@@ -2,5 +2,16 @@
   "square_size": 60,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",
   "piece_theme": "cburnett",
-  "search_results_limit": 20000
+  "search_results_limit": 20000,
+  "board_theme": "Blue",
+  "light_squares_color": [
+    0.91764706,
+    0.972549,
+    1.0
+  ],
+  "dark_squares_color": [
+    0.4117647,
+    0.67058825,
+    0.827451
+  ]
 }

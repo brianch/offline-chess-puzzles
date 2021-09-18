@@ -135,35 +135,36 @@ pub enum Message {
     SelectMode(config::GameMode),
     TabSelected(usize),
     ShowHint(Option<Square>),
-    LoadPuzzle(Option<Vec<config::Puzzle>>)
+    LoadPuzzle(Option<Vec<config::Puzzle>>),
+    ChangeSettings(Option<config::OfflinePuzzlesConfig>)
 }
 
-struct ChessSquare { row: i32, col: i32, is_selected: bool }
+struct ChessSquare { row: i32, col: i32, is_selected: bool, light_sqr: [f32; 3], dark_sqr: [f32; 3]}
 
-impl From<(PositionGUI, bool)> for ChessSquare {
-    fn from(pos_color: (PositionGUI, bool)) -> Self {
-        let (pos, is_selected) = pos_color;
-        Self::new(pos.get_row(), pos.get_col(), is_selected)
+impl From<(PositionGUI, bool, [f32; 3], [f32; 3])> for ChessSquare {
+    fn from(pos_color: (PositionGUI, bool, [f32; 3], [f32; 3])) -> Self {
+        let (pos, is_selected, light_sqr, dark_sqr) = pos_color;
+        Self::new(pos.get_row(), pos.get_col(), is_selected, light_sqr, dark_sqr)
     }
 }
 
 impl ChessSquare {
-    fn new(row: i32, col: i32, is_selected: bool) -> Self {
-        Self { row, col, is_selected }
+    fn new(row: i32, col: i32, is_selected: bool, light_sqr: [f32; 3], dark_sqr: [f32; 3]) -> Self {
+        Self { row, col, is_selected, light_sqr, dark_sqr }
     }
 
-    fn get_bg_color(&self, is_selected: bool) -> iced::Color {
+    fn get_bg_color(&self, is_selected: bool, light_sqr: [f32; 3], dark_sqr: [f32; 3]) -> iced::Color {
         if (self.row * 9 + self.col) % 2 == 1 {
             if is_selected {
                 styles::SELECTED_LIGHT_SQUARE
             } else {
-                styles::LIGHT_SQUARE
+                light_sqr.into()
             }
         } else {
             if is_selected {
                 styles::SELECTED_DARK_SQUARE
             } else {
-                styles::DARK_SQUARE
+                dark_sqr.into()
             }
         }
     }
@@ -172,8 +173,8 @@ impl ChessSquare {
 impl button::StyleSheet for ChessSquare {
     fn active(&self) -> button::Style {
         button::Style {
-            background: Some(Background::Color(self.get_bg_color(self.is_selected))),
-            border_color: self.get_bg_color(self.is_selected),
+            background: Some(Background::Color(self.get_bg_color(self.is_selected, self.light_sqr, self.dark_sqr))),
+            border_color: self.get_bg_color(self.is_selected, self.light_sqr, self.dark_sqr),
             border_radius: 0.0,
             border_width: 0.0,
             ..button::Style::default()
@@ -186,8 +187,8 @@ impl button::StyleSheet for ChessSquare {
 
     fn pressed(&self) -> button::Style {
         button::Style {
-            background: Some(Background::Color(self.get_bg_color(true))),
-            border_color: self.get_bg_color(true),
+            background: Some(Background::Color(self.get_bg_color(true, self.light_sqr, self.dark_sqr))),
+            border_color: self.get_bg_color(true, self.light_sqr, self.dark_sqr),
             border_radius: 0.0,
             border_width: 0.0,
             ..button::Style::default()
@@ -212,6 +213,7 @@ struct OfflinePuzzles {
     settings_tab: SettingsTab,
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
+    settings: config::OfflinePuzzlesConfig,
 }
 
 impl Default for OfflinePuzzles {
@@ -232,7 +234,8 @@ impl Default for OfflinePuzzles {
             puzzle_tab: PuzzleTab::new(),
             active_tab: 0,
 
-            game_mode: config::GameMode::Puzzle
+            game_mode: config::GameMode::Puzzle,
+            settings: config::load_config()
         }
     }
 }
@@ -394,8 +397,7 @@ impl Application for OfflinePuzzles {
                 self.active_tab = selected;
                 Command::none()
             } (_, Message::Settings(message)) => {
-                self.settings_tab.update(message);
-                Command::none()
+                self.settings_tab.update(message)
             } (_, Message::SelectMode(message)) => {
                 self.game_mode = message;
                 if message == config::GameMode::Analysis {
@@ -459,7 +461,14 @@ impl Application for OfflinePuzzles {
                     self.puzzle_status = String::from("Sorry, no puzzle found");
                 }
                 Command::none()
-            } (_, Message::PuzzleInfo(message)) => {
+            } (_, Message::ChangeSettings(message)) => {
+                if let Some(settings) = message {
+                    self.settings = settings;
+                    self.search_tab.bg_color_promotion = self.settings.dark_squares_color.into();
+                }
+                Command::none()
+            }
+             (_, Message::PuzzleInfo(message)) => {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
@@ -515,10 +524,15 @@ impl Application for OfflinePuzzles {
                 }
             }
 
-            let selected = self.from_square == Some(pos)    ||
-                           self.last_move_from == Some(pos) ||
-                           self.last_move_to == Some(pos)   ||
-                           self.hint_square == Some(pos);
+            let selected =
+                if self.game_mode == config::GameMode::Puzzle {
+                    self.from_square == Some(pos)    ||
+                    self.last_move_from == Some(pos) ||
+                    self.last_move_to == Some(pos)   ||
+                    self.hint_square == Some(pos)
+                } else {
+                    self.from_square == Some(pos)
+                };
 
             board_row = board_row.push(Button::new(button,
                 Image::new(String::from(&config::SETTINGS.piece_theme) + text)
@@ -528,7 +542,7 @@ impl Application for OfflinePuzzles {
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
                 .on_press(Message::SelectSquare(pos))
-                .style(ChessSquare::from((pos, selected)))
+                .style(ChessSquare::from((pos, selected, self.settings.light_squares_color, self.settings.dark_squares_color)))
             );
 
             i += 1;
@@ -557,19 +571,26 @@ impl Application for OfflinePuzzles {
         status_col = status_col.push(row_result);
         
         board_col = board_col.push(status_col).push(game_mode_row);
-        let mut layout_row = Row::new().spacing(0).align_items(Align::Center);
+        let mut layout_row = Row::new().spacing(30).align_items(Align::Center);
         layout_row = layout_row.push(board_col);
+
+        let tab_theme = match self.settings.board_theme {
+            styles::BoardStyle::Grey => styles::TabTheme::Grey,
+            styles::BoardStyle::Blue => styles::TabTheme::Blue,
+            styles::BoardStyle::Green => styles::TabTheme::Green,
+            styles::BoardStyle::Purple => styles::TabTheme::Purple,
+            _ => styles::TabTheme::Brown,
+        };
 
         let tabs = Tabs::new(self.active_tab, Message::TabSelected)
                 .push(self.search_tab.tab_label(), self.search_tab.view())
                 .push(self.settings_tab.tab_label(), self.settings_tab.view())
                 .push(self.puzzle_tab.tab_label(), self.puzzle_tab.view())
                 .tab_bar_position(iced_aw::TabBarPosition::Top)
-                .tab_bar_style(styles::Theme::Blue);
+                .tab_bar_style(tab_theme);
             
         layout_row = layout_row.push(tabs);
         Container::new(layout_row)
-            .style(styles::ChessBoardStyle)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(1)

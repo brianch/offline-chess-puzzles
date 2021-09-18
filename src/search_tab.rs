@@ -141,12 +141,18 @@ impl std::fmt::Display for TaticsThemes {
     }
 }
 
-struct PromotionStyle;
+struct PromotionStyle {bg_color: iced::Color }
+
+impl PromotionStyle {
+    fn new(bg_color: iced::Color) -> Self {
+        Self { bg_color }
+    }
+}
 
 impl button::StyleSheet for PromotionStyle {
     fn active(&self) -> button::Style {
         button::Style {
-            background: Some(Background::Color(styles::LIGHT_SQUARE)),
+            background: Some(Background::Color(self.bg_color)),
             border_radius: 0.1,
             border_width: 0.0,
             ..button::Style::default()
@@ -159,7 +165,7 @@ impl button::StyleSheet for PromotionStyle {
 
     fn pressed(&self) -> button::Style {
         button::Style {
-            background: Some(Background::Color(styles::SELECTED_LIGHT_SQUARE)),
+            background: Some(Background::Color(styles::SELECTED_DARK_SQUARE)),
             border_radius: 1.0,
             border_width: 0.0,
             ..button::Style::default()
@@ -195,8 +201,8 @@ pub struct SearchTab {
     btn_search_state: button::State,
 
     btns_promotion: [button::State; 4],
+    pub bg_color_promotion: iced::Color,
     pub piece_to_promote_to: Piece,
-
 }
 
 impl SearchTab {
@@ -214,6 +220,7 @@ impl SearchTab {
             btn_search_state: button::State::new(),
 
             btns_promotion: [button::State::default(); 4],
+            bg_color_promotion: config::SETTINGS.dark_squares_color.into(),
             piece_to_promote_to: Piece::Queen,
         }
     }
@@ -368,7 +375,7 @@ impl Tab for SearchTab {
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
-                .style(PromotionStyle)
+                .style(PromotionStyle::new(self.bg_color_promotion))
             ));
             i += 1;
         }
