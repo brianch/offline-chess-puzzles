@@ -632,7 +632,7 @@ fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
             size: (
-                (config::SETTINGS.square_size * 8) as u32 + 370,
+                (config::SETTINGS.square_size * 8) as u32 + 450,
                 (config::SETTINGS.square_size * 8) as u32 + 70,
             ),
             resizable: true,
