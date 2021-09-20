@@ -1,4 +1,4 @@
-use iced::{button, container, slider, pick_list, Command, Container, Align, Length, HorizontalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Text, Image};
+use iced::{button, container, slider, pick_list, Svg, Command, Container, Align, Length, HorizontalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Text};
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::{Tab, Message, config, styles};
@@ -348,29 +348,28 @@ impl Tab for SearchTab {
         let mut i = 0;
         for button in &mut self.btns_promotion {
             let piece;
-            let mut image = String::from(&config::SETTINGS.piece_theme);
+            let image;
             match i {
                 0 => {
                     piece = Piece::Rook;
-                    image.push_str("/wR.png");
+                    image = "/wR.svg";
                 }
                 1 => {
                     piece = Piece::Knight;
-                    image.push_str("/wN.png");
+                    image = "/wN.svg";
                 }
                 2 => {
                     piece = Piece::Bishop;
-                    image.push_str("/wB.png");
+                    image = "/wB.svg";
                 }
                 _ => {
                     piece = Piece::Queen;
-                    image.push_str("/wQ.png");
+                    image = "/wQ.svg";
                 }
             };
-            row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Align::Center).push(Button::new(button,
-                Image::new(String::from(image))
-                        .width(Length::Fill)
-                        .height(Length::Fill)
+            row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Align::Center)
+                .push(Button::new(button,
+                    Svg::from_path(String::from(&config::SETTINGS.piece_theme) + image)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))

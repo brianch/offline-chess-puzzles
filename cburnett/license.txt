@@ -2,4 +2,3 @@ Author: Colin M.L. Burnett (https://en.wikipedia.org/wiki/User:Cburnett)
 Used under the Creative Commons Attribution-Share Alike 3.0 Unported license (https://creativecommons.org/licenses/by-sa/3.0)
 
 Obtained from the links on: https://commons.wikimedia.org/wiki/Template:SVG_chess_pieces
-(The individual files were downloaded as 240x240px pngs using the links available on the wikimedia pages for each file)

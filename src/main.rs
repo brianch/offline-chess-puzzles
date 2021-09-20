@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use iced::{executor, button, Command, Clipboard, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Row, Column, Element, Application, Settings, Text, Image, Radio};
+use iced::{executor, button, Svg, Command, Clipboard, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Row, Column, Element, Application, Settings, Text, Radio};
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
@@ -505,21 +505,21 @@ impl Application for OfflinePuzzles {
             if let Some(piece) = piece {
                 if color.unwrap() == Color::White {
                     text = match piece {
-                        Piece::Pawn => "/wP.png",
-                        Piece::Rook => "/wR.png",
-                        Piece::Knight => "/wN.png",
-                        Piece::Bishop => "/wB.png",
-                        Piece::Queen => "/wQ.png",
-                        Piece::King => "/wK.png"
+                        Piece::Pawn => "/wP.svg",
+                        Piece::Rook => "/wR.svg",
+                        Piece::Knight => "/wN.svg",
+                        Piece::Bishop => "/wB.svg",
+                        Piece::Queen => "/wQ.svg",
+                        Piece::King => "/wK.svg"
                     };
                 } else {
                     text = match piece {
-                        Piece::Pawn => "/bP.png",
-                        Piece::Rook => "/bR.png",
-                        Piece::Knight => "/bN.png",
-                        Piece::Bishop => "/bB.png",
-                        Piece::Queen => "/bQ.png",
-                        Piece::King => "/bK.png"
+                        Piece::Pawn => "/bP.svg",
+                        Piece::Rook => "/bR.svg",
+                        Piece::Knight => "/bN.svg",
+                        Piece::Bishop => "/bB.svg",
+                        Piece::Queen => "/bQ.svg",
+                        Piece::King => "/bK.svg"
                     };
                 }
             }
@@ -535,9 +535,7 @@ impl Application for OfflinePuzzles {
                 };
 
             board_row = board_row.push(Button::new(button,
-                Image::new(String::from(&config::SETTINGS.piece_theme) + text)
-                        .width(Length::Fill)
-                        .height(Length::Fill)
+                    Svg::from_path(String::from(&config::SETTINGS.piece_theme) + text)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
