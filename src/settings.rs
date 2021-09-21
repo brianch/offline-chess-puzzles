@@ -1,6 +1,6 @@
 use iced::{
     button, text_input, pick_list, Align, Button, Column, Container, Element, HorizontalAlignment, VerticalAlignment, Length,
-    Text, TextInput, PickList, Command, Row
+    Text, TextInput, PickList, Command, Row, Checkbox
 };
 use iced_aw::TabLabel;
 
@@ -9,6 +9,7 @@ use crate::{Message, Tab, config, styles};
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {
     ChangeSquareSize(String),
+    CheckPlaySound(bool),
     SelectBoardTheme(styles::BoardStyle),
     ChangePuzzleDbLocation(String),
     //ChangePieceTheme(String),
@@ -23,6 +24,7 @@ pub struct SettingsTab {
 
     board_theme_list: pick_list::State<styles::BoardStyle>,
     board_theme: styles::BoardStyle,
+    play_sound: bool,
 
     puzzle_db_location_value: String,
     puzzle_db_location: text_input::State,
@@ -44,6 +46,7 @@ impl SettingsTab {
 
             board_theme_list: pick_list::State::default(),
             board_theme: config::SETTINGS.board_theme,
+            play_sound: config::SETTINGS.play_sound,
 
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
             puzzle_db_location: text_input::State::default(),
@@ -71,7 +74,7 @@ impl SettingsTab {
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_theme_change(self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -88,12 +91,17 @@ impl SettingsTab {
                 }
                 Command::none()
             }
+            SettingsMessage::CheckPlaySound(value) => {
+                self.play_sound = value;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.board_theme), Message::ChangeSettings)
+            }
             SettingsMessage::ChangePressed => {
                 let config = config::OfflinePuzzlesConfig {
                     square_size: self.square_size_value.parse().unwrap(),
                     puzzle_db_location: String::from(&self.puzzle_db_location_value),
                     piece_theme: String::from("cburnett"),
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
+                    play_sound: self.play_sound,
                     board_theme: self.board_theme,
                     light_squares_color: self.board_theme.light_sqr(),
                     dark_squares_color: self.board_theme.dark_sqr(),
@@ -113,11 +121,12 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_theme_change(style: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, style: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
         let mut config = config::load_config();
         config.board_theme = style;
+        config.play_sound = play_sound;
         config.light_squares_color = style.light_sqr();
-        config.dark_squares_color = style.dark_sqr();        
+        config.dark_squares_color = style.dark_sqr();
         Some(config)
     }
 }
@@ -158,23 +167,40 @@ impl Tab for SettingsTab {
                 )
             )
             .push(
-            Row::new().spacing(5).align_items(Align::Center)
-                .push(
-                    Text::new("Square size:")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
-                )
-                .push(
-                    TextInput::new(
-                        &mut self.square_size,
-                        &self.square_size_value.to_string(),
-                        &self.square_size_value.to_string(),
-                        SettingsMessage::ChangeSquareSize,
+                Row::new().spacing(5).align_items(Align::Center)
+                    .push(
+                        Text::new("Square size:")
+                        .width(Length::Shrink)
+                        .horizontal_alignment(HorizontalAlignment::Center),    
                     )
-                    .padding(10)
-                    .size(20),
+                    .push(
+                        TextInput::new(
+                            &mut self.square_size,
+                            &self.square_size_value.to_string(),
+                            &self.square_size_value.to_string(),
+                            SettingsMessage::ChangeSquareSize,
+                        )
+                        .padding(10)
+                        .size(20),
+                    )
                 )
-            )
+            .push(
+                Row::new().spacing(5).align_items(Align::Center)
+                    .push(
+                        Text::new("Play sound on moves:")
+                        .width(Length::Shrink)
+                        .horizontal_alignment(HorizontalAlignment::Center),    
+                    )
+                    .push(
+                        Checkbox::new(
+                            self.play_sound,
+                            "",
+                            SettingsMessage::CheckPlaySound,
+                        )
+                        .size(20),
+                    )
+                )
+    
             /*
             .push(
                 Text::new("Puzzle DB location")

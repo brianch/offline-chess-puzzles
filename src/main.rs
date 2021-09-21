@@ -4,7 +4,7 @@ use iced::{executor, button, Svg, Command, Clipboard, Container, Align, Length, 
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
-
+use soloud::{Soloud, Wav, audio, AudioExt, LoadExt};
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
@@ -196,7 +196,7 @@ impl button::StyleSheet for ChessSquare {
     }
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
     board: Board,
@@ -214,6 +214,9 @@ struct OfflinePuzzles {
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
     settings: config::OfflinePuzzlesConfig,
+    sound_player: Option<Soloud>,
+    two_pieces_sound: Option<Wav>,
+    one_piece_sound: Option<Wav>
 }
 
 impl Default for OfflinePuzzles {
@@ -235,8 +238,28 @@ impl Default for OfflinePuzzles {
             active_tab: 0,
 
             game_mode: config::GameMode::Puzzle,
-            settings: config::load_config()
+            settings: config::load_config(),
+            sound_player: Soloud::default().ok(),
+            two_pieces_sound: load_two_pieces_sound(),
+            one_piece_sound: load_one_piece_sound(),
+
         }
+    }
+}
+
+fn load_two_pieces_sound() -> Option<Wav> {
+    let mut sound = audio::Wav::default();
+    match sound.load("2pieces.wav") {
+        Ok(_) => Some(sound),
+        Err(_) => None,
+    }
+}
+
+fn load_one_piece_sound() -> Option<Wav> {
+    let mut sound = audio::Wav::default();
+    match sound.load("1piece.wav") {
+        Ok(_) => Some(sound),
+        Err(_) => None,
     }
 }
 
@@ -309,7 +332,11 @@ impl Application for OfflinePuzzles {
                         Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
                         Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
 
-                    self.analysis.make_move(move_made);
+                    if self.analysis.make_move(move_made) && self.settings.play_sound {
+                        if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                            soloud.play(wav);
+                        } 
+                    }
                 } else {
                     if self.puzzle_tab.puzzles.len() > 0 {
                         let movement;
@@ -329,12 +356,17 @@ impl Application for OfflinePuzzles {
 
                         // If the move is correct we can apply it to the board
                         if is_mate || (move_made == correct_move) {
-                        
+
                             self.board = self.board.make_move_new(move_made);
                             self.puzzle_tab.current_puzzle_move += 1;
 
                             if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
-                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+                                if self.settings.play_sound {
+                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                                        soloud.play(wav);
+                                    }
+                                }
+                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {                                    
                                     // The previous puzzle ended, and we still have puzzles available,
                                     // so we prepare the next one.
                                     self.puzzle_tab.current_puzzle += 1;
@@ -369,6 +401,11 @@ impl Application for OfflinePuzzles {
                                     self.puzzle_status = String::from("All puzzles done for this search!");
                                 }
                             } else {
+                                if self.settings.play_sound {
+                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
+                                        soloud.play(wav);
+                                    } 
+                                }
                                 movement = ChessMove::new(
                                     Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
                                     Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(&correct_moves[self.puzzle_tab.current_puzzle_move]));
@@ -620,7 +657,6 @@ trait Tab {
 
     fn content(&mut self) -> Element<'_, Self::Message>;
 }
-
 
 fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {

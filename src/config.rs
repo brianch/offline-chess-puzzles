@@ -16,6 +16,7 @@ pub struct OfflinePuzzlesConfig {
     pub puzzle_db_location: String,
     pub piece_theme: String,
     pub search_results_limit: usize,
+    pub play_sound: bool,
     pub board_theme: styles::BoardStyle,
     pub light_squares_color: [f32; 3],
     pub dark_squares_color: [f32; 3],
@@ -28,6 +29,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
             piece_theme: String::from("cburnett"),
             search_results_limit: 20000,
+            play_sound: true,
             board_theme: styles::BoardStyle::Default,
             // Saving the colors as well, so the user may set custom ones by changing
             // the config file directly.
