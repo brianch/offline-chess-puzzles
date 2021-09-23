@@ -18,3 +18,6 @@ serde_derive = "1.0.126"
 serde_json = "1.0.64"
 lazy_static = "1.4.0"
 soloud = "0.4.0"
+#Use this on windows instead: 
+#soloud = { version = "0.4.0", default-features = false, features = ["winmm"] }
+#todo: Figure out how to do this condition properly.
