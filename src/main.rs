@@ -322,8 +322,24 @@ impl Application for OfflinePuzzles {
                 }
                 Command::none()
             } (Some(from), Message::SelectSquare(to)) if from != to => {
+                let side =
+                    match self.game_mode {
+                        config::GameMode::Analysis => { self.analysis.side_to_move() }
+                        config::GameMode::Puzzle => { self.board.side_to_move() }
+                    };
+                let color =
+                    match self.game_mode {
+                        config::GameMode::Analysis => { self.analysis.current_position().color_on(to.posgui_to_square()) }
+                        config::GameMode::Puzzle => { self.board.color_on(to.posgui_to_square()) }
+                    };
+                // If the user clicked on another piece of his own side,
+                // just replace the previous selection and exit
+                if self.puzzle_tab.is_playing && color == Some(side) {
+                    self.from_square = Some(to);
+                    return Command::none()
+                }
                 self.from_square = None;
-                
+
                 if self.game_mode == config::GameMode::Analysis {
                      let move_made_notation =
                         get_notation_string(self.analysis.current_position(), self.search_tab.piece_to_promote_to, from, to);
