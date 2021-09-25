@@ -369,7 +369,8 @@ impl Tab for SearchTab {
             };
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Align::Center)
                 .push(Button::new(button,
-                    Svg::from_path(String::from(&config::SETTINGS.piece_theme) + image)
+                    Svg::from_path(
+                        String::from("pieces/") + &config::SETTINGS.piece_theme.to_string() + image)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))

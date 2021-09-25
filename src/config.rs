@@ -14,7 +14,7 @@ pub enum GameMode {
 pub struct OfflinePuzzlesConfig {
     pub square_size: u16,
     pub puzzle_db_location: String,
-    pub piece_theme: String,
+    pub piece_theme: styles::PieceTheme,
     pub search_results_limit: usize,
     pub play_sound: bool,
     pub board_theme: styles::BoardStyle,
@@ -27,7 +27,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
         Self {
             square_size: 60,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
-            piece_theme: String::from("cburnett"),
+            piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
             play_sound: true,
             board_theme: styles::BoardStyle::Default,

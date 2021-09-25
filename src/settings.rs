@@ -10,6 +10,7 @@ use crate::{Message, Tab, config, styles};
 pub enum SettingsMessage {
     ChangeSquareSize(String),
     CheckPlaySound(bool),
+    SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::BoardStyle),
     ChangePuzzleDbLocation(String),
     //ChangePieceTheme(String),
@@ -21,6 +22,9 @@ pub enum SettingsMessage {
 pub struct SettingsTab {
     square_size_value: String,
     square_size: text_input::State,
+
+    piece_theme_list: pick_list::State<styles::PieceTheme>,
+    piece_theme: styles::PieceTheme,
 
     board_theme_list: pick_list::State<styles::BoardStyle>,
     board_theme: styles::BoardStyle,
@@ -44,6 +48,8 @@ impl SettingsTab {
             square_size_value: config::SETTINGS.square_size.to_string(),
             square_size: text_input::State::default(),
 
+            piece_theme_list: pick_list::State::default(),
+            piece_theme: config::SETTINGS.piece_theme,
             board_theme_list: pick_list::State::default(),
             board_theme: config::SETTINGS.board_theme,
             play_sound: config::SETTINGS.play_sound,
@@ -72,9 +78,13 @@ impl SettingsTab {
                 }
                 Command::none()
             }
+            SettingsMessage::SelectPieceTheme(value) => {
+                self.piece_theme = value;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
+            }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -93,13 +103,13 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePressed => {
                 let config = config::OfflinePuzzlesConfig {
                     square_size: self.square_size_value.parse().unwrap(),
                     puzzle_db_location: String::from(&self.puzzle_db_location_value),
-                    piece_theme: String::from("cburnett"),
+                    piece_theme: self.piece_theme,
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
                     play_sound: self.play_sound,
                     board_theme: self.board_theme,
@@ -121,12 +131,13 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, style: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, pieces: styles::PieceTheme, board: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
         let mut config = config::load_config();
-        config.board_theme = style;
+        config.board_theme = board;
+        config.piece_theme = pieces;
         config.play_sound = play_sound;
-        config.light_squares_color = style.light_sqr();
-        config.dark_squares_color = style.dark_sqr();
+        config.light_squares_color = board.light_sqr();
+        config.dark_squares_color = board.dark_sqr();
         Some(config)
     }
 }
@@ -149,6 +160,22 @@ impl Tab for SettingsTab {
                 Text::new("(Size and search limit REQUIRE restart)")
                 .width(Length::Shrink)
                 .horizontal_alignment(HorizontalAlignment::Center),    
+            )
+            .push(
+                Row::new().spacing(5).align_items(Align::Center)
+                .push(
+                    Text::new("Piece Theme:")
+                    .width(Length::Shrink)
+                    .horizontal_alignment(HorizontalAlignment::Center),    
+                )
+                .push(
+                    PickList::new(
+                        &mut self.piece_theme_list,
+                        &styles::PieceTheme::ALL[..],
+                        Some(self.piece_theme),
+                        SettingsMessage::SelectPieceTheme
+                    )
+                )
             )
             .push(
                 Row::new().spacing(5).align_items(Align::Center)

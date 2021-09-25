@@ -10,6 +10,54 @@ pub const SELECTED_DARK_SQUARE: iced::Color = rgb!(170,162,58);
 pub const SELECTED_LIGHT_SQUARE: iced::Color = rgb!(205,210,106);
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum PieceTheme {
+    Cburnett,
+    California,
+    Cardinal,
+    Dubrovny,
+    Gioco,
+    Icpieces,
+    Maestro,
+    Staunty,
+    Tatiana,
+}
+
+impl PieceTheme {
+
+    pub const ALL: [PieceTheme; 9] = [
+        PieceTheme::Cburnett,
+        PieceTheme::California,
+        PieceTheme::Cardinal,
+        PieceTheme::Dubrovny,
+        PieceTheme::Gioco,
+        PieceTheme::Icpieces,
+        PieceTheme::Maestro,
+        PieceTheme::Staunty,
+        PieceTheme::Tatiana,
+    ];
+}
+
+impl std::fmt::Display for PieceTheme {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                PieceTheme::California => "california",
+                PieceTheme::Cardinal => "cardinal",
+                PieceTheme::Dubrovny => "dubrovny",
+                PieceTheme::Gioco => "gioco",
+                PieceTheme::Icpieces => "icpieces",
+                PieceTheme::Maestro => "maestro",
+                PieceTheme::Staunty => "staunty",
+                PieceTheme::Tatiana => "tatiana",
+                _ => "cburnett",
+            }
+        )
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum BoardStyle {
     Default,
     Brown,

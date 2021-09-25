@@ -588,7 +588,8 @@ impl Application for OfflinePuzzles {
                 };
 
             board_row = board_row.push(Button::new(button,
-                    Svg::from_path(String::from(&config::SETTINGS.piece_theme) + text)
+                    Svg::from_path(
+                        String::from("pieces/") + &self.settings.piece_theme.to_string() + text)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
