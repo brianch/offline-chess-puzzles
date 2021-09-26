@@ -1,7 +1,7 @@
 # offline-chess-puzzles
 Tool to view and solve puzzles from the lichess puzzle database.
 
-<img src="https://github.com/brianch/offline-chess-puzzles/blob/main/demo.gif" width="200"/>
+<img src="https://github.com/brianch/offline-chess-puzzles/blob/main/demo.gif" width="350"/>
 
 It's a very simple tool for those who want to practice offline, it has filters by puzzle rating and theme. It might also be helpful to teach the tactical motifs to students, since it's easy to select easy puzzles from a theme.
 
