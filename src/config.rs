@@ -20,8 +20,9 @@ pub enum GameMode {
 pub struct OfflinePuzzlesConfig {
     pub square_size: u16,
     pub puzzle_db_location: String,
-    pub piece_theme: String,
+    pub piece_theme: styles::PieceTheme,
     pub search_results_limit: usize,
+    pub play_sound: bool,
     pub board_theme: styles::BoardStyle,
     pub light_squares_color: [f32; 3],
     pub dark_squares_color: [f32; 3],
@@ -32,8 +33,9 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
         Self {
             square_size: 60,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
-            piece_theme: String::from("cburnett"),
+            piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
+            play_sound: true,
             board_theme: styles::BoardStyle::Default,
             // Saving the colors as well, so the user may set custom ones by changing
             // the config file directly.

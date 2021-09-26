@@ -1,8 +1,9 @@
 {
   "square_size": 60,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",
-  "piece_theme": "cburnett",
+  "piece_theme": "Cburnett",
   "search_results_limit": 20000,
+  "play_sound": true,
   "board_theme": "Blue",
   "light_squares_color": [
     0.91764706,

@@ -4,7 +4,7 @@ use iced::{executor, button, Command, Clipboard, Container, Align, Length, Horiz
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
-
+use soloud::{Soloud, Wav, audio, AudioExt, LoadExt};
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
@@ -196,7 +196,7 @@ impl button::StyleSheet for ChessSquare {
     }
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
     board: Board,
@@ -214,6 +214,9 @@ struct OfflinePuzzles {
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
     settings: config::OfflinePuzzlesConfig,
+    sound_player: Option<Soloud>,
+    two_pieces_sound: Option<Wav>,
+    one_piece_sound: Option<Wav>
 }
 
 impl Default for OfflinePuzzles {
@@ -235,8 +238,28 @@ impl Default for OfflinePuzzles {
             active_tab: 0,
 
             game_mode: config::GameMode::Puzzle,
-            settings: config::load_config()
+            settings: config::load_config(),
+            sound_player: Soloud::default().ok(),
+            two_pieces_sound: load_two_pieces_sound(),
+            one_piece_sound: load_one_piece_sound(),
+
         }
+    }
+}
+
+fn load_two_pieces_sound() -> Option<Wav> {
+    let mut sound = audio::Wav::default();
+    match sound.load("2pieces.wav") {
+        Ok(_) => Some(sound),
+        Err(_) => None,
+    }
+}
+
+fn load_one_piece_sound() -> Option<Wav> {
+    let mut sound = audio::Wav::default();
+    match sound.load("1piece.wav") {
+        Ok(_) => Some(sound),
+        Err(_) => None,
     }
 }
 
@@ -299,8 +322,24 @@ impl Application for OfflinePuzzles {
                 }
                 Command::none()
             } (Some(from), Message::SelectSquare(to)) if from != to => {
+                let side =
+                    match self.game_mode {
+                        config::GameMode::Analysis => { self.analysis.side_to_move() }
+                        config::GameMode::Puzzle => { self.board.side_to_move() }
+                    };
+                let color =
+                    match self.game_mode {
+                        config::GameMode::Analysis => { self.analysis.current_position().color_on(to.posgui_to_square()) }
+                        config::GameMode::Puzzle => { self.board.color_on(to.posgui_to_square()) }
+                    };
+                // If the user clicked on another piece of his own side,
+                // just replace the previous selection and exit
+                if self.puzzle_tab.is_playing && color == Some(side) {
+                    self.from_square = Some(to);
+                    return Command::none()
+                }
                 self.from_square = None;
-                
+
                 if self.game_mode == config::GameMode::Analysis {
                      let move_made_notation =
                         get_notation_string(self.analysis.current_position(), self.search_tab.piece_to_promote_to, from, to);
@@ -309,7 +348,11 @@ impl Application for OfflinePuzzles {
                         Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
                         Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
 
-                    self.analysis.make_move(move_made);
+                    if self.analysis.make_move(move_made) && self.settings.play_sound {
+                        if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                            soloud.play(wav);
+                        } 
+                    }
                 } else {
                     if self.puzzle_tab.puzzles.len() > 0 {
                         let movement;
@@ -329,12 +372,17 @@ impl Application for OfflinePuzzles {
 
                         // If the move is correct we can apply it to the board
                         if is_mate || (move_made == correct_move) {
-                        
+
                             self.board = self.board.make_move_new(move_made);
                             self.puzzle_tab.current_puzzle_move += 1;
 
                             if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
-                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+                                if self.settings.play_sound {
+                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                                        soloud.play(wav);
+                                    }
+                                }
+                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {                                    
                                     // The previous puzzle ended, and we still have puzzles available,
                                     // so we prepare the next one.
                                     self.puzzle_tab.current_puzzle += 1;
@@ -369,6 +417,11 @@ impl Application for OfflinePuzzles {
                                     self.puzzle_status = String::from("All puzzles done for this search!");
                                 }
                             } else {
+                                if self.settings.play_sound {
+                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
+                                        soloud.play(wav);
+                                    } 
+                                }
                                 movement = ChessMove::new(
                                     Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
                                     Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(&correct_moves[self.puzzle_tab.current_puzzle_move]));
@@ -464,6 +517,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
                     self.settings = settings;
+                    self.search_tab.piece_theme_promotion = self.settings.piece_theme;
                     self.search_tab.bg_color_promotion = self.settings.dark_squares_color.into();
                 }
                 Command::none()
@@ -565,7 +619,7 @@ impl Application for OfflinePuzzles {
             .push(
                 Radio::new(config::GameMode::Analysis, "Analysis", Some(self.game_mode), Message::SelectMode));
 
-        let mut status_col = Column::new().spacing(0).align_items(Align::Center);
+        let mut status_col = Column::new().padding(3).align_items(Align::Center);
 
         let mut row_result = Row::new().spacing(0).align_items(Align::Center);
         row_result = row_result.push(Text::new(&self.puzzle_status)
@@ -627,13 +681,12 @@ trait Tab {
     fn content(&mut self) -> Element<'_, Self::Message>;
 }
 
-
 fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
             size: (
                 (config::SETTINGS.square_size * 8) as u32 + 450,
-                (config::SETTINGS.square_size * 8) as u32 + 70,
+                (config::SETTINGS.square_size * 8) as u32 + 77,
             ),
             resizable: true,
             ..iced::window::Settings::default()

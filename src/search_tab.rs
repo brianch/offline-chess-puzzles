@@ -202,6 +202,7 @@ pub struct SearchTab {
 
     btns_promotion: [button::State; 4],
     pub bg_color_promotion: iced::Color,
+    pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
 }
 
@@ -221,6 +222,7 @@ impl SearchTab {
 
             btns_promotion: [button::State::default(); 4],
             bg_color_promotion: config::SETTINGS.dark_squares_color.into(),
+            piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
         }
     }
