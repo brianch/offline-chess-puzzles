@@ -517,6 +517,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
                     self.settings = settings;
+                    self.search_tab.piece_theme_promotion = self.settings.piece_theme;
                     self.search_tab.bg_color_promotion = self.settings.dark_squares_color.into();
                 }
                 Command::none()
