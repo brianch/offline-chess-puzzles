@@ -614,7 +614,7 @@ impl Application for OfflinePuzzles {
             .push(
                 Radio::new(config::GameMode::Analysis, "Analysis", Some(self.game_mode), Message::SelectMode));
 
-        let mut status_col = Column::new().spacing(0).align_items(Align::Center);
+        let mut status_col = Column::new().padding(3).align_items(Align::Center);
 
         let mut row_result = Row::new().spacing(0).align_items(Align::Center);
         row_result = row_result.push(Text::new(&self.puzzle_status)
@@ -681,7 +681,7 @@ fn main() -> iced::Result {
         window: iced::window::Settings {
             size: (
                 (config::SETTINGS.square_size * 8) as u32 + 450,
-                (config::SETTINGS.square_size * 8) as u32 + 70,
+                (config::SETTINGS.square_size * 8) as u32 + 77,
             ),
             resizable: true,
             ..iced::window::Settings::default()
