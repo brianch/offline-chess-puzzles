@@ -14,6 +14,7 @@ pub enum PieceTheme {
     Cburnett,
     California,
     Cardinal,
+    Chess7,
     Dubrovny,
     Gioco,
     Icpieces,
@@ -24,10 +25,11 @@ pub enum PieceTheme {
 
 impl PieceTheme {
 
-    pub const ALL: [PieceTheme; 9] = [
+    pub const ALL: [PieceTheme; 10] = [
         PieceTheme::Cburnett,
         PieceTheme::California,
         PieceTheme::Cardinal,
+        PieceTheme::Chess7,
         PieceTheme::Dubrovny,
         PieceTheme::Gioco,
         PieceTheme::Icpieces,
@@ -45,6 +47,7 @@ impl std::fmt::Display for PieceTheme {
             match self {
                 PieceTheme::California => "california",
                 PieceTheme::Cardinal => "cardinal",
+                PieceTheme::Chess7 => "chess7",
                 PieceTheme::Dubrovny => "dubrovny",
                 PieceTheme::Gioco => "gioco",
                 PieceTheme::Icpieces => "icpieces",
