@@ -2,22 +2,22 @@
 name = "offline-chess-puzzles"
 version = "0.1.0"
 authors = ["brianch <brianch@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-iced = {version = "0.3", features = ["svg"] }
+iced = {version = "0.4", features = ["svg"] }
 iced_aw = { git = "https://github.com/iced-rs/iced_aw", branch = "main", default-features = false, features = ["tabs"] }
 
 rand = "0.8"
 chess = "3.2.0"
 csv = "1.1.6"
-serde = "1.0.126"
-serde_derive = "1.0.126"
-serde_json = "1.0.64"
+serde = "1.0.137"
+serde_derive = "1.0.137"
+serde_json = "1.0.81"
 lazy_static = "1.4.0"
-soloud = "0.4.0"
+soloud = "1.0.2"
 #Use this on windows instead: 
 #soloud = { version = "0.4.0", default-features = false, features = ["winmm"] }
 #todo: Figure out how to do this condition properly.

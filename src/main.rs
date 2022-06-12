@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use iced::{executor, button, Svg, Command, Clipboard, Container, Align, Length, HorizontalAlignment, VerticalAlignment, Background, Button, Row, Column, Element, Application, Settings, Text, Radio};
+use iced::{executor, alignment ,button, Svg, Command, Container, Alignment, Length, Background, Button, Row, Column, Element, Application, Settings, Text, Radio};
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
@@ -302,7 +302,7 @@ impl Application for OfflinePuzzles {
         String::from("Offline Chess Puzzles")
     }
 
-    fn update(&mut self, message: self::Message, _clipboard: &mut Clipboard) -> Command<Message> {
+    fn update(&mut self, message: self::Message) -> Command<Message> {
         match (self.from_square, message) {
             (None, Message::SelectSquare(pos)) => {
                 let side =
@@ -531,8 +531,8 @@ impl Application for OfflinePuzzles {
     }
     
     fn view(&mut self) -> Element<'_, Self::Message> {
-        let mut board_col = Column::new().spacing(0).align_items(Align::Center);
-        let mut board_row = Row::new().spacing(0).align_items(Align::Center);
+        let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
+        let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
         let mut i = 0;
 
         let is_white = self.puzzle_tab.current_puzzle_side == Color::White;
@@ -601,30 +601,30 @@ impl Application for OfflinePuzzles {
             i += 1;
             if i % 8 == 0 {
                 board_col = board_col.push(board_row);
-                board_row = Row::new().spacing(0).align_items(Align::Center);
+                board_row = Row::new().spacing(0).align_items(Alignment::Center);
             }            
         }
 
-        let game_mode_row = Row::new().spacing(10).padding(10).align_items(Align::Center)
+        let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
             .push(Text::new("Mode:")
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center))
+                .horizontal_alignment(alignment::Horizontal::Center))
             .push(
                 Radio::new(config::GameMode::Puzzle, "Puzzle", Some(self.game_mode), Message::SelectMode))
             .push(
                 Radio::new(config::GameMode::Analysis, "Analysis", Some(self.game_mode), Message::SelectMode));
 
-        let mut status_col = Column::new().padding(3).align_items(Align::Center);
+        let mut status_col = Column::new().padding(3).align_items(Alignment::Center);
 
-        let mut row_result = Row::new().spacing(0).align_items(Align::Center);
+        let mut row_result = Row::new().spacing(0).align_items(Alignment::Center);
         row_result = row_result.push(Text::new(&self.puzzle_status)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center));
+                .horizontal_alignment(alignment::Horizontal::Center)
+                .vertical_alignment(alignment::Vertical::Center));
 
         status_col = status_col.push(row_result);
         
         board_col = board_col.push(status_col).push(game_mode_row);
-        let mut layout_row = Row::new().spacing(30).align_items(Align::Center);
+        let mut layout_row = Row::new().spacing(30).align_items(Alignment::Center);
         layout_row = layout_row.push(board_col);
 
         let tab_theme = match self.settings.board_theme {
@@ -667,8 +667,8 @@ trait Tab {
         Container::new(column)
             .width(Length::Fill)
             .height(Length::Fill)
-            .align_x(Align::Center)
-            .align_y(Align::Center)
+            .align_x(alignment::Horizontal::Center)
+            .align_y(alignment::Vertical::Center)
             .padding(TAB_PADDING)
             .into()
     }

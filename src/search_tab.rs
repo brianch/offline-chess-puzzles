@@ -1,4 +1,4 @@
-use iced::{button, container, slider, pick_list, Svg, Command, Container, Align, Length, HorizontalAlignment, Background, Button, Slider, PickList, Row, Column, Element, Text};
+use iced::{alignment, button, container, slider, pick_list, Svg, Command, Container, Alignment, Length, Background, Button, Slider, PickList, Row, Column, Element, Text};
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::{Tab, Message, config, styles};
@@ -369,9 +369,9 @@ impl Tab for SearchTab {
 
     fn content(&mut self) -> Element<'_, Self::Message> {
         
-        let mut search_col = Column::new().spacing(10).align_items(Align::Center);
+        let mut search_col = Column::new().spacing(10).align_items(Alignment::Center);
 
-        let mut row_theme = Row::new().spacing(5).align_items(Align::Center);
+        let mut row_theme = Row::new().spacing(5).align_items(Alignment::Center);
         let theme_list = PickList::new(
             & mut self.theme_list,
             &TaticsThemes::ALL[..],
@@ -379,7 +379,7 @@ impl Tab for SearchTab {
             SearchMesssage::SelectTheme
         );
 
-        let mut row_min_rating = Row::new().spacing(5).align_items(Align::Center);
+        let mut row_min_rating = Row::new().spacing(5).align_items(Alignment::Center);
         let slider_rating_min = Slider::new(
             &mut self.slider_min_rating_state,
             0..=3000,
@@ -387,7 +387,7 @@ impl Tab for SearchTab {
             SearchMesssage::SliderMinRatingChanged,
         );
 
-        let mut row_max_rating = Row::new().spacing(5).align_items(Align::Center);
+        let mut row_max_rating = Row::new().spacing(5).align_items(Alignment::Center);
         let slider_rating_max = Slider::new(
             &mut self.slider_max_rating_state,
             0..=3000,
@@ -395,20 +395,20 @@ impl Tab for SearchTab {
             SearchMesssage::SliderMaxRatingChanged,
         );
 
-        let mut row_search = Row::new().spacing(5).align_items(Align::Center);
+        let mut row_search = Row::new().spacing(5).align_items(Alignment::Center);
         let btn_search = Button::new(&mut self.btn_search_state,
             Text::new("Search")).on_press(SearchMesssage::ClickSearch);
 
         row_min_rating = row_min_rating.push(Text::new("Min. Rating: ")).push(slider_rating_min).push(
             Text::new(self.slider_min_rating_value.to_string())
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center),
+                .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
 
         row_max_rating = row_max_rating.push(Text::new("Max. Rating: ")).push(slider_rating_max).push(
             Text::new(self.slider_max_rating_value.to_string())
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center),
+                .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
 
         row_theme = row_theme.push(theme_list);
@@ -417,8 +417,8 @@ impl Tab for SearchTab {
         search_col = search_col.push(row_min_rating).push(row_max_rating).push(row_theme).push(row_search);
 
         // Promotion piece selector
-        let mut promotion_col = Column::new().spacing(10).align_items(Align::Center);
-        let mut row_promotion = Row::new().spacing(5).align_items(Align::Center);
+        let mut promotion_col = Column::new().spacing(10).align_items(Alignment::Center);
+        let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
         let mut i = 0;
         for button in &mut self.btns_promotion {
             let piece;
@@ -441,7 +441,7 @@ impl Tab for SearchTab {
                     image = "/wQ.svg";
                 }
             };
-            row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Align::Center)
+            row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
                 .push(Button::new(button,
                     Svg::from_path(
                         String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
@@ -454,17 +454,17 @@ impl Tab for SearchTab {
             i += 1;
         }
         promotion_col = promotion_col.push(
-                Row::new().spacing(5).align_items(Align::Center).push(Text::new("Promotion piece:")
+                Row::new().spacing(5).align_items(Alignment::Center).push(Text::new("Promotion piece:")
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center))
+                .horizontal_alignment(alignment::Horizontal::Center))
                 .spacing(5)
         ).width(Length::Fill);
         promotion_col = promotion_col.push(row_promotion);
         
         search_col = search_col.push(promotion_col);
         let content: Element<'_, SearchMesssage> = Container::new(search_col)
-            .align_x(Align::Center)
-            .align_y(Align::Center)
+            .align_x(alignment::Horizontal::Center)
+            .align_y(alignment::Vertical::Center)
             .into();
         
         content.map(Message::Search)

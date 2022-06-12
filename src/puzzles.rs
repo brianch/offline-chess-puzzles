@@ -1,5 +1,5 @@
 use iced::{
-    button, text_input, Align, Button, Command, Column, Container, Element, HorizontalAlignment, Length,
+    button, text_input, alignment, Alignment, Button, Command, Column, Container, Element, Length,
     Text, TextInput
 };
 use std::str::FromStr;
@@ -94,17 +94,17 @@ impl Tab for PuzzleTab {
     fn content(&mut self) -> Element<'_, Self::Message> {
         let col_puzzle_info;
         if self.is_playing {
-            col_puzzle_info = Column::new().spacing(10).align_items(Align::Center)
+            col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
                     Text::new(String::from("Puzzle ID: ") + &self.puzzles[self.current_puzzle].puzzle_id)
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),
                 )
                 .push(
                     Text::new("FEN:")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     TextInput::new(
@@ -117,37 +117,37 @@ impl Tab for PuzzleTab {
                 .push(
                     Text::new(String::from("Rating: ") + &self.puzzles[self.current_puzzle].rating.to_string())
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new(String::from("Rating Deviation: ") + &self.puzzles[self.current_puzzle].rating_deviation.to_string())
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new(String::from("Popularity: ") + &self.puzzles[self.current_puzzle].popularity.to_string())
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new(String::from("Times Played (on lichess): ") + &self.puzzles[self.current_puzzle].nb_plays.to_string())
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new("Themes:")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new(&self.puzzles[self.current_puzzle].themes)
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     Text::new("URL: ")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     TextInput::new(
@@ -162,16 +162,16 @@ impl Tab for PuzzleTab {
                         Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
                 );
         } else {
-            col_puzzle_info = Column::new().spacing(10).align_items(Align::Center)
+            col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
                     Text::new("No puzzle loaded")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
         }
-        let content: Element<'_, PuzzleMessage> = Container::new(col_puzzle_info).align_x(Align::Center)
-            .align_y(Align::Center)
+        let content: Element<'_, PuzzleMessage> = Container::new(col_puzzle_info).align_x(alignment::Horizontal::Center)
+            .align_y(alignment::Vertical::Center)
             .into();
 
         content.map(Message::PuzzleInfo)

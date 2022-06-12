@@ -1,5 +1,5 @@
 use iced::{
-    button, text_input, pick_list, Align, Button, Column, Container, Element, HorizontalAlignment, VerticalAlignment, Length,
+    alignment, button, text_input, pick_list, Alignment, Button, Column, Container, Element, Length,
     Text, TextInput, PickList, Command, Row, Checkbox
 };
 use iced_aw::TabLabel;
@@ -154,19 +154,19 @@ impl Tab for SettingsTab {
     }
 
     fn content(&mut self) -> Element<'_, Self::Message> {
-        let col_settings = Column::new().spacing(10).align_items(Align::Center)
+        let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
             .spacing(10)
             .push(
                 Text::new("(Size and search limit REQUIRE restart)")
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center),    
+                .horizontal_alignment(alignment::Horizontal::Center),    
             )
             .push(
-                Row::new().spacing(5).align_items(Align::Center)
+                Row::new().spacing(5).align_items(Alignment::Center)
                 .push(
                     Text::new("Piece Theme:")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     PickList::new(
@@ -178,11 +178,11 @@ impl Tab for SettingsTab {
                 )
             )
             .push(
-                Row::new().spacing(5).align_items(Align::Center)
+                Row::new().spacing(5).align_items(Alignment::Center)
                 .push(
                     Text::new("Board Theme:")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     PickList::new(
@@ -194,11 +194,11 @@ impl Tab for SettingsTab {
                 )
             )
             .push(
-                Row::new().spacing(5).align_items(Align::Center)
+                Row::new().spacing(5).align_items(Alignment::Center)
                     .push(
                         Text::new("Square size:")
                         .width(Length::Shrink)
-                        .horizontal_alignment(HorizontalAlignment::Center),    
+                        .horizontal_alignment(alignment::Horizontal::Center),    
                     )
                     .push(
                         TextInput::new(
@@ -212,11 +212,11 @@ impl Tab for SettingsTab {
                     )
                 )
             .push(
-                Row::new().spacing(5).align_items(Align::Center)
+                Row::new().spacing(5).align_items(Alignment::Center)
                     .push(
                         Text::new("Play sound on moves:")
                         .width(Length::Shrink)
-                        .horizontal_alignment(HorizontalAlignment::Center),    
+                        .horizontal_alignment(alignment::Horizontal::Center),    
                     )
                     .push(
                         Checkbox::new(
@@ -246,12 +246,12 @@ impl Tab for SettingsTab {
             )
             */
             .push(
-                Row::new().spacing(5).align_items(Align::Center)
+                Row::new().spacing(5).align_items(Alignment::Center)
     
                 .push(
                     Text::new("Search Result limit:")
                     .width(Length::Shrink)
-                    .horizontal_alignment(HorizontalAlignment::Center),    
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
                     TextInput::new(
@@ -271,11 +271,11 @@ impl Tab for SettingsTab {
             .push(
                 Text::new(&self.settings_status)
                 .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Bottom),
+                .horizontal_alignment(alignment::Horizontal::Center)
+                .vertical_alignment(alignment::Vertical::Bottom),
             );
-        let content: Element<'_, SettingsMessage> = Container::new(col_settings).align_x(Align::Center)
-            .align_y(Align::Center)
+        let content: Element<'_, SettingsMessage> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
+            .align_y(alignment::Vertical::Center)
             .into();
 
         content.map(Message::Settings)
