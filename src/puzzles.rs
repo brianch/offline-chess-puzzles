@@ -88,7 +88,7 @@ impl Tab for PuzzleTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('\u{E800}'.into(), self.title())
+        TabLabel::IconText('\u{F217}'.into(), self.title())
     }
 
     fn content(&mut self) -> Element<'_, Self::Message> {
