@@ -1,8 +1,8 @@
-use iced::{
-    alignment, button, text_input, pick_list, Alignment, Button, Column, Container, Element, Length,
-    Text, TextInput, PickList, Command, Row, Checkbox
-};
-use iced_aw::TabLabel;
+use iced::pure::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList};
+use iced::pure::{Element};
+use iced::{alignment, Command, Alignment, Length};
+
+use iced_aw::pure::TabLabel;
 
 use crate::{Message, Tab, config, styles};
 
@@ -21,23 +21,13 @@ pub enum SettingsMessage {
 #[derive(Debug, Clone)]
 pub struct SettingsTab {
     square_size_value: String,
-    square_size: text_input::State,
 
-    piece_theme_list: pick_list::State<styles::PieceTheme>,
     piece_theme: styles::PieceTheme,
-
-    board_theme_list: pick_list::State<styles::BoardStyle>,
     board_theme: styles::BoardStyle,
     play_sound: bool,
 
     puzzle_db_location_value: String,
-    puzzle_db_location: text_input::State,
-    //puzzle_db_location: text_input::State,
-
     search_results_limit_value: String,
-    search_results_limit: text_input::State,
-
-    change_button: button::State,
 
     settings_status: String,
 }
@@ -46,21 +36,11 @@ impl SettingsTab {
     pub fn new() -> Self {
         SettingsTab {
             square_size_value: config::SETTINGS.square_size.to_string(),
-            square_size: text_input::State::default(),
-
-            piece_theme_list: pick_list::State::default(),
             piece_theme: config::SETTINGS.piece_theme,
-            board_theme_list: pick_list::State::default(),
             board_theme: config::SETTINGS.board_theme,
             play_sound: config::SETTINGS.play_sound,
-
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
-            puzzle_db_location: text_input::State::default(),
-
             search_results_limit_value: config::SETTINGS.search_results_limit.to_string(),
-            search_results_limit: text_input::State::default(),
-
-            change_button: button::State::default(),
             settings_status: String::new(),
         }
     }
@@ -153,7 +133,7 @@ impl Tab for SettingsTab {
         TabLabel::IconText('\u{F217}'.into(), self.title())
     }
 
-    fn content(&mut self) -> Element<'_, Self::Message> {
+    fn content(&self) -> Element<'_, Self::Message> {
         let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
             .spacing(10)
             .push(
@@ -170,7 +150,6 @@ impl Tab for SettingsTab {
                 )
                 .push(
                     PickList::new(
-                        &mut self.piece_theme_list,
                         &styles::PieceTheme::ALL[..],
                         Some(self.piece_theme),
                         SettingsMessage::SelectPieceTheme
@@ -186,7 +165,6 @@ impl Tab for SettingsTab {
                 )
                 .push(
                     PickList::new(
-                        &mut self.board_theme_list,
                         &styles::BoardStyle::ALL[..],
                         Some(self.board_theme),
                         SettingsMessage::SelectBoardTheme
@@ -202,7 +180,6 @@ impl Tab for SettingsTab {
                     )
                     .push(
                         TextInput::new(
-                            &mut self.square_size,
                             &self.square_size_value.to_string(),
                             &self.square_size_value.to_string(),
                             SettingsMessage::ChangeSquareSize,
@@ -255,7 +232,6 @@ impl Tab for SettingsTab {
                 )
                 .push(
                     TextInput::new(
-                        &mut self.search_results_limit,
                         &self.search_results_limit_value,
                         &self.search_results_limit_value,
                         SettingsMessage::ChangeSearchResultLimit,
@@ -265,7 +241,7 @@ impl Tab for SettingsTab {
                 )
             )
             .push(
-                Button::new(&mut self.change_button,
+                Button::new(
                     Text::new("Save Changes")).on_press(SettingsMessage::ChangePressed)
             )
             .push(

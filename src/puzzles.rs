@@ -1,10 +1,10 @@
-use iced::{
-    button, text_input, alignment, Alignment, Button, Command, Column, Container, Element, Length,
-    Text, TextInput
-};
+use iced::pure::widget::{Container, Button, Column, Text, TextInput};
+use iced::pure::{Element};
+use iced::{alignment, Command, Alignment, Length};
+
 use std::str::FromStr;
 use chess::{Color, Square, Piece};
-use iced_aw::TabLabel;
+use iced_aw::pure::TabLabel;
 
 use crate::{Message, Tab, config};
 
@@ -16,29 +16,21 @@ pub enum PuzzleMessage {
 
 #[derive(Debug, Clone)]
 pub struct PuzzleTab {
-    //puzzle_info: config::Puzzle,
     pub puzzles: Vec<config::Puzzle>,
     pub current_puzzle: usize,
     pub current_puzzle_move: usize,
     pub current_puzzle_side: Color,
     pub is_playing: bool,
-    hint_button: button::State,
-    fen_state: text_input::State,
-    url_state: text_input::State,
 }
 
 impl PuzzleTab {
     pub fn new() -> Self {
         PuzzleTab {
-            //puzzle_info: config::Puzzle::new(),
             puzzles: Vec::new(),
             current_puzzle: 0,
             current_puzzle_move: 1,
             current_puzzle_side: Color::White,
             is_playing: false,
-            hint_button: button::State::new(),
-            fen_state: text_input::State::default(),
-            url_state: text_input::State::default(),
         }
     }
 
@@ -91,7 +83,7 @@ impl Tab for PuzzleTab {
         TabLabel::IconText('\u{F217}'.into(), self.title())
     }
 
-    fn content(&mut self) -> Element<'_, Self::Message> {
+    fn content(&self) -> Element<'_, Self::Message> {
         let col_puzzle_info;
         if self.is_playing {
             col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
@@ -108,7 +100,6 @@ impl Tab for PuzzleTab {
                 )
                 .push(
                     TextInput::new(
-                        &mut self.fen_state,
                         &self.puzzles[self.current_puzzle].fen,
                         &self.puzzles[self.current_puzzle].fen,
                         PuzzleMessage::ChangeTextInputs,
@@ -151,15 +142,13 @@ impl Tab for PuzzleTab {
                 )
                 .push(
                     TextInput::new(
-                        &mut self.url_state,
                         &self.puzzles[self.current_puzzle].game_url,
                         &self.puzzles[self.current_puzzle].game_url,
                         PuzzleMessage::ChangeTextInputs,
                     )
                 )
                 .push(
-                    Button::new(&mut self.hint_button,
-                        Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
+                    Button::new(Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
                 );
         } else {
             col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)

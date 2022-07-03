@@ -1,7 +1,9 @@
 #![windows_subsystem = "windows"]
 
-use iced::{executor, alignment ,button, Svg, Command, Container, Alignment, Length, Background, Button, Row, Column, Element, Application, Settings, Text, Radio};
-use iced_aw::{TabLabel, Tabs};
+use iced::pure::widget::{button, Svg, Container, Button, Row, Column, Text, Radio};
+use iced::pure::{Application, Element};
+use iced::{executor, alignment, Command, Alignment, Length, Background, Settings };
+use iced_aw::pure::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
 use soloud::{Soloud, Wav, audio, AudioExt, LoadExt};
@@ -200,7 +202,6 @@ impl button::StyleSheet for ChessSquare {
 struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
     board: Board,
-    squares: [button::State; 64],
     last_move_from: Option<PositionGUI>,
     last_move_to: Option<PositionGUI>,    
     hint_square: Option<PositionGUI>,
@@ -224,7 +225,6 @@ impl Default for OfflinePuzzles {
         Self {
             from_square: None,
             board: Board::default(),
-            squares: [button::State::default(); 64],
             last_move_from: None,
             last_move_to: None,
             hint_square: None,
@@ -530,14 +530,14 @@ impl Application for OfflinePuzzles {
         }
     }
     
-    fn view(&mut self) -> Element<'_, Self::Message> {
+    fn view(&self) -> Element<'_, Self::Message> {
         let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
         let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
         let mut i = 0;
 
         let is_white = self.puzzle_tab.current_puzzle_side == Color::White;
 
-        for button in &mut self.squares {
+        for _ in 0..64 {
 
             let rol: i32 = if is_white { 7 - i / 8 } else { i / 8 };
             let col: i32 = if is_white { i % 8 } else { 7 - (i % 8) };
@@ -588,7 +588,7 @@ impl Application for OfflinePuzzles {
                     self.from_square == Some(pos)
                 };
 
-            board_row = board_row.push(Button::new(button,
+            board_row = board_row.push(Button::new(
                     Svg::from_path(
                         String::from("pieces/") + &self.settings.piece_theme.to_string() + text)
                 )
@@ -658,7 +658,7 @@ trait Tab {
 
     fn tab_label(&self) -> TabLabel;
 
-    fn view(&mut self) -> Element<'_, Self::Message> {
+    fn view(&self) -> Element<'_, Self::Message> {
         let column = Column::new()
             .spacing(20)
             .push(Text::new(self.title()).size(HEADER_SIZE))
@@ -673,7 +673,7 @@ trait Tab {
             .into()
     }
 
-    fn content(&mut self) -> Element<'_, Self::Message>;
+    fn content(&self) -> Element<'_, Self::Message>;
 }
 
 fn main() -> iced::Result {
