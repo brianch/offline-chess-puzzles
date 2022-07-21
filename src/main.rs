@@ -137,6 +137,7 @@ pub enum Message {
     SelectMode(config::GameMode),
     TabSelected(usize),
     ShowHint(Option<Square>),
+    ShowNextPuzzle,
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>)
 }
@@ -242,7 +243,6 @@ impl Default for OfflinePuzzles {
             sound_player: Soloud::default().ok(),
             two_pieces_sound: load_two_pieces_sound(),
             one_piece_sound: load_one_piece_sound(),
-
         }
     }
 }
@@ -351,7 +351,7 @@ impl Application for OfflinePuzzles {
                     if self.analysis.make_move(move_made) && self.settings.play_sound {
                         if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
                             soloud.play(wav);
-                        } 
+                        }
                     }
                 } else {
                     if self.puzzle_tab.puzzles.len() > 0 {
@@ -382,33 +382,38 @@ impl Application for OfflinePuzzles {
                                         soloud.play(wav);
                                     }
                                 }
-                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {                                    
-                                    // The previous puzzle ended, and we still have puzzles available,
-                                    // so we prepare the next one.
-                                    self.puzzle_tab.current_puzzle += 1;
-                                    self.puzzle_tab.current_puzzle_move = 1;
+                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+                                    if self.settings.auto_load_next {
+                                        // The previous puzzle ended, and we still have puzzles available,
+                                        // so we prepare the next one.
+                                        self.puzzle_tab.current_puzzle += 1;
+                                        self.puzzle_tab.current_puzzle_move = 1;
 
-                                    let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+                                        let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
 
-                                    // The opponent's last move (before the puzzle starts)
-                                    // is in the "moves" field of the cvs, so we need to apply it.
-                                    self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+                                        // The opponent's last move (before the puzzle starts)
+                                        // is in the "moves" field of the cvs, so we need to apply it.
+                                        self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
 
-                                    movement = ChessMove::new(
-                                        Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                                        Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+                                        movement = ChessMove::new(
+                                            Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                                            Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+                    
+                                        self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                                        self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
                 
-                                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
-            
-                                    self.board = self.board.make_move_new(movement);
+                                        self.board = self.board.make_move_new(movement);
 
-                                    if self.board.side_to_move() == Color::White {
-                                        self.puzzle_status = String::from("White to move!");
+                                        if self.board.side_to_move() == Color::White {
+                                            self.puzzle_status = String::from("White to move!");
+                                        } else {
+                                            self.puzzle_status = String::from("Black to move!");
+                                        }
+                                        self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                                     } else {
-                                        self.puzzle_status = String::from("Black to move!");
+                                        self.puzzle_status = String::from("Well done!");
+                                        self.puzzle_tab.is_playing = false;
                                     }
-                                    self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                                 } else {
                                     self.board = Board::default();
                                     self.last_move_from = None;
@@ -467,6 +472,35 @@ impl Application for OfflinePuzzles {
                         }
                     }
                 }
+                Command::none()
+            } (_, Message::ShowNextPuzzle) => {
+                // The previous puzzle ended, and we still have puzzles available,
+                // so we prepare the next one.
+                self.puzzle_tab.current_puzzle += 1;
+                self.puzzle_tab.current_puzzle_move = 1;
+
+                let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+                // The opponent's last move (before the puzzle starts)
+                // is in the "moves" field of the cvs, so we need to apply it.
+                self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+                let movement = ChessMove::new(
+                    Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+
+                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+
+                self.board = self.board.make_move_new(movement);
+
+                if self.board.side_to_move() == Color::White {
+                    self.puzzle_status = String::from("White to move!");
+                } else {
+                    self.puzzle_status = String::from("Black to move!");
+                }
+                self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                self.puzzle_tab.is_playing = true;
                 Command::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
                 self.from_square = None;
@@ -622,9 +656,17 @@ impl Application for OfflinePuzzles {
                 .vertical_alignment(alignment::Vertical::Center));
 
         status_col = status_col.push(row_result);
+
+        let mut navigation_row = Row::new().padding(3).align_items(Alignment::Center);
+        if !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+            navigation_row = navigation_row.push(
+                    Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle));
+        } else {
+            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));    
+        }
         
-        board_col = board_col.push(status_col).push(game_mode_row);
-        let mut layout_row = Row::new().spacing(30).align_items(Alignment::Center);
+        board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
+        let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
         layout_row = layout_row.push(board_col);
 
         let tab_theme = match self.settings.board_theme {
@@ -681,7 +723,7 @@ fn main() -> iced::Result {
         window: iced::window::Settings {
             size: (
                 (config::SETTINGS.square_size * 8) as u32 + 450,
-                (config::SETTINGS.square_size * 8) as u32 + 77,
+                (config::SETTINGS.square_size * 8) as u32 + 117,
             ),
             resizable: true,
             ..iced::window::Settings::default()

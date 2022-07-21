@@ -10,6 +10,7 @@ use crate::{Message, Tab, config, styles};
 pub enum SettingsMessage {
     ChangeSquareSize(String),
     CheckPlaySound(bool),
+    CheckAutoLoad(bool),
     SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::BoardStyle),
     ChangePuzzleDbLocation(String),
@@ -25,6 +26,7 @@ pub struct SettingsTab {
     piece_theme: styles::PieceTheme,
     board_theme: styles::BoardStyle,
     play_sound: bool,
+    auto_load_next: bool,
 
     puzzle_db_location_value: String,
     search_results_limit_value: String,
@@ -39,6 +41,7 @@ impl SettingsTab {
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
             play_sound: config::SETTINGS.play_sound,
+            auto_load_next: config::SETTINGS.auto_load_next,
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
             search_results_limit_value: config::SETTINGS.search_results_limit.to_string(),
             settings_status: String::new(),
@@ -60,11 +63,11 @@ impl SettingsTab {
             }
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -83,7 +86,11 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
+            }
+            SettingsMessage::CheckAutoLoad(value) => {
+                self.auto_load_next = value;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePressed => {
                 let config = config::OfflinePuzzlesConfig {
@@ -92,6 +99,7 @@ impl SettingsTab {
                     piece_theme: self.piece_theme,
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
                     play_sound: self.play_sound,
+                    auto_load_next: self.auto_load_next,
                     board_theme: self.board_theme,
                     light_squares_color: self.board_theme.light_sqr(),
                     dark_squares_color: self.board_theme.dark_sqr(),
@@ -111,11 +119,12 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, pieces: styles::PieceTheme, board: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, pieces: styles::PieceTheme, board: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
         let mut config = config::load_config();
         config.board_theme = board;
         config.piece_theme = pieces;
         config.play_sound = play_sound;
+        config.auto_load_next = auto_load;
         config.light_squares_color = board.light_sqr();
         config.dark_squares_color = board.dark_sqr();
         Some(config)
@@ -204,7 +213,23 @@ impl Tab for SettingsTab {
                         .size(20),
                     )
                 )
-    
+            .push(
+                Row::new().spacing(5).align_items(Alignment::Center)
+                    .push(
+                        Text::new("Auto load next puzzle:")
+                        .width(Length::Shrink)
+                        .horizontal_alignment(alignment::Horizontal::Center),    
+                    )
+                    .push(
+                        Checkbox::new(
+                            self.auto_load_next,
+                            "",
+                            SettingsMessage::CheckAutoLoad,
+                        )
+                        .size(20),
+                    )
+                )
+        
             /*
             .push(
                 Text::new("Puzzle DB location")

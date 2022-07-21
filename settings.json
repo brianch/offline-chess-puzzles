@@ -4,6 +4,7 @@
   "piece_theme": "Cburnett",
   "search_results_limit": 20000,
   "play_sound": true,
+  "auto_load_next": true,
   "board_theme": "Blue",
   "light_squares_color": [
     0.91764706,

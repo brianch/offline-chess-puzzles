@@ -85,7 +85,7 @@ impl Tab for PuzzleTab {
 
     fn content(&self) -> Element<'_, Self::Message> {
         let col_puzzle_info;
-        if self.is_playing {
+        if !self.puzzles.is_empty() && self.current_puzzle <= self.puzzles.len() - 1 {
             col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(

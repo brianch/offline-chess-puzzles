@@ -17,6 +17,7 @@ pub struct OfflinePuzzlesConfig {
     pub piece_theme: styles::PieceTheme,
     pub search_results_limit: usize,
     pub play_sound: bool,
+    pub auto_load_next: bool,
     pub board_theme: styles::BoardStyle,
     pub light_squares_color: [f32; 3],
     pub dark_squares_color: [f32; 3],
@@ -30,6 +31,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
             play_sound: true,
+            auto_load_next: true,
             board_theme: styles::BoardStyle::Default,
             // Saving the colors as well, so the user may set custom ones by changing
             // the config file directly.
