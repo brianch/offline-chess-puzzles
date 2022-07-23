@@ -37,7 +37,7 @@ pub struct PositionGUI {
 }
 
 impl PositionGUI {
-    
+
     #[inline]
     pub const fn new(row: i32, col: i32) -> Self {
         Self { row, col }
@@ -88,7 +88,7 @@ impl PositionGUI {
             4 => File::E,
             5 => File::F,
             6 => File::G,
-            _ => File::H,            
+            _ => File::H,
         };
         let rank = match self.row {
             0 => Rank::First,
@@ -138,6 +138,8 @@ pub enum Message {
     TabSelected(usize),
     ShowHint(Option<Square>),
     ShowNextPuzzle,
+    GoBackMove,
+    RedoPuzzle,
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>)
 }
@@ -204,11 +206,13 @@ struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
     board: Board,
     last_move_from: Option<PositionGUI>,
-    last_move_to: Option<PositionGUI>,    
+    last_move_to: Option<PositionGUI>,
     hint_square: Option<PositionGUI>,
     puzzle_status: String,
 
     analysis: Game,
+    analysis_history: Vec<Board>,
+    analysis_move: usize,
 
     active_tab: usize,
     search_tab: SearchTab,
@@ -231,6 +235,8 @@ impl Default for OfflinePuzzles {
             hint_square: None,
 
             analysis: Game::new(),
+            analysis_history: Vec::new(),
+            analysis_move: 0,
 
             puzzle_status: String::from("Use the search."),
             search_tab: SearchTab::new(),
@@ -281,7 +287,7 @@ fn get_notation_string(board: Board, promo_piece: Piece, from: PositionGUI, to: 
                     _ => move_made_notation += "q"
                 }
             }
-        } 
+        }
     }
     move_made_notation
 }
@@ -316,7 +322,7 @@ impl Application for OfflinePuzzles {
                         config::GameMode::Puzzle => { self.board.color_on(pos.posgui_to_square()) }
                     };
 
-                if self.puzzle_tab.is_playing && color == Some(side) {
+                if (self.puzzle_tab.is_playing || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
                     self.hint_square = None;
                     self.from_square = Some(pos);
                 }
@@ -348,9 +354,13 @@ impl Application for OfflinePuzzles {
                         Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
                         Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
 
-                    if self.analysis.make_move(move_made) && self.settings.play_sound {
-                        if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
-                            soloud.play(wav);
+                    if self.analysis.make_move(move_made) {
+                        self.analysis_history.push(self.analysis.current_position());
+                        self.analysis_move = self.analysis_move + 1;
+                        if self.settings.play_sound {
+                            if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                                soloud.play(wav);
+                            }
                         }
                     }
                 } else {
@@ -374,6 +384,9 @@ impl Application for OfflinePuzzles {
                         if is_mate || (move_made == correct_move) {
 
                             self.board = self.board.make_move_new(move_made);
+                            self.analysis_history.push(self.board);
+                            self.analysis_move = self.analysis_move + 1;
+
                             self.puzzle_tab.current_puzzle_move += 1;
 
                             if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
@@ -398,11 +411,13 @@ impl Application for OfflinePuzzles {
                                         movement = ChessMove::new(
                                             Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                                             Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
-                    
+
                                         self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
                                         self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
-                
+
                                         self.board = self.board.make_move_new(movement);
+                                        self.analysis_history = vec![self.board];
+                                        self.analysis_move = 0;
 
                                         if self.board.side_to_move() == Color::White {
                                             self.puzzle_status = String::from("White to move!");
@@ -425,7 +440,7 @@ impl Application for OfflinePuzzles {
                                 if self.settings.play_sound {
                                     if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
                                         soloud.play(wav);
-                                    } 
+                                    }
                                 }
                                 movement = ChessMove::new(
                                     Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
@@ -433,8 +448,11 @@ impl Application for OfflinePuzzles {
 
                                 self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
                                 self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
-        
+
                                 self.board = self.board.make_move_new(movement);
+                                self.analysis_history.push(self.board);
+                                self.analysis_move = self.analysis_move + 1;
+
                                 self.puzzle_tab.current_puzzle_move += 1;
                                 self.puzzle_status = String::from("Correct! What now?");
                             }
@@ -460,6 +478,9 @@ impl Application for OfflinePuzzles {
                 self.game_mode = message;
                 if message == config::GameMode::Analysis {
                     self.analysis = Game::new_with_board(self.board);
+                    // -1 because the current_puzzle_move starts at 1 and not zero
+                    // (index 0 is for the oponents' last move).
+                    self.analysis_move = self.puzzle_tab.current_puzzle_move -1;
                 }
                 Command::none()
             } (_, Message::ShowHint(square)) => {
@@ -493,6 +514,45 @@ impl Application for OfflinePuzzles {
                 self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
 
                 self.board = self.board.make_move_new(movement);
+                self.analysis_history = vec![self.board];
+                self.analysis_move = 0;
+
+                if self.board.side_to_move() == Color::White {
+                    self.puzzle_status = String::from("White to move!");
+                } else {
+                    self.puzzle_status = String::from("Black to move!");
+                }
+                self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                self.puzzle_tab.is_playing = true;
+                self.game_mode = config::GameMode::Puzzle;
+                Command::none()
+            } (_, Message::GoBackMove) => {
+                if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > 1 && self.analysis_move > 0 {
+                    //self.analysis_history.pop();
+                    self.analysis_move = self.analysis_move - 1;
+                    //if let Some(prev_board) = self.analysis_history.last() {
+                    self.analysis = Game::new_with_board(self.analysis_history[self.analysis_move]);
+                }
+                Command::none()
+            } (_, Message::RedoPuzzle) => {
+                self.puzzle_tab.current_puzzle_move = 1;
+
+                let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+                // The opponent's last move (before the puzzle starts)
+                // is in the "moves" field of the cvs, so we need to apply it.
+                self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+                let movement = ChessMove::new(
+                    Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+
+                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+
+                self.board = self.board.make_move_new(movement);
+                self.analysis_history = vec![self.board];
+                self.analysis_move = 0;
 
                 if self.board.side_to_move() == Color::White {
                     self.puzzle_status = String::from("White to move!");
@@ -510,7 +570,7 @@ impl Application for OfflinePuzzles {
                         self.puzzle_tab.puzzles.shuffle(&mut thread_rng());
                         self.puzzle_tab.current_puzzle_move = 1;
                         self.puzzle_tab.current_puzzle = 0;
-                        
+
                         self.board = Board::from_str(&self.puzzle_tab.puzzles[0].fen).unwrap();
                         let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[0].moves.split_whitespace().collect();
 
@@ -524,6 +584,8 @@ impl Application for OfflinePuzzles {
                         self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
 
                         self.board = self.board.make_move_new(movement);
+                        self.analysis_history = vec![self.board];
+                        self.analysis_move = 0;
 
                         if self.board.side_to_move() == Color::White {
                             self.puzzle_status = String::from("White to move!");
@@ -563,7 +625,7 @@ impl Application for OfflinePuzzles {
             }
         }
     }
-    
+
     fn view(&self) -> Element<'_, Self::Message> {
         let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
         let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
@@ -578,7 +640,7 @@ impl Application for OfflinePuzzles {
 
             let pos = PositionGUI::new(rol, col);
 
-            let (piece, color) = 
+            let (piece, color) =
                 match self.game_mode {
                     config::GameMode::Analysis => {
                         (self.analysis.current_position().piece_on(pos.posgui_to_square()),
@@ -636,7 +698,7 @@ impl Application for OfflinePuzzles {
             if i % 8 == 0 {
                 board_col = board_col.push(board_row);
                 board_row = Row::new().spacing(0).align_items(Alignment::Center);
-            }            
+            }
         }
 
         let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
@@ -657,14 +719,22 @@ impl Application for OfflinePuzzles {
 
         status_col = status_col.push(row_result);
 
-        let mut navigation_row = Row::new().padding(3).align_items(Alignment::Center);
-        if !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+        let mut navigation_row = Row::new().padding(3).align_items(Alignment::Fill);
+        let has_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
+        if has_puzzles {
             navigation_row = navigation_row.push(
                     Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle));
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));    
+            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
         }
-        
+        if self.game_mode == config::GameMode::Analysis {
+            navigation_row = navigation_row.spacing(50).push(
+                Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
+        } else if has_puzzles && !self.puzzle_tab.is_playing {
+            navigation_row = navigation_row.spacing(50).push(
+                Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle));
+        }
+
         board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
         let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
         layout_row = layout_row.push(board_col);
@@ -683,7 +753,7 @@ impl Application for OfflinePuzzles {
                 .push(self.puzzle_tab.tab_label(), self.puzzle_tab.view())
                 .tab_bar_position(iced_aw::TabBarPosition::Top)
                 .tab_bar_style(tab_theme);
-            
+
         layout_row = layout_row.push(tabs);
         Container::new(layout_row)
             .width(Length::Fill)
