@@ -212,7 +212,6 @@ struct OfflinePuzzles {
 
     analysis: Game,
     analysis_history: Vec<Board>,
-    analysis_move: usize,
 
     active_tab: usize,
     search_tab: SearchTab,
@@ -236,7 +235,6 @@ impl Default for OfflinePuzzles {
 
             analysis: Game::new(),
             analysis_history: Vec::new(),
-            analysis_move: 0,
 
             puzzle_status: String::from("Use the search."),
             search_tab: SearchTab::new(),
@@ -356,7 +354,6 @@ impl Application for OfflinePuzzles {
 
                     if self.analysis.make_move(move_made) {
                         self.analysis_history.push(self.analysis.current_position());
-                        self.analysis_move = self.analysis_move + 1;
                         if self.settings.play_sound {
                             if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
                                 soloud.play(wav);
@@ -385,7 +382,6 @@ impl Application for OfflinePuzzles {
 
                             self.board = self.board.make_move_new(move_made);
                             self.analysis_history.push(self.board);
-                            self.analysis_move = self.analysis_move + 1;
 
                             self.puzzle_tab.current_puzzle_move += 1;
 
@@ -417,7 +413,6 @@ impl Application for OfflinePuzzles {
 
                                         self.board = self.board.make_move_new(movement);
                                         self.analysis_history = vec![self.board];
-                                        self.analysis_move = 0;
 
                                         if self.board.side_to_move() == Color::White {
                                             self.puzzle_status = String::from("White to move!");
@@ -431,6 +426,11 @@ impl Application for OfflinePuzzles {
                                     }
                                 } else {
                                     self.board = Board::default();
+                                    // quite meaningless but allows the user to use the takeback button
+                                    // to analyze a full game in analysis mode after the puzzles ended.
+                                    self.analysis_history = vec![self.board];
+                                    self.puzzle_tab.current_puzzle_move = 1;
+
                                     self.last_move_from = None;
                                     self.last_move_to = None;
                                     self.puzzle_tab.is_playing = false;
@@ -451,7 +451,6 @@ impl Application for OfflinePuzzles {
 
                                 self.board = self.board.make_move_new(movement);
                                 self.analysis_history.push(self.board);
-                                self.analysis_move = self.analysis_move + 1;
 
                                 self.puzzle_tab.current_puzzle_move += 1;
                                 self.puzzle_status = String::from("Correct! What now?");
@@ -478,9 +477,8 @@ impl Application for OfflinePuzzles {
                 self.game_mode = message;
                 if message == config::GameMode::Analysis {
                     self.analysis = Game::new_with_board(self.board);
-                    // -1 because the current_puzzle_move starts at 1 and not zero
-                    // (index 0 is for the oponents' last move).
-                    self.analysis_move = self.puzzle_tab.current_puzzle_move -1;
+                } else {
+                    self.analysis_history.truncate(self.puzzle_tab.current_puzzle_move);
                 }
                 Command::none()
             } (_, Message::ShowHint(square)) => {
@@ -515,7 +513,6 @@ impl Application for OfflinePuzzles {
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
-                self.analysis_move = 0;
 
                 if self.board.side_to_move() == Color::White {
                     self.puzzle_status = String::from("White to move!");
@@ -527,11 +524,9 @@ impl Application for OfflinePuzzles {
                 self.game_mode = config::GameMode::Puzzle;
                 Command::none()
             } (_, Message::GoBackMove) => {
-                if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > 1 && self.analysis_move > 0 {
-                    //self.analysis_history.pop();
-                    self.analysis_move = self.analysis_move - 1;
-                    //if let Some(prev_board) = self.analysis_history.last() {
-                    self.analysis = Game::new_with_board(self.analysis_history[self.analysis_move]);
+                if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
+                    self.analysis_history.pop();
+                    self.analysis = Game::new_with_board(*self.analysis_history.last().unwrap());
                 }
                 Command::none()
             } (_, Message::RedoPuzzle) => {
@@ -552,7 +547,6 @@ impl Application for OfflinePuzzles {
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
-                self.analysis_move = 0;
 
                 if self.board.side_to_move() == Color::White {
                     self.puzzle_status = String::from("White to move!");
@@ -585,7 +579,6 @@ impl Application for OfflinePuzzles {
 
                         self.board = self.board.make_move_new(movement);
                         self.analysis_history = vec![self.board];
-                        self.analysis_move = 0;
 
                         if self.board.side_to_move() == Color::White {
                             self.puzzle_status = String::from("White to move!");
