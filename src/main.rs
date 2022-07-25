@@ -234,7 +234,7 @@ impl Default for OfflinePuzzles {
             hint_square: None,
 
             analysis: Game::new(),
-            analysis_history: Vec::new(),
+            analysis_history: vec![Board::default()],
 
             puzzle_status: String::from("Use the search."),
             search_tab: SearchTab::new(),
