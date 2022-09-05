@@ -315,6 +315,7 @@ impl SearchTab {
     
         let reader = csv::ReaderBuilder::new()
         .has_headers(false)
+        .flexible(true)
         .from_path(&config::SETTINGS.puzzle_db_location);
     
         match reader {
