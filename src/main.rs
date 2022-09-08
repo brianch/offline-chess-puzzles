@@ -712,7 +712,7 @@ impl Application for OfflinePuzzles {
 
         status_col = status_col.push(row_result);
 
-        let mut navigation_row = Row::new().padding(3).align_items(Alignment::Fill);
+        let mut navigation_row = Row::new().padding(3).spacing(50);
         let has_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
         if has_puzzles {
             navigation_row = navigation_row.push(
@@ -722,14 +722,14 @@ impl Application for OfflinePuzzles {
         }
         if self.game_mode == config::GameMode::Analysis {
             if self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
-                navigation_row = navigation_row.spacing(50).push(
+                navigation_row = navigation_row.push(
                     Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
             } else {
-                navigation_row = navigation_row.spacing(50).push(
+                navigation_row = navigation_row.push(
                     Button::new(Text::new("Takeback move")));
             }
         } else if has_puzzles && !self.puzzle_tab.is_playing {
-            navigation_row = navigation_row.spacing(50).push(
+            navigation_row = navigation_row.push(
                 Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle));
         }
 

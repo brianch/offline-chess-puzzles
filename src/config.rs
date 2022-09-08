@@ -57,7 +57,7 @@ pub fn load_config() -> OfflinePuzzlesConfig {
     config
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Puzzle {
     #[serde(rename = "PuzzleId")]
     pub puzzle_id: String,
@@ -76,5 +76,11 @@ pub struct Puzzle {
     #[serde(rename = "Themes")]
     pub themes: String,
     #[serde(rename = "GameUrl")]
-    pub game_url: String
+    pub game_url: String,
+    #[serde(rename = "OpeningFamily")]
+    #[serde(default)]
+    pub opening: String,
+    #[serde(rename = "OpeningVariation")]
+    #[serde(default)]
+    pub variation: String
 }

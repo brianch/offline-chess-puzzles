@@ -1,4 +1,4 @@
-use iced::pure::widget::{button, Container, Button, Column, Text, Row, Svg, PickList, Slider};
+use iced::pure::widget::{button, Container, Button, Column, Text, Row, Svg, PickList, Slider, Scrollable};
 use iced::pure::{Element};
 use iced::{alignment, container, Command, Alignment, Length, Background};
 
@@ -11,6 +11,7 @@ pub enum SearchMesssage {
     SliderMinRatingChanged(i32),
     SliderMaxRatingChanged(i32),
     SelectTheme(TaticsThemes),
+    SelectOpening(Openings),
     SelectPiecePromotion(Piece),
     ClickSearch,
 }
@@ -216,6 +217,99 @@ impl std::fmt::Display for TaticsThemes {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Openings {
+    Any, AlekhineDefense, Benoni, Bird, BishopsOpening, BlackmarDiemerGambit, CaroKann, Catalan,
+    Dutch, English, FourKnightsGame, French, GiuocoPiano, Grunfeld, HorwitzDefense, IndianDefense,
+    ItalianGame, KingsGambit, KingsGambitAccepted, KingsGambitDeclined, KingsIndianAttack,
+    KingsIndianDefense, KingsPawnGame, ModernDefense, NimzoIndianDefense, NimzoLarsenAttack,
+    NimzowitschDefense, PhilidorDefense, PircDefense, Ponziani, QueensGambitAccepted,
+    QueensGambitDeclined, QueensPawnGame, RapportJobavaSystem, Reti, RussianGame, RuyLopez,
+    Scandinavian, ScotchGame, SemiSlav,Sicilian, SlavDefense, ThreeKnightsOpening, Trompowsky,
+    ViennaGame, ZukertortOpening
+}
+
+impl Openings {
+    const ALL: [Openings; 46] = [
+        Openings::Any, Openings::AlekhineDefense, Openings::Benoni, Openings::Bird,
+        Openings::BishopsOpening, Openings::BlackmarDiemerGambit, Openings::CaroKann,
+        Openings::Catalan, Openings::Dutch, Openings::English, Openings::FourKnightsGame,
+        Openings::French, Openings::GiuocoPiano, Openings::Grunfeld, Openings::HorwitzDefense,
+        Openings::IndianDefense, Openings::ItalianGame, Openings::KingsGambit,
+        Openings::KingsGambitAccepted, Openings::KingsGambitDeclined, Openings::KingsIndianAttack,
+        Openings::KingsIndianDefense, Openings::KingsPawnGame, Openings::ModernDefense,
+        Openings::NimzoIndianDefense, Openings::NimzoLarsenAttack, Openings::NimzowitschDefense,
+        Openings::PhilidorDefense, Openings::PircDefense, Openings::Ponziani,
+        Openings::QueensGambitAccepted, Openings::QueensGambitDeclined, Openings::QueensPawnGame,
+        Openings::RapportJobavaSystem, Openings::Reti, Openings::RussianGame, Openings::RuyLopez,
+        Openings::Scandinavian, Openings::ScotchGame, Openings::SemiSlav, Openings::Sicilian,
+        Openings::SlavDefense, Openings::ThreeKnightsOpening, Openings::Trompowsky,
+        Openings::ViennaGame, Openings::ZukertortOpening];
+
+    pub fn get_field_name(&self) -> &str {
+        match self {
+            Openings::Any => "",
+            Openings::Sicilian => "Sicilian_Defense", Openings::French => "French_Defense",
+            Openings::QueensPawnGame => "Queens_Pawn_Game", Openings::ItalianGame => "Italian_Game",
+            Openings::CaroKann => "Caro-Kann_Defense", Openings::QueensGambitDeclined => "Queens_Gambit_Declined",
+            Openings::Scandinavian => "Scandinavian_Defense", Openings::RuyLopez => "Ruy_Lopez",
+            Openings::English => "English_Opening", Openings::IndianDefense => "Indian_Defense",
+            Openings::ScotchGame => "Scotch_Game", Openings::PhilidorDefense => "Philidor_Defense",
+            Openings::RussianGame => "Russian_Game", Openings::ModernDefense => "Modern_Defense",
+            Openings::FourKnightsGame => "Four_Knights_Game", Openings::KingsGambitAccepted => "Kings_Gambit_Accepted",
+            Openings::SlavDefense => "Slav_Defense", Openings::PircDefense => "Pirc_Defense",
+            Openings::ZukertortOpening => "Zukertort_Opening", Openings::BishopsOpening => "Bishops_Opening",
+            Openings::KingsPawnGame => "Kings_Pawn_Game", Openings::ViennaGame => "Vienna_Game",
+            Openings::KingsIndianDefense => "Kings_Indian_Defense", Openings::QueensGambitAccepted => "Queens_Gambit_Accepted",
+            Openings::Benoni => "Benoni_Defense", Openings::AlekhineDefense => "Alekhine_Defense",
+            Openings::NimzowitschDefense => "Nimzowitsch_Defense", Openings::HorwitzDefense => "Horwitz_Defense",
+            Openings::NimzoLarsenAttack => "Nimzo-Larsen_Attack", Openings::KingsGambitDeclined => "Kings_Gambit_Declined",
+            Openings::NimzoIndianDefense => "Nimzo-Indian_Defense", Openings::Bird => "Bird_Opening",
+            Openings::Dutch => "Dutch_Defense", Openings::SemiSlav => "Semi-Slav_Defense",
+            Openings::GiuocoPiano => "Giuoco_Piano", Openings::Grunfeld => "Grunfeld_Defense",
+            Openings::ThreeKnightsOpening => "Three_Knights_Opening", Openings::Ponziani => "Ponziani_Opening",
+            Openings::KingsIndianAttack => "Kings_Indian_Attack", Openings::BlackmarDiemerGambit => "Blackmar-Diemer_Gambit",
+            Openings::Trompowsky => "Trompowsky_Attack", Openings::KingsGambit => "Kings_Gambit",
+            Openings::RapportJobavaSystem => "Rapport-Jobava_System", Openings::Catalan => "Catalan_Opening",
+            Openings::Reti => "Reti_Opening"
+        }
+    }
+}
+
+impl std::fmt::Display for Openings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Openings::Any => "Any",
+                Openings::Sicilian => "Sicilian Defense", Openings::French => "French Defense",
+                Openings::QueensPawnGame => "Queen's Pawn Game", Openings::ItalianGame => "Italian Game",
+                Openings::CaroKann => "Caro-Kann Defense", Openings::QueensGambitDeclined => "Queen's Gambit Declined",
+                Openings::Scandinavian => "Scandinavian Defense", Openings::RuyLopez => "Ruy Lopez",
+                Openings::English => "English Opening", Openings::IndianDefense => "Indian Defense",
+                Openings::ScotchGame => "Scotch Game", Openings::PhilidorDefense => "Philidor Defense",
+                Openings::RussianGame => "Russian Game", Openings::ModernDefense => "Modern Defense",
+                Openings::FourKnightsGame => "Four Knights Game", Openings::KingsGambitAccepted => "King's Gambit Accepted",
+                Openings::SlavDefense => "Slav Defense", Openings::PircDefense => "Pirc Defense",
+                Openings::ZukertortOpening => "Zukertort Opening", Openings::BishopsOpening => "Bishops Opening",
+                Openings::KingsPawnGame => "King's Pawn Game", Openings::ViennaGame => "Vienna Game",
+                Openings::KingsIndianDefense => "King's Indian Defense", Openings::QueensGambitAccepted => "Queen's Gambit Accepted",
+                Openings::Benoni => "Benoni Defense", Openings::AlekhineDefense => "Alekhine Defense",
+                Openings::NimzowitschDefense => "Nimzowitsch Defense", Openings::HorwitzDefense => "Horwitz Defense",
+                Openings::NimzoLarsenAttack => "Nimzo-Larsen Attack", Openings::KingsGambitDeclined => "King's Gambit Declined",
+                Openings::NimzoIndianDefense => "Nimzo-Indian Defense", Openings::Bird => "Bird Opening",
+                Openings::Dutch => "Dutch Defense", Openings::SemiSlav => "Semi-Slav Defense",
+                Openings::GiuocoPiano => "Giuoco Piano", Openings::Grunfeld => "Grunfeld Defense",
+                Openings::ThreeKnightsOpening => "Three Knights Opening", Openings::Ponziani => "Ponziani Opening",
+                Openings::KingsIndianAttack => "King's Indian Attack", Openings::BlackmarDiemerGambit => "Blackmar-Diemer Gambit",
+                Openings::Trompowsky => "Trompowsky Attack", Openings::KingsGambit => "King's Gambit",
+                Openings::RapportJobavaSystem => "Rapport-Jobava System", Openings::Catalan => "Catalan Opening",
+                Openings::Reti => "Réti Opening"
+                }
+        )
+    }
+}
 struct PromotionStyle {bg_color: iced::Color }
 
 impl PromotionStyle {
@@ -265,6 +359,7 @@ impl container::StyleSheet for SearchBoxStyle {
 #[derive(Debug, Clone)]
 pub struct SearchTab {
     pub theme: TaticsThemes,
+    pub opening: Option<Openings>,
 
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,    
@@ -278,6 +373,7 @@ impl SearchTab {
     pub fn new() -> Self {
         SearchTab {
             theme : TaticsThemes::default(),
+            opening: None,
 
             slider_min_rating_value: 0,
             slider_max_rating_value: 1000,
@@ -298,6 +394,9 @@ impl SearchTab {
                 Command::none()
             } SearchMesssage::SelectTheme(new_theme) => {
                 self.theme = new_theme;
+                Command::none()   
+            } SearchMesssage::SelectOpening(new_opening) => {
+                self.opening = Some(new_opening);
                 Command::none()
             } SearchMesssage::SelectPiecePromotion(piece) => {
                 self.piece_to_promote_to = piece;
@@ -306,11 +405,11 @@ impl SearchTab {
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
-                           self.theme), Message::LoadPuzzle)
+                           self.theme, self.opening), Message::LoadPuzzle)
             }
         }
     }
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
     
         let reader = csv::ReaderBuilder::new()
@@ -323,17 +422,37 @@ impl SearchTab {
                 puzzles.clear();
                 //self.current_puzzle_move = 1;
                 //self.current_puzzle = 0;
+                let op = match opening {
+                    None => Openings::Any,
+                    Some(x) => x
+                };
     
-                for result in reader.deserialize::<config::Puzzle>() {
-                    if let Ok(record) = result {                                
-                        if record.rating >= min_rating && record.rating <= max_rating &&
-                                (theme == TaticsThemes::All ||
-                                record.themes.contains(theme.get_tag_name())) {
-                            puzzles.push(record);
+                if op != Openings::Any {
+                    for result in reader.deserialize::<config::Puzzle>() {
+                        if let Ok(record) = result {                                
+                            if record.opening == op.get_field_name() &&
+                                    record.rating >= min_rating && record.rating <= max_rating &&
+                                    (theme == TaticsThemes::All ||
+                                    record.themes.contains(theme.get_tag_name())) {
+                                puzzles.push(record);
+                            }
+                        }
+                        if puzzles.len() == config::SETTINGS.search_results_limit {
+                            break;
                         }
                     }
-                    if puzzles.len() == config::SETTINGS.search_results_limit {
-                        break;
+                } else {
+                    for result in reader.deserialize::<config::Puzzle>() {
+                        if let Ok(record) = result {                                
+                            if record.rating >= min_rating && record.rating <= max_rating &&
+                                    (theme == TaticsThemes::All ||
+                                    record.themes.contains(theme.get_tag_name())) {
+                                puzzles.push(record);
+                            }
+                        }
+                        if puzzles.len() == config::SETTINGS.search_results_limit {
+                            break;
+                        }
                     }
                 }
             } Err(_) => {
@@ -359,13 +478,22 @@ impl Tab for SearchTab {
 
     fn content(&self) -> Element<'_, Self::Message> {
         
-        let mut search_col = Column::new().spacing(10).align_items(Alignment::Center);
+        let row_theme = Row::new().spacing(5).align_items(Alignment::Center)
+        .push(
+            PickList::new(
+                &TaticsThemes::ALL[..],
+                Some(self.theme),
+                SearchMesssage::SelectTheme
+            )
+        );
 
-        let mut row_theme = Row::new().spacing(5).align_items(Alignment::Center);
-        let theme_list = PickList::new(
-            &TaticsThemes::ALL[..],
-            Some(self.theme),
-            SearchMesssage::SelectTheme
+        let row_opening = Row::new().spacing(5).align_items(Alignment::Center)
+        .push(
+            PickList::new(
+                &Openings::ALL[..],
+                self.opening,
+                SearchMesssage::SelectOpening
+            )
         );
 
         let mut row_min_rating = Row::new().spacing(5).align_items(Alignment::Center);
@@ -398,13 +526,23 @@ impl Tab for SearchTab {
                 .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
 
-        row_theme = row_theme.push(theme_list);
         row_search = row_search.push(btn_search);
 
-        search_col = search_col.push(row_min_rating).push(row_max_rating).push(row_theme).push(row_search);
+        let search_col = Column::new().spacing(10).align_items(Alignment::Center)
+                .push(row_min_rating)
+                .push(row_max_rating)
+                .push(Text::new("Tactics theme:")
+                    .width(Length::Shrink)
+                    .horizontal_alignment(alignment::Horizontal::Center))
+                .push(row_theme)
+                .push(Text::new("In the opening:")
+                    .width(Length::Shrink)
+                    .horizontal_alignment(alignment::Horizontal::Center))
+                .push(row_opening)
+                .width(Length::Shrink);
 
         // Promotion piece selector
-        let mut promotion_col = Column::new().spacing(10).align_items(Alignment::Center);
+        //let mut promotion_col = Column::new().spacing(10).align_items(Alignment::Center).height(Length::FillPortion(1));
         let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
 
         for i in 0..4 {
@@ -439,18 +577,17 @@ impl Tab for SearchTab {
                 .style(PromotionStyle::new(self.bg_color_promotion))
             ));            
         }
-        promotion_col = promotion_col.push(
-                Row::new().spacing(5).align_items(Alignment::Center).push(Text::new("Promotion piece:")
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center))
-                .spacing(5)
-        ).width(Length::Fill);
-        promotion_col = promotion_col.push(row_promotion);
-        
-        search_col = search_col.push(promotion_col);
-        let content: Element<'_, SearchMesssage> = Container::new(search_col)
+
+        let scroll = Scrollable::new(search_col).height(Length::Fill);
+        let search_tab_col = Column::new().spacing(10).align_items(Alignment::Center)
+            .push(scroll)
+            .push(row_search)
+            .push(Text::new("Promotion piece:"))
+            .push(row_promotion);
+
+        let content: Element<'_, SearchMesssage> = Container::new(search_tab_col)
             .align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Center)
+            .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();
         
         content.map(Message::Search)
