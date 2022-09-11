@@ -558,6 +558,7 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
                 self.from_square = None;
+                self.search_tab.show_searching_msg = false;
                 if let Some(puzzles_vec) = puzzles_vec {
                     if !puzzles_vec.is_empty() {
                         self.puzzle_tab.puzzles = puzzles_vec;

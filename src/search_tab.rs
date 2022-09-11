@@ -367,6 +367,8 @@ pub struct SearchTab {
     pub bg_color_promotion: iced::Color,
     pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
+
+    pub show_searching_msg: bool,
 }
 
 impl SearchTab {
@@ -381,6 +383,7 @@ impl SearchTab {
             bg_color_promotion: config::SETTINGS.dark_squares_color.into(),
             piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
+            show_searching_msg: false,
         }
     }
 
@@ -402,6 +405,7 @@ impl SearchTab {
                 self.piece_to_promote_to = piece;
                 Command::none()
             } SearchMesssage::ClickSearch => {
+                self.show_searching_msg = true;
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
@@ -459,6 +463,7 @@ impl SearchTab {
                 //self.puzzle_status = String::from("Problem reading the puzzle DB");
             }
         }
+        
         Some(puzzles)
     }
 
@@ -579,11 +584,11 @@ impl Tab for SearchTab {
         }
 
         let scroll = Scrollable::new(search_col).height(Length::Fill);
-        let search_tab_col = Column::new().spacing(10).align_items(Alignment::Center)
-            .push(scroll)
-            .push(row_search)
-            .push(Text::new("Promotion piece:"))
-            .push(row_promotion);
+        let mut search_tab_col = Column::new().spacing(10).align_items(Alignment::Center).push(scroll);
+        if self.show_searching_msg {
+            search_tab_col = search_tab_col.push(Text::new("Searching, please wait..."));
+        }
+        search_tab_col = search_tab_col.push(row_search).push(Text::new("Promotion piece:")).push(row_promotion);
 
         let content: Element<'_, SearchMesssage> = Container::new(search_tab_col)
             .align_x(alignment::Horizontal::Center)
