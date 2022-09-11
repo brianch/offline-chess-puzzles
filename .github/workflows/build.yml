@@ -16,14 +16,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --verbose
+    - uses: actions/checkout@v3
+    - run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+    - uses: Swatinem/rust-cache@v2
+    - run: cargo build --release --verbose
+
   build-windows:
 
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --verbose
+    - uses: actions/checkout@v3
+    - run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+    - uses: Swatinem/rust-cache@v2
+    - run: cargo build --release --verbose
