@@ -40,9 +40,8 @@ jobs:
           rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --verbose
-
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release-bin
-          path: target/release/offline-chess-puzzles
+          path: target/release/offline-chess-puzzles.exe
 
