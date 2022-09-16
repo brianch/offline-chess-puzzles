@@ -19,8 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-        rustup set auto-self-update disable
-        rustup toolchain install stable --profile minimal
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --verbose
       - uses: actions/upload-artifact@v3
@@ -36,8 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-        rustup set auto-self-update disable
-        rustup toolchain install stable --profile minimal
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --verbose
 
