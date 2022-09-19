@@ -36,7 +36,7 @@ jobs:
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release --verbose
+      - run: RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --verbose
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release-bin
