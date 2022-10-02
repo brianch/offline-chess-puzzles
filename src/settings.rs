@@ -276,7 +276,7 @@ impl Tab for SettingsTab {
                 .vertical_alignment(alignment::Vertical::Bottom),
             );
         let content: Element<'_, SettingsMessage> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Center)
+            .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();
 
         content.map(Message::Settings)
