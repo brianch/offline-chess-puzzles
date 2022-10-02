@@ -25,22 +25,37 @@ jobs:
           name: linux-release-bin
           path: target/release/offline-chess-puzzles
 
-  build-windows:
+  build-windows-64:
 
     runs-on: windows-latest
 
-    name: Build Windows
+    name: Build Windows 64-bit
     steps:
       - uses: actions/checkout@v3
       - run: |
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@v2
-      - run: |
-          set RUSTFLAGS=-C target-feature=+crt-static
-          cargo build --release --verbose
+      - run: cargo build --release --verbose
       - uses: actions/upload-artifact@v3
         with:
-          name: windows-release-bin
+          name: windows-release
+          path: target/release/offline-chess-puzzles.exe
+
+  build-windows-32:
+
+    runs-on: windows-latest
+
+    name: Build Windows 32-bit
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --target i686-pc-windows-msvc --verbose
+      - uses: actions/upload-artifact@v3
+        with:
+          name: windows-release-i686
           path: target/release/offline-chess-puzzles.exe
 
