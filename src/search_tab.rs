@@ -1,4 +1,4 @@
-use iced::pure::widget::{button, Container, Button, Column, Text, Row, Svg, PickList, Slider, Scrollable};
+use iced::pure::widget::{button, Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
 use iced::pure::{Element};
 use iced::{alignment, container, Command, Alignment, Length, Background};
 
@@ -12,6 +12,7 @@ pub enum SearchMesssage {
     SliderMaxRatingChanged(i32),
     SelectTheme(TaticsThemes),
     SelectOpening(Openings),
+    SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
 }
@@ -61,7 +62,7 @@ impl TaticsThemes {
     
     pub fn get_tag_name(&self) -> &str {
         match self {
-            TaticsThemes::All => "all",
+            TaticsThemes::All => "",
             TaticsThemes::Opening => "opening",
             TaticsThemes::Middlegame => "middlegame",
             TaticsThemes::Endgame => "endgame",
@@ -310,6 +311,7 @@ impl std::fmt::Display for Openings {
         )
     }
 }
+
 struct PromotionStyle {bg_color: iced::Color }
 
 impl PromotionStyle {
@@ -342,6 +344,10 @@ impl button::StyleSheet for PromotionStyle {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OpeningSide {
+    Any, White, Black
+}
 
 struct SearchBoxStyle;
 
@@ -360,6 +366,7 @@ impl container::StyleSheet for SearchBoxStyle {
 pub struct SearchTab {
     pub theme: TaticsThemes,
     pub opening: Option<Openings>,
+    pub opening_side: Option<OpeningSide>,
 
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,    
@@ -376,6 +383,7 @@ impl SearchTab {
         SearchTab {
             theme : TaticsThemes::default(),
             opening: None,
+            opening_side: None,
 
             slider_min_rating_value: 0,
             slider_max_rating_value: 1000,
@@ -401,6 +409,9 @@ impl SearchTab {
             } SearchMesssage::SelectOpening(new_opening) => {
                 self.opening = Some(new_opening);
                 Command::none()
+            } SearchMesssage::SelectOpeningSide(new_opening_side) => {
+                self.opening_side = Some(new_opening_side);
+                Command::none()
             } SearchMesssage::SelectPiecePromotion(piece) => {
                 self.piece_to_promote_to = piece;
                 Command::none()
@@ -409,11 +420,11 @@ impl SearchTab {
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
-                           self.theme, self.opening), Message::LoadPuzzle)
+                           self.theme, self.opening, self.opening_side), Message::LoadPuzzle)
             }
         }
     }
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
     
         let reader = csv::ReaderBuilder::new()
@@ -432,25 +443,59 @@ impl SearchTab {
                 };
     
                 if op != Openings::Any {
-                    for result in reader.deserialize::<config::Puzzle>() {
-                        if let Ok(record) = result {                                
-                            if record.opening == op.get_field_name() &&
-                                    record.rating >= min_rating && record.rating <= max_rating &&
-                                    (theme == TaticsThemes::All ||
-                                    record.themes.contains(theme.get_tag_name())) {
-                                puzzles.push(record);
+                    let side = match op_side {
+                        None => OpeningSide::Any,
+                        Some(x) => x
+                    };    
+                    if side == OpeningSide::Any {                        
+                        for result in reader.deserialize::<config::Puzzle>() {
+                            if let Ok(record) = result {                                
+                                if record.opening == op.get_field_name() &&
+                                        record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.themes.contains(theme.get_tag_name()) {
+                                    puzzles.push(record);
+                                }
+                            }
+                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                                break;
                             }
                         }
-                        if puzzles.len() == config::SETTINGS.search_results_limit {
-                            break;
+                    } else {
+                        if side == OpeningSide::Black {
+                            for result in reader.deserialize::<config::Puzzle>() {
+                                if let Ok(record) = result {                                
+                                    if record.opening == op.get_field_name() &&
+                                            !record.game_url.contains("black") &&
+                                            record.rating >= min_rating && record.rating <= max_rating &&
+                                            record.themes.contains(theme.get_tag_name()) {
+                                        puzzles.push(record);
+                                    }
+                                }
+                                if puzzles.len() == config::SETTINGS.search_results_limit {
+                                    break;
+                                }
+                            }
+                        } else {
+                            for result in reader.deserialize::<config::Puzzle>() {
+                                if let Ok(record) = result {                                
+                                    if record.opening == op.get_field_name() &&
+                                            record.game_url.contains("black") &&
+                                            record.rating >= min_rating && record.rating <= max_rating &&
+                                            record.themes.contains(theme.get_tag_name()) {
+                                        puzzles.push(record);
+                                    }
+                                }
+                                if puzzles.len() == config::SETTINGS.search_results_limit {
+                                    break;
+                                }
+                            }
                         }
                     }
                 } else {
                     for result in reader.deserialize::<config::Puzzle>() {
                         if let Ok(record) = result {                                
                             if record.rating >= min_rating && record.rating <= max_rating &&
-                                    (theme == TaticsThemes::All ||
-                                    record.themes.contains(theme.get_tag_name())) {
+                                    record.themes.contains(theme.get_tag_name()) {
                                 puzzles.push(record);
                             }
                         }
@@ -533,7 +578,7 @@ impl Tab for SearchTab {
 
         row_search = row_search.push(btn_search);
 
-        let search_col = Column::new().spacing(10).align_items(Alignment::Center)
+        let mut search_col = Column::new().spacing(10).align_items(Alignment::Center)
                 .push(row_min_rating)
                 .push(row_max_rating)
                 .push(Text::new("Tactics theme:")
@@ -545,6 +590,20 @@ impl Tab for SearchTab {
                     .horizontal_alignment(alignment::Horizontal::Center))
                 .push(row_opening)
                 .width(Length::Shrink);
+
+        if let Some(op) = self.opening {
+            if op != Openings::Any {
+                let row_color = Row::new().spacing(5).align_items(Alignment::Center)
+                    .push(
+                        Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide)
+                    ).push(
+                        Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide)
+                    ).push(
+                        Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide)
+                    );
+                search_col = search_col.push(Text::new("Side: ")).push(row_color);
+            }
+        }
 
         // Promotion piece selector
         //let mut promotion_col = Column::new().spacing(10).align_items(Alignment::Center).height(Length::FillPortion(1));
