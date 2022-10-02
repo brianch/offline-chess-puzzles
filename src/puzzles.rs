@@ -1,4 +1,4 @@
-use iced::pure::widget::{Container, Button, Column, Text, TextInput};
+use iced::pure::widget::{Container, Button, Column, Scrollable, Text, TextInput};
 use iced::pure::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
@@ -86,14 +86,17 @@ impl Tab for PuzzleTab {
     fn content(&self) -> Element<'_, Self::Message> {
         let col_puzzle_info;
         if !self.puzzles.is_empty() && self.current_puzzle <= self.puzzles.len() - 1 {
-            col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
+            let col_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
-                    Text::new(String::from("Puzzle ID: ") + &self.puzzles[self.current_puzzle].puzzle_id)
+                    Text::new(String::from("Puzzle link: "))
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),
-                )
-                .push(
+                ).push(
+                    TextInput::new("",
+                    &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
+                    PuzzleMessage::ChangeTextInputs)                        
+                ).push(
                     Text::new("FEN:")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
@@ -116,7 +119,7 @@ impl Tab for PuzzleTab {
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
-                    Text::new(String::from("Popularity: ") + &self.puzzles[self.current_puzzle].popularity.to_string())
+                    Text::new(String::from("Popularity (-100 to 100): ") + &self.puzzles[self.current_puzzle].popularity.to_string())
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
@@ -136,7 +139,7 @@ impl Tab for PuzzleTab {
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
                 .push(
-                    Text::new("URL: ")
+                    Text::new("Game url: ")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
@@ -146,10 +149,12 @@ impl Tab for PuzzleTab {
                         &self.puzzles[self.current_puzzle].game_url,
                         PuzzleMessage::ChangeTextInputs,
                     )
-                )
-                .push(
-                    Button::new(Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
                 );
+                col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
+                    .push(Scrollable::new(col_info).height(Length::Fill))
+                    .push(
+                        Button::new(Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
+                    );
         } else {
             col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
