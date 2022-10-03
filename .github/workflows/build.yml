@@ -57,5 +57,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release-i686
-          path: target/release/offline-chess-puzzles.exe
+          path: target/i686-pc-windows-msvc/release/offline-chess-puzzles.exe
 

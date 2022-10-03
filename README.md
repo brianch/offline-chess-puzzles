@@ -1,4 +1,6 @@
 # offline-chess-puzzles
+[![Build](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml/badge.svg)](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml)
+
 Tool to view and solve puzzles from the lichess puzzle database.
 
 <img src="https://user-images.githubusercontent.com/5335499/193604390-459e94c9-822e-423a-9ec9-df2c26b1bfe9.gif" width="400"/>
