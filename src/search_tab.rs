@@ -312,11 +312,15 @@ impl std::fmt::Display for Openings {
     }
 }
 
-struct PromotionStyle {bg_color: iced::Color }
+struct PromotionStyle {bg_color: iced::Color}
 
 impl PromotionStyle {
-    fn new(bg_color: iced::Color) -> Self {
-        Self { bg_color }
+    fn new(bg_color: iced::Color, bg_color_selected: iced::Color, is_selected: bool) -> Self {
+        if is_selected{
+            Self { bg_color: bg_color_selected }
+        } else {
+            Self { bg_color }
+        }
     }
 }
 
@@ -372,6 +376,7 @@ pub struct SearchTab {
     slider_max_rating_value: i32,    
 
     pub bg_color_promotion: iced::Color,
+    pub bg_color_promotion_selected: iced::Color,
     pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
 
@@ -388,7 +393,8 @@ impl SearchTab {
             slider_min_rating_value: 0,
             slider_max_rating_value: 1000,
 
-            bg_color_promotion: config::SETTINGS.dark_squares_color.into(),
+            bg_color_promotion: config::SETTINGS.light_squares_color.into(),
+            bg_color_promotion_selected: config::SETTINGS.dark_squares_color.into(),
             piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
             show_searching_msg: false,
@@ -638,7 +644,7 @@ impl Tab for SearchTab {
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
-                .style(PromotionStyle::new(self.bg_color_promotion))
+                .style(PromotionStyle::new(self.bg_color_promotion, self.bg_color_promotion_selected, self.piece_to_promote_to==piece))
             ));            
         }
 
