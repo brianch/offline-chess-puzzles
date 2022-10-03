@@ -1,6 +1,7 @@
 #![windows_subsystem = "windows"]
 
-use iced::pure::widget::{button, Svg, Container, Button, Row, Column, Text, Radio};
+use iced::alignment::{Horizontal, Vertical};
+use iced::pure::widget::{button, Container, Button, Row, Column, Text, Radio};
 use iced::pure::{Application, Element};
 use iced::{executor, alignment, Command, Alignment, Length, Background, Settings };
 use iced_aw::pure::{TabLabel, Tabs};
@@ -650,23 +651,35 @@ impl Application for OfflinePuzzles {
             if let Some(piece) = piece {
                 if color.unwrap() == Color::White {
                     text = match piece {
-                        Piece::Pawn => "/wP.svg",
-                        Piece::Rook => "/wR.svg",
-                        Piece::Knight => "/wN.svg",
-                        Piece::Bishop => "/wB.svg",
-                        Piece::Queen => "/wQ.svg",
-                        Piece::King => "/wK.svg"
+                        Piece::Pawn => "♙",
+                        Piece::Rook => "♖",
+                        Piece::Knight => "♘",
+                        Piece::Bishop => "♗",
+                        Piece::Queen => "♕",
+                        Piece::King => "♔" 
                     };
                 } else {
                     text = match piece {
-                        Piece::Pawn => "/bP.svg",
-                        Piece::Rook => "/bR.svg",
-                        Piece::Knight => "/bN.svg",
-                        Piece::Bishop => "/bB.svg",
-                        Piece::Queen => "/bQ.svg",
-                        Piece::King => "/bK.svg"
+                        Piece::Pawn => "♟",
+                        Piece::Rook => "♜",
+                        Piece::Knight => "♞",
+                        Piece::Bishop => "♝",
+                        Piece::Queen => "♛",
+                        Piece::King => "♚"
                     };
                 }
+            }
+            let v_align;
+            let size;
+            let font;
+            if self.settings.piece_theme == styles::PieceTheme::Gnu {
+                font = config::FREE_SERIF;
+                v_align = Vertical::Center;
+                size = self.settings.square_size + 10;
+            } else {
+                font = config::GOTHIC_A1;
+                v_align = Vertical::Top;
+                size = self.settings.square_size;
             }
 
             let selected =
@@ -680,8 +693,13 @@ impl Application for OfflinePuzzles {
                 };
 
             board_row = board_row.push(Button::new(
-                    Svg::from_path(
-                        String::from("pieces/") + &self.settings.piece_theme.to_string() + text)
+                Text::new(text)
+                        .horizontal_alignment(Horizontal::Center)
+                        .vertical_alignment(v_align)
+                        .width(Length::Shrink)
+                        .height(Length::Shrink)
+                        .font(font)
+                        .size(size)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))

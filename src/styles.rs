@@ -11,29 +11,15 @@ pub const SELECTED_LIGHT_SQUARE: iced::Color = rgb!(205,210,106);
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum PieceTheme {
-    Cburnett,
-    California,
-    Cardinal,
-    Dubrovny,
-    Gioco,
-    Icpieces,
-    Maestro,
-    Staunty,
-    Tatiana,
+    Gnu,
+    Gothic,
 }
 
 impl PieceTheme {
 
-    pub const ALL: [PieceTheme; 9] = [
-        PieceTheme::Cburnett,
-        PieceTheme::California,
-        PieceTheme::Cardinal,
-        PieceTheme::Dubrovny,
-        PieceTheme::Gioco,
-        PieceTheme::Icpieces,
-        PieceTheme::Maestro,
-        PieceTheme::Staunty,
-        PieceTheme::Tatiana,
+    pub const ALL: [PieceTheme; 2] = [
+        PieceTheme::Gnu,
+        PieceTheme::Gothic,
     ];
 }
 
@@ -43,15 +29,8 @@ impl std::fmt::Display for PieceTheme {
             f,
             "{}",
             match self {
-                PieceTheme::California => "california",
-                PieceTheme::Cardinal => "cardinal",
-                PieceTheme::Dubrovny => "dubrovny",
-                PieceTheme::Gioco => "gioco",
-                PieceTheme::Icpieces => "icpieces",
-                PieceTheme::Maestro => "maestro",
-                PieceTheme::Staunty => "staunty",
-                PieceTheme::Tatiana => "tatiana",
-                _ => "cburnett",
+                PieceTheme::Gnu => "Gnu",
+                PieceTheme::Gothic => "Gothic",
             }
         )
     }

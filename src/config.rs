@@ -1,8 +1,20 @@
+use iced::Font;
 use crate::{styles};
 
 lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
 }
+
+pub const GOTHIC_A1: Font = Font::External {
+    name: "Gothic A1",
+    bytes: include_bytes!("../font/gothic_a1/GothicA1-Bold.ttf"),
+};
+
+pub const FREE_SERIF: Font = Font::External {
+    name: "Free Serif",
+    bytes: include_bytes!("../font/freefont/FreeSerif.ttf"),
+};
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {
@@ -28,7 +40,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
         Self {
             square_size: 60,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
-            piece_theme: styles::PieceTheme::Cburnett,
+            piece_theme: styles::PieceTheme::Gnu,
             search_results_limit: 20000,
             play_sound: true,
             auto_load_next: true,

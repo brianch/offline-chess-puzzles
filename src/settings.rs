@@ -153,7 +153,7 @@ impl Tab for SettingsTab {
             .push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                 .push(
-                    Text::new("Piece Theme:")
+                    Text::new("Piece Font:")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )

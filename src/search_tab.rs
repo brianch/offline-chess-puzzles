@@ -1,6 +1,7 @@
-use iced::pure::widget::{button, Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
+use iced::pure::widget::{button, Container, Button, Column, Text, Radio, Row, PickList, Slider, Scrollable};
 use iced::pure::{Element};
 use iced::{alignment, container, Command, Alignment, Length, Background};
+use iced::alignment::{Horizontal, Vertical};
 
 use iced_aw::pure::TabLabel;
 use chess::{Piece};
@@ -617,29 +618,48 @@ impl Tab for SearchTab {
 
         for i in 0..4 {
             let piece;
-            let image;
+            let text;
             match i {
                 0 => {
                     piece = Piece::Rook;
-                    image = "/wR.svg";
+                    text = "♜";
                 }
                 1 => {
                     piece = Piece::Knight;
-                    image = "/wN.svg";
+                    text = "♞";
                 }
                 2 => {
                     piece = Piece::Bishop;
-                    image = "/wB.svg";
+                    text = "♝";
                 }
                 _ => {
                     piece = Piece::Queen;
-                    image = "/wQ.svg";
+                    text = "♛";
                 }
             };
+
+            let v_align;
+            let size;
+            let font;
+            if self.piece_theme_promotion == styles::PieceTheme::Gnu {
+                font = config::FREE_SERIF;
+                v_align = Vertical::Center;
+                size = config::SETTINGS.square_size + 10;
+            } else {
+                font = config::GOTHIC_A1;
+                v_align = Vertical::Top;
+                size = config::SETTINGS.square_size;
+            }
+
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
                 .push(Button::new(
-                    Svg::from_path(
-                        String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
+                    Text::new(text)
+                    .horizontal_alignment(Horizontal::Center)
+                    .vertical_alignment(v_align)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .font(font)
+                    .size(size)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
