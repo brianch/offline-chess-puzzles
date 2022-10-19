@@ -1,6 +1,7 @@
 use iced::pure::widget::{button, Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
 use iced::pure::{Element};
 use iced::{alignment, container, Command, Alignment, Length, Background};
+use std::io::BufReader;
 
 use iced_aw::pure::TabLabel;
 use chess::{Piece};
@@ -17,7 +18,7 @@ pub enum SearchMesssage {
     ClickSearch,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum TaticsThemes {
     All,
     Opening, Middlegame, Endgame, RookEndgame, BishopEndgame, PawnEndgame, KnightEndgame, QueenEndgame, QueenRookEndgame,
@@ -218,7 +219,7 @@ impl std::fmt::Display for TaticsThemes {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum Openings {
     Any, AlekhineDefense, Benoni, Bird, BishopsOpening, BlackmarDiemerGambit, CaroKann, Catalan,
     Dutch, English, FourKnightsGame, French, GiuocoPiano, Grunfeld, HorwitzDefense, IndianDefense,
@@ -348,7 +349,7 @@ impl button::StyleSheet for PromotionStyle {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum OpeningSide {
     Any, White, Black
 }
@@ -386,12 +387,12 @@ pub struct SearchTab {
 impl SearchTab {
     pub fn new() -> Self {
         SearchTab {
-            theme : TaticsThemes::default(),
-            opening: None,
-            opening_side: None,
+            theme : config::SETTINGS.last_theme,
+            opening: config::SETTINGS.last_opening,
+            opening_side: config::SETTINGS.last_opening_side,
 
-            slider_min_rating_value: 0,
-            slider_max_rating_value: 1000,
+            slider_min_rating_value: config::SETTINGS.last_min_rating,
+            slider_max_rating_value: config::SETTINGS.last_max_rating,
 
             bg_color_promotion: config::SETTINGS.light_squares_color.into(),
             bg_color_promotion_selected: config::SETTINGS.dark_squares_color.into(),
@@ -423,6 +424,9 @@ impl SearchTab {
                 Command::none()
             } SearchMesssage::ClickSearch => {
                 self.show_searching_msg = true;
+                SearchTab::save_search_settings(self.slider_min_rating_value,
+                    self.slider_max_rating_value,
+                    self.theme, self.opening, self.opening_side);
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
@@ -430,6 +434,32 @@ impl SearchTab {
             }
         }
     }
+
+    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) {
+        let file = std::fs::File::open("settings.json");        
+        match file {
+            Ok(file) => {
+                let buf_reader = BufReader::new(file);
+                if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
+                    config.last_min_rating = min_rating;
+                    config.last_max_rating = max_rating;
+                    config.last_theme = theme;
+                    config.last_opening = opening;
+                    config.last_opening_side = op_side;
+                            
+                    let file = std::fs::File::create("settings.json");
+                    match file {
+                        Ok(file) => {
+                            if let Err(_) = serde_json::to_writer_pretty(file, &config) {
+                                println!("Error saving search options.");
+                            }
+                        } Err(_) => {}
+                    }
+                }
+            } Err(_) => {}
+        }
+    }
+    
     pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
     

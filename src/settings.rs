@@ -32,6 +32,7 @@ pub struct SettingsTab {
     search_results_limit_value: String,
 
     settings_status: String,
+    pub saved_configs: config::OfflinePuzzlesConfig,
 }
 
 impl SettingsTab {
@@ -45,6 +46,7 @@ impl SettingsTab {
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
             search_results_limit_value: config::SETTINGS.search_results_limit.to_string(),
             settings_status: String::new(),
+            saved_configs: config::load_config(),
         }
     }
 
@@ -103,6 +105,11 @@ impl SettingsTab {
                     board_theme: self.board_theme,
                     light_squares_color: self.board_theme.light_sqr(),
                     dark_squares_color: self.board_theme.dark_sqr(),
+                    last_min_rating: self.saved_configs.last_min_rating,
+                    last_max_rating: self.saved_configs.last_max_rating,
+                    last_theme: self.saved_configs.last_theme,
+                    last_opening: self.saved_configs.last_opening,
+                    last_opening_side: self.saved_configs.last_opening_side,                    
                 };
                 let file = std::fs::File::create("settings.json");
                 match file {

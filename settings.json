@@ -15,5 +15,10 @@
     0.4117647,
     0.67058825,
     0.827451
-  ]
+  ],
+  "last_min_rating": 0,
+  "last_max_rating": 1000,
+  "last_theme": "All",
+  "last_opening": "Any",
+  "last_opening_side": "White"
 }

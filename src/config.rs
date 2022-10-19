@@ -1,4 +1,4 @@
-use crate::{styles};
+use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide};
 
 lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
@@ -21,6 +21,12 @@ pub struct OfflinePuzzlesConfig {
     pub board_theme: styles::BoardStyle,
     pub light_squares_color: [f32; 3],
     pub dark_squares_color: [f32; 3],
+
+    pub last_min_rating: i32,
+    pub last_max_rating: i32,
+    pub last_theme: TaticsThemes,
+    pub last_opening: Option<Openings>,
+    pub last_opening_side: Option<OpeningSide>,
 }
 
 impl ::std::default::Default for OfflinePuzzlesConfig {
@@ -37,6 +43,12 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             // the config file directly.
             light_squares_color: styles::BoardStyle::Default.light_sqr(),
             dark_squares_color: styles::BoardStyle::Default.dark_sqr(),
+
+            last_min_rating: 0,
+            last_max_rating: 1000,
+            last_theme: TaticsThemes::All,
+            last_opening: None,
+            last_opening_side: None,
         }
     }
 }

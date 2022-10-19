@@ -218,7 +218,6 @@ struct OfflinePuzzles {
     settings_tab: SettingsTab,
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
-    settings: config::OfflinePuzzlesConfig,
     sound_player: Option<Soloud>,
     two_pieces_sound: Option<Wav>,
     one_piece_sound: Option<Wav>
@@ -243,7 +242,6 @@ impl Default for OfflinePuzzles {
             active_tab: 0,
 
             game_mode: config::GameMode::Puzzle,
-            settings: config::load_config(),
             sound_player: Soloud::default().ok(),
             two_pieces_sound: load_two_pieces_sound(),
             one_piece_sound: load_one_piece_sound(),
@@ -354,7 +352,7 @@ impl Application for OfflinePuzzles {
 
                     if self.analysis.make_move(move_made) {
                         self.analysis_history.push(self.analysis.current_position());
-                        if self.settings.play_sound {
+                        if self.settings_tab.saved_configs.play_sound {
                             if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
                                 soloud.play(wav);
                             }
@@ -386,13 +384,13 @@ impl Application for OfflinePuzzles {
                             self.puzzle_tab.current_puzzle_move += 1;
 
                             if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
-                                if self.settings.play_sound {
+                                if self.settings_tab.saved_configs.play_sound {
                                     if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
                                         soloud.play(wav);
                                     }
                                 }
                                 if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
-                                    if self.settings.auto_load_next {
+                                    if self.settings_tab.saved_configs.auto_load_next {
                                         // The previous puzzle ended, and we still have puzzles available,
                                         // so we prepare the next one.
                                         self.puzzle_tab.current_puzzle += 1;
@@ -437,7 +435,7 @@ impl Application for OfflinePuzzles {
                                     self.puzzle_status = String::from("All puzzles done for this search!");
                                 }
                             } else {
-                                if self.settings.play_sound {
+                                if self.settings_tab.saved_configs.play_sound {
                                     if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
                                         soloud.play(wav);
                                     }
@@ -606,10 +604,10 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
-                    self.settings = settings;
-                    self.search_tab.piece_theme_promotion = self.settings.piece_theme;
-                    self.search_tab.bg_color_promotion = self.settings.light_squares_color.into();
-                    self.search_tab.bg_color_promotion_selected = self.settings.dark_squares_color.into();
+                    self.settings_tab.saved_configs = settings;
+                    self.search_tab.piece_theme_promotion = self.settings_tab.saved_configs.piece_theme;
+                    self.search_tab.bg_color_promotion = self.settings_tab.saved_configs.light_squares_color.into();
+                    self.search_tab.bg_color_promotion_selected = self.settings_tab.saved_configs.dark_squares_color.into();
                 }
                 Command::none()
             }
@@ -681,12 +679,12 @@ impl Application for OfflinePuzzles {
 
             board_row = board_row.push(Button::new(
                     Svg::from_path(
-                        String::from("pieces/") + &self.settings.piece_theme.to_string() + text)
+                        String::from("pieces/") + &self.settings_tab.saved_configs.piece_theme.to_string() + text)
                 )
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
                 .on_press(Message::SelectSquare(pos))
-                .style(ChessSquare::from((pos, selected, self.settings.light_squares_color, self.settings.dark_squares_color)))
+                .style(ChessSquare::from((pos, selected, self.settings_tab.saved_configs.light_squares_color, self.settings_tab.saved_configs.dark_squares_color)))
             );
 
             i += 1;
@@ -739,7 +737,7 @@ impl Application for OfflinePuzzles {
         let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
         layout_row = layout_row.push(board_col);
 
-        let tab_theme = match self.settings.board_theme {
+        let tab_theme = match self.settings_tab.saved_configs.board_theme {
             styles::BoardStyle::Grey => styles::TabTheme::Grey,
             styles::BoardStyle::Blue => styles::TabTheme::Blue,
             styles::BoardStyle::Green => styles::TabTheme::Green,
