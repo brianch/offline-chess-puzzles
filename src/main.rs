@@ -166,6 +166,7 @@ impl ChessSquare {
                 light_sqr.into()
             }
         } else {
+            #[allow(clippy::collapsible_else_if)]
             if is_selected {
                 styles::SELECTED_DARK_SQUARE
             } else {
@@ -273,15 +274,13 @@ fn get_notation_string(board: Board, promo_piece: Piece, from: PositionGUI, to: 
 
     // Check for promotion and adjust the notation accordingly
     if let (Some(piece), Some(color)) = (piece, color) {
-        if piece == Piece::Pawn {
-            if (color == Color::White && to.get_row() == 7) ||
-                    (color == Color::Black && to.get_row() == 0) {
-                match promo_piece {
-                    Piece::Rook => move_made_notation += "r",
-                    Piece::Knight => move_made_notation += "n",
-                    Piece::Bishop => move_made_notation += "b",
-                    _ => move_made_notation += "q"
-                }
+        if piece == Piece::Pawn && ((color == Color::White && to.get_row() == 7) ||
+                                   (color == Color::Black && to.get_row() == 0)) {
+            match promo_piece {
+                Piece::Rook => move_made_notation += "r",
+                Piece::Knight => move_made_notation += "n",
+                Piece::Bishop => move_made_notation += "b",
+                _ => move_made_notation += "q"
             }
         }
     }
@@ -358,107 +357,106 @@ impl Application for OfflinePuzzles {
                             }
                         }
                     }
-                } else {
-                    if self.puzzle_tab.puzzles.len() > 0 {
-                        let movement;
-                        let move_made_notation =
-                            get_notation_string(self.board, self.search_tab.piece_to_promote_to, from, to);
+                } else if !self.puzzle_tab.puzzles.is_empty() {
+                    let movement;
+                    let move_made_notation =
+                        get_notation_string(self.board, self.search_tab.piece_to_promote_to, from, to);
 
-                        let move_made = ChessMove::new(
-                            Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
-                            Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
+                    let move_made = ChessMove::new(
+                        Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
+                        Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
 
-                        let is_mate = self.board.legal(move_made) && self.board.make_move_new(move_made).status() == BoardStatus::Checkmate;
+                    let is_mate = self.board.legal(move_made) && self.board.make_move_new(move_made).status() == BoardStatus::Checkmate;
 
-                        let correct_moves : Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
-                        let correct_move = ChessMove::new(
-                            Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
-                            Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(&correct_moves[self.puzzle_tab.current_puzzle_move]));
+                    let correct_moves : Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
+                    let correct_move = ChessMove::new(
+                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
+                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
 
-                        // If the move is correct we can apply it to the board
-                        if is_mate || (move_made == correct_move) {
+                    // If the move is correct we can apply it to the board
+                    if is_mate || (move_made == correct_move) {
 
-                            self.board = self.board.make_move_new(move_made);
+                        self.board = self.board.make_move_new(move_made);
+                        self.analysis_history.push(self.board);
+
+                        self.puzzle_tab.current_puzzle_move += 1;
+
+                        if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
+                            if self.settings_tab.saved_configs.play_sound {
+                                if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
+                                    soloud.play(wav);
+                                }
+                            }
+                            if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+                                if self.settings_tab.saved_configs.auto_load_next {
+                                    // The previous puzzle ended, and we still have puzzles available,
+                                    // so we prepare the next one.
+                                    self.puzzle_tab.current_puzzle += 1;
+                                    self.puzzle_tab.current_puzzle_move = 1;
+
+                                    let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+                                    // The opponent's last move (before the puzzle starts)
+                                    // is in the "moves" field of the cvs, so we need to apply it.
+                                    self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+                                    movement = ChessMove::new(
+                                        Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                                        Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
+
+                                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+
+                                    self.board = self.board.make_move_new(movement);
+                                    self.analysis_history = vec![self.board];
+
+                                    if self.board.side_to_move() == Color::White {
+                                        self.puzzle_status = String::from("White to move!");
+                                    } else {
+                                        self.puzzle_status = String::from("Black to move!");
+                                    }
+                                    self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                                } else {
+                                    self.puzzle_status = String::from("Well done!");
+                                    self.puzzle_tab.is_playing = false;
+                                }
+                            } else {
+                                self.board = Board::default();
+                                // quite meaningless but allows the user to use the takeback button
+                                // to analyze a full game in analysis mode after the puzzles ended.
+                                self.analysis_history = vec![self.board];
+                                self.puzzle_tab.current_puzzle_move = 1;
+
+                                self.last_move_from = None;
+                                self.last_move_to = None;
+                                self.puzzle_tab.is_playing = false;
+                                self.puzzle_status = String::from("All puzzles done for this search!");
+                            }
+                        } else {
+                            if self.settings_tab.saved_configs.play_sound {
+                                if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
+                                    soloud.play(wav);
+                                }
+                            }
+                            movement = ChessMove::new(
+                                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
+                                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
+
+                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
+                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+
+                            self.board = self.board.make_move_new(movement);
                             self.analysis_history.push(self.board);
 
                             self.puzzle_tab.current_puzzle_move += 1;
-
-                            if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
-                                if self.settings_tab.saved_configs.play_sound {
-                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
-                                        soloud.play(wav);
-                                    }
-                                }
-                                if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
-                                    if self.settings_tab.saved_configs.auto_load_next {
-                                        // The previous puzzle ended, and we still have puzzles available,
-                                        // so we prepare the next one.
-                                        self.puzzle_tab.current_puzzle += 1;
-                                        self.puzzle_tab.current_puzzle_move = 1;
-
-                                        let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                                        // The opponent's last move (before the puzzle starts)
-                                        // is in the "moves" field of the cvs, so we need to apply it.
-                                        self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                                        movement = ChessMove::new(
-                                            Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                                            Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
-
-                                        self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                                        self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
-
-                                        self.board = self.board.make_move_new(movement);
-                                        self.analysis_history = vec![self.board];
-
-                                        if self.board.side_to_move() == Color::White {
-                                            self.puzzle_status = String::from("White to move!");
-                                        } else {
-                                            self.puzzle_status = String::from("Black to move!");
-                                        }
-                                        self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                                    } else {
-                                        self.puzzle_status = String::from("Well done!");
-                                        self.puzzle_tab.is_playing = false;
-                                    }
-                                } else {
-                                    self.board = Board::default();
-                                    // quite meaningless but allows the user to use the takeback button
-                                    // to analyze a full game in analysis mode after the puzzles ended.
-                                    self.analysis_history = vec![self.board];
-                                    self.puzzle_tab.current_puzzle_move = 1;
-
-                                    self.last_move_from = None;
-                                    self.last_move_to = None;
-                                    self.puzzle_tab.is_playing = false;
-                                    self.puzzle_status = String::from("All puzzles done for this search!");
-                                }
-                            } else {
-                                if self.settings_tab.saved_configs.play_sound {
-                                    if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
-                                        soloud.play(wav);
-                                    }
-                                }
-                                movement = ChessMove::new(
-                                    Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
-                                    Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(&correct_moves[self.puzzle_tab.current_puzzle_move]));
-
-                                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
-
-                                self.board = self.board.make_move_new(movement);
-                                self.analysis_history.push(self.board);
-
-                                self.puzzle_tab.current_puzzle_move += 1;
-                                self.puzzle_status = String::from("Correct! What now?");
-                            }
+                            self.puzzle_status = String::from("Correct! What now?");
+                        }
+                    } else {
+                        #[allow(clippy::collapsible_else_if)]
+                        if self.board.side_to_move() == Color::White {
+                            self.puzzle_status = String::from("Ops! Wrong move... White to play.");
                         } else {
-                            if self.board.side_to_move() == Color::White {
-                                self.puzzle_status = String::from("Ops! Wrong move... White to play.");
-                            } else {
-                                self.puzzle_status = String::from("Ops! Wrong move... Black to play.");
-                            }
+                            self.puzzle_status = String::from("Ops! Wrong move... Black to play.");
                         }
                     }
                 }
@@ -504,7 +502,7 @@ impl Application for OfflinePuzzles {
 
                 let movement = ChessMove::new(
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
                 self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
                 self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
@@ -538,7 +536,7 @@ impl Application for OfflinePuzzles {
 
                 let movement = ChessMove::new(
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
                 self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
                 self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
@@ -571,7 +569,7 @@ impl Application for OfflinePuzzles {
                         // so we need to apply it.
                         let movement = ChessMove::new(
                                 Square::from_str(&puzzle_moves[0][..2]).unwrap(),
-                                Square::from_str(&puzzle_moves[0][2..4]).unwrap(), PuzzleTab::check_promotion(&puzzle_moves[0]));
+                                Square::from_str(&puzzle_moves[0][2..4]).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
                         self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
                         self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));

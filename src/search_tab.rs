@@ -437,26 +437,22 @@ impl SearchTab {
 
     pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) {
         let file = std::fs::File::open("settings.json");        
-        match file {
-            Ok(file) => {
-                let buf_reader = BufReader::new(file);
-                if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
-                    config.last_min_rating = min_rating;
-                    config.last_max_rating = max_rating;
-                    config.last_theme = theme;
-                    config.last_opening = opening;
-                    config.last_opening_side = op_side;
-                            
-                    let file = std::fs::File::create("settings.json");
-                    match file {
-                        Ok(file) => {
-                            if let Err(_) = serde_json::to_writer_pretty(file, &config) {
-                                println!("Error saving search options.");
-                            }
-                        } Err(_) => {}
+        if let Ok(file) = file {
+            let buf_reader = BufReader::new(file);
+            if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
+                config.last_min_rating = min_rating;
+                config.last_max_rating = max_rating;
+                config.last_theme = theme;
+                config.last_opening = opening;
+                config.last_opening_side = op_side;
+                        
+                let file = std::fs::File::create("settings.json");
+                if let Ok(file) = file {
+                    if serde_json::to_writer_pretty(file, &config).is_err() {
+                        println!("Error saving search options.");
                     }
                 }
-            } Err(_) => {}
+            }
         }
     }
     
@@ -468,22 +464,22 @@ impl SearchTab {
         .flexible(true)
         .from_path(&config::SETTINGS.puzzle_db_location);
     
-        match reader {
-            Ok(mut reader) => {
-                puzzles.clear();
-                //self.current_puzzle_move = 1;
-                //self.current_puzzle = 0;
-                let op = match opening {
-                    None => Openings::Any,
+        if let Ok(mut reader) = reader {
+            puzzles.clear();
+            //self.current_puzzle_move = 1;
+            //self.current_puzzle = 0;
+            let op = match opening {
+                None => Openings::Any,
+                Some(x) => x
+            };
+
+            if op != Openings::Any {
+                let side = match op_side {
+                    None => OpeningSide::Any,
                     Some(x) => x
                 };
-    
-                if op != Openings::Any {
-                    let side = match op_side {
-                        None => OpeningSide::Any,
-                        Some(x) => x
-                    };    
-                    if side == OpeningSide::Any {                        
+                match side {
+                    OpeningSide::Any => {                        
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
                                 if record.opening == op.get_field_name() &&
@@ -496,52 +492,48 @@ impl SearchTab {
                                 break;
                             }
                         }
-                    } else {
-                        if side == OpeningSide::Black {
-                            for result in reader.deserialize::<config::Puzzle>() {
-                                if let Ok(record) = result {                                
-                                    if record.opening == op.get_field_name() &&
-                                            !record.game_url.contains("black") &&
-                                            record.rating >= min_rating && record.rating <= max_rating &&
-                                            record.themes.contains(theme.get_tag_name()) {
-                                        puzzles.push(record);
-                                    }
-                                }
-                                if puzzles.len() == config::SETTINGS.search_results_limit {
-                                    break;
+                    } OpeningSide::Black => {
+                        for result in reader.deserialize::<config::Puzzle>() {
+                            if let Ok(record) = result {                                
+                                if record.opening == op.get_field_name() &&
+                                        !record.game_url.contains("black") &&
+                                        record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.themes.contains(theme.get_tag_name()) {
+                                    puzzles.push(record);
                                 }
                             }
-                        } else {
-                            for result in reader.deserialize::<config::Puzzle>() {
-                                if let Ok(record) = result {                                
-                                    if record.opening == op.get_field_name() &&
-                                            record.game_url.contains("black") &&
-                                            record.rating >= min_rating && record.rating <= max_rating &&
-                                            record.themes.contains(theme.get_tag_name()) {
-                                        puzzles.push(record);
-                                    }
-                                }
-                                if puzzles.len() == config::SETTINGS.search_results_limit {
-                                    break;
-                                }
+                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                                break;
                             }
                         }
-                    }
-                } else {
-                    for result in reader.deserialize::<config::Puzzle>() {
-                        if let Ok(record) = result {                                
-                            if record.rating >= min_rating && record.rating <= max_rating &&
-                                    record.themes.contains(theme.get_tag_name()) {
-                                puzzles.push(record);
+                    } OpeningSide::White => {
+                        for result in reader.deserialize::<config::Puzzle>() {
+                            if let Ok(record) = result {                                
+                                if record.opening == op.get_field_name() &&
+                                        record.game_url.contains("black") &&
+                                        record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.themes.contains(theme.get_tag_name()) {
+                                    puzzles.push(record);
+                                }
                             }
-                        }
-                        if puzzles.len() == config::SETTINGS.search_results_limit {
-                            break;
+                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                                break;
+                            }
                         }
                     }
                 }
-            } Err(_) => {
-                //self.puzzle_status = String::from("Problem reading the puzzle DB");
+            } else {
+                for result in reader.deserialize::<config::Puzzle>() {
+                    if let Ok(record) = result {                                
+                        if record.rating >= min_rating && record.rating <= max_rating &&
+                                record.themes.contains(theme.get_tag_name()) {
+                            puzzles.push(record);
+                        }
+                    }
+                    if puzzles.len() == config::SETTINGS.search_results_limit {
+                        break;
+                    }
+                }
             }
         }
         
@@ -559,7 +551,7 @@ impl Tab for SearchTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('\u{F217}'.into(), self.title())
+        TabLabel::IconText('\u{F217}', self.title())
     }
 
     fn content(&self) -> Element<'_, Self::Message> {

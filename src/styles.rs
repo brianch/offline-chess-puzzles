@@ -79,9 +79,11 @@ impl BoardStyle {
 
     pub fn light_sqr(&self) -> [f32; 3] {
         match self {
+            #[allow(clippy::eq_op)]
             BoardStyle::Green  => [255.0 / 255.0, 255.0 / 255.0, 221.0 / 255.0],
             BoardStyle::Purple => [230.0 / 255.0, 219.0 / 255.0, 241.0 / 255.0],
             BoardStyle::Grey   => [222.0 / 255.0, 227.0 / 255.0, 230.0 / 255.0],
+            #[allow(clippy::eq_op)]
             BoardStyle::Blue   => [234.0 / 255.0, 248.0 / 255.0, 255.0 / 255.0],
             _ => [240.0 / 255.0, 217.0 / 255.0, 181.0 / 255.0],
         }

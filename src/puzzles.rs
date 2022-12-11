@@ -80,12 +80,11 @@ impl Tab for PuzzleTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('\u{F217}'.into(), self.title())
+        TabLabel::IconText('\u{F217}', self.title())
     }
 
     fn content(&self) -> Element<'_, Self::Message> {
-        let col_puzzle_info;
-        if !self.puzzles.is_empty() && self.current_puzzle <= self.puzzles.len() - 1 {
+        let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
             let col_info = Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
@@ -150,20 +149,18 @@ impl Tab for PuzzleTab {
                         PuzzleMessage::ChangeTextInputs,
                     )
                 );
-                col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
+                Column::new().spacing(10).align_items(Alignment::Center)
                     .push(Scrollable::new(col_info).height(Length::Fill))
-                    .push(
-                        Button::new(Text::new("Hint")).on_press(PuzzleMessage::ShowHint)
-                    );
+                    .push(Button::new(Text::new("Hint")).on_press(PuzzleMessage::ShowHint))
         } else {
-            col_puzzle_info = Column::new().spacing(10).align_items(Alignment::Center)
+            Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
                     Text::new("No puzzle loaded")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
-        }
+        };
         let content: Element<'_, PuzzleMessage> = Container::new(col_puzzle_info).align_x(alignment::Horizontal::Center)
             .align_y(alignment::Vertical::Center)
             .into();

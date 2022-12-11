@@ -53,13 +53,11 @@ impl SettingsTab {
     pub fn update(&mut self, message: SettingsMessage) -> Command<Message> {
         match message {
             SettingsMessage::ChangeSquareSize(value) => {
-                if value == "" {
+                if value.is_empty() {
                     self.square_size_value = String::from("0");
-                } else {
-                    if let Ok(new_val) = value.parse::<u16>() {
-                        self.square_size_value = new_val.to_string();
-                        self.settings_status = String::from("");
-                    }
+                } else if let Ok(new_val) = value.parse::<u16>() {
+                    self.square_size_value = new_val.to_string();
+                    self.settings_status = String::from("");
                 }
                 Command::none()
             }
@@ -76,13 +74,11 @@ impl SettingsTab {
                 Command::none()
             }
             SettingsMessage::ChangeSearchResultLimit(value) => {
-                if value == "" {
+                if value.is_empty() {
                     self.search_results_limit_value = String::from("0");
-                } else {
-                    if let Ok(new_val) = value.parse::<usize>() {
-                        self.search_results_limit_value = new_val.to_string();
-                        self.settings_status = String::from("");
-                    }
+                } else if let Ok(new_val) = value.parse::<usize>() {
+                    self.search_results_limit_value = new_val.to_string();
+                    self.settings_status = String::from("");
                 }
                 Command::none()
             }
@@ -114,7 +110,7 @@ impl SettingsTab {
                 let file = std::fs::File::create("settings.json");
                 match file {
                     Ok(file) => {
-                        if let Ok(_) = serde_json::to_writer_pretty(file, &config) {                
+                        if serde_json::to_writer_pretty(file, &config).is_ok() {                
                             self.settings_status = String::from("Settings saved!");
                         } else {
                             self.settings_status = String::from("Error saving config file.");
@@ -146,7 +142,7 @@ impl Tab for SettingsTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('\u{F217}'.into(), self.title())
+        TabLabel::IconText('\u{F217}', self.title())
     }
 
     fn content(&self) -> Element<'_, Self::Message> {
