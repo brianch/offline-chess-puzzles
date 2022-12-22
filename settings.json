@@ -6,16 +6,6 @@
   "play_sound": true,
   "auto_load_next": true,
   "board_theme": "Blue",
-  "light_squares_color": [
-    0.91764706,
-    0.972549,
-    1.0
-  ],
-  "dark_squares_color": [
-    0.4117647,
-    0.67058825,
-    0.827451
-  ],
   "last_min_rating": 0,
   "last_max_rating": 1000,
   "last_theme": "All",

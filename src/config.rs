@@ -18,10 +18,7 @@ pub struct OfflinePuzzlesConfig {
     pub search_results_limit: usize,
     pub play_sound: bool,
     pub auto_load_next: bool,
-    pub board_theme: styles::BoardStyle,
-    pub light_squares_color: [f32; 3],
-    pub dark_squares_color: [f32; 3],
-
+    pub board_theme: styles::Theme,
     pub last_min_rating: i32,
     pub last_max_rating: i32,
     pub last_theme: TaticsThemes,
@@ -38,12 +35,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             search_results_limit: 20000,
             play_sound: true,
             auto_load_next: true,
-            board_theme: styles::BoardStyle::Default,
-            // Saving the colors as well, so the user may set custom ones by changing
-            // the config file directly.
-            light_squares_color: styles::BoardStyle::Default.light_sqr(),
-            dark_squares_color: styles::BoardStyle::Default.dark_sqr(),
-
+            board_theme: styles::Theme::default(),
             last_min_rating: 0,
             last_max_rating: 1000,
             last_theme: TaticsThemes::All,

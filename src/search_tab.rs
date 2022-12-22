@@ -1,9 +1,9 @@
-use iced::pure::widget::{button, Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
-use iced::pure::{Element};
-use iced::{alignment, container, Command, Alignment, Length, Background};
+use iced::widget::{Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
+use iced::{Element};
+use iced::{alignment, Command, Alignment, Length};
 use std::io::BufReader;
 
-use iced_aw::pure::TabLabel;
+use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::{Tab, Message, config, styles};
 
@@ -313,58 +313,9 @@ impl std::fmt::Display for Openings {
     }
 }
 
-struct PromotionStyle {bg_color: iced::Color}
-
-impl PromotionStyle {
-    fn new(bg_color: iced::Color, bg_color_selected: iced::Color, is_selected: bool) -> Self {
-        if is_selected{
-            Self { bg_color: bg_color_selected }
-        } else {
-            Self { bg_color }
-        }
-    }
-}
-
-impl button::StyleSheet for PromotionStyle {
-    fn active(&self) -> button::Style {
-        button::Style {
-            background: Some(Background::Color(self.bg_color)),
-            border_radius: 0.1,
-            border_width: 0.0,
-            ..button::Style::default()
-        }
-    }
-
-    fn hovered(&self) -> button::Style {
-        self.active()
-    }
-
-    fn pressed(&self) -> button::Style {
-        button::Style {
-            background: Some(Background::Color(styles::SELECTED_DARK_SQUARE)),
-            border_radius: 1.0,
-            border_width: 0.0,
-            ..button::Style::default()
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum OpeningSide {
     Any, White, Black
-}
-
-struct SearchBoxStyle;
-
-impl container::StyleSheet for SearchBoxStyle {
-    fn style(&self) -> container::Style {
-        container::Style {
-            border_color: iced::Color::BLACK,
-            border_width: 2.0,
-            border_radius: 0.0,
-            ..container::Style::default()
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -372,12 +323,8 @@ pub struct SearchTab {
     pub theme: TaticsThemes,
     pub opening: Option<Openings>,
     pub opening_side: Option<OpeningSide>,
-
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,    
-
-    pub bg_color_promotion: iced::Color,
-    pub bg_color_promotion_selected: iced::Color,
     pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
 
@@ -390,12 +337,8 @@ impl SearchTab {
             theme : config::SETTINGS.last_theme,
             opening: config::SETTINGS.last_opening,
             opening_side: config::SETTINGS.last_opening_side,
-
             slider_min_rating_value: config::SETTINGS.last_min_rating,
             slider_max_rating_value: config::SETTINGS.last_max_rating,
-
-            bg_color_promotion: config::SETTINGS.light_squares_color.into(),
-            bg_color_promotion_selected: config::SETTINGS.dark_squares_color.into(),
             piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
             show_searching_msg: false,
@@ -554,7 +497,7 @@ impl Tab for SearchTab {
         TabLabel::IconText('\u{F217}', self.title())
     }
 
-    fn content(&self) -> Element<'_, Self::Message> {
+    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         
         let row_theme = Row::new().spacing(5).align_items(Alignment::Center)
         .push(
@@ -590,7 +533,7 @@ impl Tab for SearchTab {
 
         let mut row_search = Row::new().spacing(5).align_items(Alignment::Center);
         let btn_search = Button::new(
-            Text::new("Search")).on_press(SearchMesssage::ClickSearch);
+            Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch);
 
         row_min_rating = row_min_rating.push(Text::new("Min. Rating: ")).push(slider_rating_min).push(
             Text::new(self.slider_min_rating_value.to_string())
@@ -634,7 +577,6 @@ impl Tab for SearchTab {
         }
 
         // Promotion piece selector
-        //let mut promotion_col = Column::new().spacing(10).align_items(Alignment::Center).height(Length::FillPortion(1));
         let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
 
         for i in 0..4 {
@@ -658,6 +600,12 @@ impl Tab for SearchTab {
                     image = "/wQ.svg";
                 }
             };
+            let square_style =
+                if self.piece_to_promote_to == piece {
+                    styles::ButtonStyle::DarkSquare
+                } else {   
+                    styles::ButtonStyle::LightSquare
+                };
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
                 .push(Button::new(
                     Svg::from_path(
@@ -666,7 +614,7 @@ impl Tab for SearchTab {
                 .width(Length::Units(config::SETTINGS.square_size))
                 .height(Length::Units(config::SETTINGS.square_size))
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
-                .style(PromotionStyle::new(self.bg_color_promotion, self.bg_color_promotion_selected, self.piece_to_promote_to==piece))
+                .style(square_style)
             ));            
         }
 
@@ -677,7 +625,7 @@ impl Tab for SearchTab {
         }
         search_tab_col = search_tab_col.push(row_search).push(Text::new("Promotion piece:")).push(row_promotion);
 
-        let content: Element<'_, SearchMesssage> = Container::new(search_tab_col)
+        let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(search_tab_col)
             .align_x(alignment::Horizontal::Center)
             .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();

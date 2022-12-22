@@ -1,8 +1,8 @@
-use iced::pure::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList};
-use iced::pure::{Element};
+use iced::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList};
+use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
-use iced_aw::pure::TabLabel;
+use iced_aw::TabLabel;
 
 use crate::{Message, Tab, config, styles};
 
@@ -12,9 +12,8 @@ pub enum SettingsMessage {
     CheckPlaySound(bool),
     CheckAutoLoad(bool),
     SelectPieceTheme(styles::PieceTheme),
-    SelectBoardTheme(styles::BoardStyle),
+    SelectBoardTheme(styles::Theme),
     ChangePuzzleDbLocation(String),
-    //ChangePieceTheme(String),
     ChangeSearchResultLimit(String),
     ChangePressed
 }
@@ -24,7 +23,8 @@ pub struct SettingsTab {
     square_size_value: String,
 
     piece_theme: styles::PieceTheme,
-    board_theme: styles::BoardStyle,
+    pub board_theme: styles::Theme,
+    theme: styles::Theme,
     play_sound: bool,
     auto_load_next: bool,
 
@@ -41,6 +41,7 @@ impl SettingsTab {
             square_size_value: config::SETTINGS.square_size.to_string(),
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
+            theme: styles::Theme::Blue,
             play_sound: config::SETTINGS.play_sound,
             auto_load_next: config::SETTINGS.auto_load_next,
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
@@ -67,7 +68,7 @@ impl SettingsTab {
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -99,8 +100,6 @@ impl SettingsTab {
                     play_sound: self.play_sound,
                     auto_load_next: self.auto_load_next,
                     board_theme: self.board_theme,
-                    light_squares_color: self.board_theme.light_sqr(),
-                    dark_squares_color: self.board_theme.dark_sqr(),
                     last_min_rating: self.saved_configs.last_min_rating,
                     last_max_rating: self.saved_configs.last_max_rating,
                     last_theme: self.saved_configs.last_theme,
@@ -122,14 +121,12 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, auto_load: bool, pieces: styles::PieceTheme, board: styles::BoardStyle) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, pieces: styles::PieceTheme, theme: styles::Theme) -> Option<config::OfflinePuzzlesConfig> {
         let mut config = config::load_config();
-        config.board_theme = board;
+        config.board_theme = theme;
         config.piece_theme = pieces;
         config.play_sound = play_sound;
         config.auto_load_next = auto_load;
-        config.light_squares_color = board.light_sqr();
-        config.dark_squares_color = board.dark_sqr();
         Some(config)
     }
 }
@@ -145,7 +142,7 @@ impl Tab for SettingsTab {
         TabLabel::IconText('\u{F217}', self.title())
     }
 
-    fn content(&self) -> Element<'_, Self::Message> {
+    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
             .spacing(10)
             .push(
@@ -177,7 +174,7 @@ impl Tab for SettingsTab {
                 )
                 .push(
                     PickList::new(
-                        &styles::BoardStyle::ALL[..],
+                        &styles::Theme::ALL[..],
                         Some(self.board_theme),
                         SettingsMessage::SelectBoardTheme
                     )
@@ -270,7 +267,7 @@ impl Tab for SettingsTab {
             )
             .push(
                 Button::new(
-                    Text::new("Save Changes")).on_press(SettingsMessage::ChangePressed)
+                    Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed)
             )
             .push(
                 Text::new(&self.settings_status)
@@ -278,7 +275,7 @@ impl Tab for SettingsTab {
                 .horizontal_alignment(alignment::Horizontal::Center)
                 .vertical_alignment(alignment::Vertical::Bottom),
             );
-        let content: Element<'_, SettingsMessage> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
+        let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
             .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();
 

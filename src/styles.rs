@@ -1,13 +1,17 @@
+use iced::widget::{button, container, text, radio, svg, text_input, scrollable, pick_list, checkbox, slider};
+use iced::widget::slider::{Handle, HandleShape};
+use iced::{application, Color};
+use iced::theme::{Container, Radio, Svg, TextInput, Scrollable, PickList, Checkbox, Slider, Menu};
+use iced::overlay::menu;
 use iced_aw::tabs;
+use iced_aw::style::tab_bar;
+use iced_aw::style::TabBarStyles;
 
 macro_rules! rgb {
     ($r:expr, $g:expr, $b:expr) => {
         iced::Color::from_rgb($r as f32 / 255.0, $g as f32 / 255.0, $b as f32 / 255.0)
     }
 }
-
-pub const SELECTED_DARK_SQUARE: iced::Color = rgb!(170,162,58);
-pub const SELECTED_LIGHT_SQUARE: iced::Color = rgb!(205,210,106);
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum PieceTheme {
@@ -57,383 +61,530 @@ impl std::fmt::Display for PieceTheme {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
-pub enum BoardStyle {
-    Default,
-    Brown,
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum Theme {
+    #[default]
+    Blue,
     Green,
+    Brown,
     Purple,
     Grey,
-    Blue,
+    BlueDark,
+    GreenDark,
+    BrownDark,
+    PurpleDark,
+    GreyDark,
 }
 
-impl BoardStyle {
-
-    pub const ALL: [BoardStyle; 5] = [
-        BoardStyle::Brown,
-        BoardStyle::Green,
-        BoardStyle::Purple,
-        BoardStyle::Grey,
-        BoardStyle::Blue,
+impl Theme {
+    pub fn palette(&self) -> OCPPalette {
+        match self {
+            Self::Blue => OCPPalette::BLUE,
+            Self::Green => OCPPalette::GREEN,
+            Self::Brown => OCPPalette::BROWN,
+            Self::Purple => OCPPalette::PURPLE,
+            Self::Grey => OCPPalette::GREY,
+            Self::BlueDark => OCPPalette::BLUE_DARK,
+            Self::GreenDark => OCPPalette::GREEN_DARK,
+            Self::BrownDark => OCPPalette::BROWN_DARK,
+            Self::PurpleDark => OCPPalette::PURPLE_DARK,
+            Self::GreyDark => OCPPalette::GREY_DARK,
+        }
+    }
+    pub const ALL: [Theme; 10] = [
+        Theme::Blue,
+        Theme::Green,
+        Theme::Brown,
+        Theme::Purple,
+        Theme::Grey,
+        Theme::BlueDark,
+        Theme::GreenDark,
+        Theme::BrownDark,
+        Theme::PurpleDark,
+        Theme::GreyDark,
     ];
-
-    pub fn light_sqr(&self) -> [f32; 3] {
-        match self {
-            #[allow(clippy::eq_op)]
-            BoardStyle::Green  => [255.0 / 255.0, 255.0 / 255.0, 221.0 / 255.0],
-            BoardStyle::Purple => [230.0 / 255.0, 219.0 / 255.0, 241.0 / 255.0],
-            BoardStyle::Grey   => [222.0 / 255.0, 227.0 / 255.0, 230.0 / 255.0],
-            #[allow(clippy::eq_op)]
-            BoardStyle::Blue   => [234.0 / 255.0, 248.0 / 255.0, 255.0 / 255.0],
-            _ => [240.0 / 255.0, 217.0 / 255.0, 181.0 / 255.0],
-        }
-    }
-    pub fn dark_sqr(&self) -> [f32; 3] {
-        match self {
-            BoardStyle::Green  => [134.0 / 255.0, 166.0 / 255.0, 102.0 / 255.0],
-            BoardStyle::Purple => [153.0 / 255.0, 125.0 / 255.0, 181.0 / 255.0],
-            BoardStyle::Grey   => [140.0 / 255.0, 162.0 / 255.0, 173.0 / 255.0],
-            BoardStyle::Blue   => [105.0 / 255.0, 171.0 / 255.0, 211.0 / 255.0],
-            _ => [181.0 / 255.0, 136.0 / 255.0, 99.0 / 255.0],
-        }
-    }
 }
-impl std::fmt::Display for BoardStyle {
+
+impl std::fmt::Display for Theme {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                BoardStyle::Green => "Green",
-                BoardStyle::Purple => "Purple",
-                BoardStyle::Grey => "Grey",
-                BoardStyle::Blue => "Blue",
-                _ => "Brown",
+                Theme::Blue => "Blue",
+                Theme::Green => "Green",
+                Theme::Brown => "Brown",
+                Theme::Purple => "Purple",
+                Theme::Grey => "Grey",
+                Theme::BlueDark => "Blue - Dark Mode",
+                Theme::GreenDark => "Green - Dark Mode",
+                Theme::BrownDark => "Brown - Dark Mode",
+                Theme::PurpleDark => "Purple - Dark Mode",
+                Theme::GreyDark => "Grey - Dark Mode",
             }
         )
     }
 }
 
-//Tab styles from the iced tab example, i'll leave then all here for now.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TabTheme {
-    Default,
-    Grey,
-    Brown,
-    Blue,
-    Green,
-    Purple,
-}
+impl application::StyleSheet for Theme {
+    type Style = ();
 
-impl TabTheme {
-    pub const ALL: [TabTheme; 6] = [
-        TabTheme::Default,
-        TabTheme::Brown,
-        TabTheme::Grey,
-        TabTheme::Blue,
-        TabTheme::Green,
-        TabTheme::Purple,
-    ];
-}
-
-impl Default for TabTheme {
-    fn default() -> TabTheme {
-        TabTheme::Default
-    }
-}
-
-impl From<TabTheme> for String {
-    fn from(tab_theme: TabTheme) -> Self {
-        String::from(match tab_theme {
-            TabTheme::Default => "Default",
-            TabTheme::Grey => "Grey",
-            TabTheme::Brown => "Brown",
-            TabTheme::Blue => "Blue",
-            TabTheme::Green => "Green",
-            TabTheme::Purple => "Purple",
-        })
-    }
-}
-
-impl From<TabTheme> for Box<dyn tabs::StyleSheet> {
-    fn from(tab_theme: TabTheme) -> Self {
-        match tab_theme {
-            TabTheme::Default => Default::default(),
-            TabTheme::Grey => grey::TabBar.into(),
-            TabTheme::Brown => brown::TabBar.into(),
-            TabTheme::Blue => blue::TabBar.into(),
-            TabTheme::Green => green::TabBar.into(),
-            TabTheme::Purple => purple::TabBar.into(),
+    fn appearance(&self, _style: &Self::Style) -> application::Appearance {
+        application::Appearance {
+            background_color: self.palette().container_bg,
+            text_color: Color::BLACK,
         }
     }
 }
 
-mod grey {
-    use iced::{Background, Color};
-    use iced_aw::tabs::{self, Style};
+impl text::StyleSheet for Theme {
+    type Style = ();
 
-    pub struct TabBar;
+    fn appearance(&self, _style: Self::Style) -> text::Appearance {
+        text::Appearance {
+            color: None,
+        }
+    }
+}
 
-    impl tabs::StyleSheet for TabBar {
-        fn active(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = if is_selected {
-                Background::Color([0.55, 0.64, 0.68].into())
-            } else {
-                Background::Color([0.87, 0.9, 0.9].into())
-            };
+impl button::StyleSheet for Theme {
+    type Style = ButtonStyle;
 
-            let tab_label_border_color = if is_selected {
-                [0.55, 0.64, 0.68].into()
-            } else {
-                [0.87, 0.9, 0.9].into()
-            };
+    fn active(&self, style: &ButtonStyle) -> button::Appearance {
+        let palette = self.palette();
 
-            let text_color = if is_selected {
-                Color::WHITE
-            } else {
-                Color::BLACK
-            };
+        match style {
+            ButtonStyle::LightSquare => {
+                button::Appearance {
+                    background: Some(iced::Background::Color(palette.light_square)),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::DarkSquare => {                
+                button::Appearance {
+                    background: Some(iced::Background::Color(palette.dark_square)),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::SelectedLightSquare => {
+                button::Appearance {
+                    background: Some(iced::Background::Color(palette.selected_light_square)),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::SelectedDarkSquare => {
+                button::Appearance {
+                    background: Some(iced::Background::Color(palette.selected_dark_square)),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::Normal => {
+                button::Appearance {
+                    border_width: 2.,
+                    border_color: palette.dark_square,
+                    background: Some(iced::Background::Color(palette.light_square)),
+                    text_color: palette.tab_label,
+                    ..Default::default()
+                }
+            }
+        }
+    }
 
-            Style {
-                background: None,
-                border_color: None,
+    fn hovered(&self, style: &Self::Style) -> button::Appearance {
+        match style {
+            ButtonStyle::Normal => {
+                button::Appearance {
+                    border_width: 2.,
+                    border_color: self.palette().dark_square,
+                    background: Some(iced::Background::Color(self.palette().dark_square)),
+                    text_color: self.palette().label_selected,
+                    ..Default::default()
+                }
+            }
+            _ => self.active(style)
+        }
+    }
+}
+
+impl container::StyleSheet for Theme {
+    type Style = Container;
+
+    fn appearance(&self, _style: &Self::Style) -> container::Appearance {
+        container::Appearance {
+                text_color: Some(self.palette().simple_text),
+                background: Some(iced::Background::Color(Color::TRANSPARENT)),
+                border_radius: 2.0,
                 border_width: 0.0,
-                tab_label_background,
-                tab_label_border_color,
-                tab_label_border_width: 1.0,
-                icon_color: text_color,
-                text_color,
-            }
-        }
-
-        fn hovered(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = Background::Color([0.35, 0.44, 0.48].into());
-            let tab_label_border_color = [0.0, 0.0, 1.0].into();
-            let text_color = Color::WHITE;
-
-            Style {
-                tab_label_background,
-                tab_label_border_color,
-                text_color,
-                icon_color: text_color,
-                ..self.active(is_selected)
-            }
+                border_color: Color::WHITE,
         }
     }
 }
 
-mod brown {
-    use iced::{Background, Color};
-    use iced_aw::tabs::{self, Style};
+impl text_input::StyleSheet for Theme {
+    type Style = TextInput;
 
-    pub struct TabBar;
-
-    impl tabs::StyleSheet for TabBar {
-        fn active(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = if is_selected {
-                Background::Color([0.71, 0.53, 0.39].into())
-            } else {
-                Background::Color([0.94, 0.85, 0.71].into())
-            };
-
-            let tab_label_border_color = if is_selected {
-                [0.71, 0.53, 0.39].into()
-            } else {
-                [0.94, 0.85, 0.71].into()
-            };
-
-            let text_color = if is_selected {
-                Color::WHITE
-            } else {
-                Color::BLACK
-            };
-
-            Style {
-                background: None,
-                border_color: None,
-                border_width: 0.0,
-                tab_label_background,
-                tab_label_border_color,
-                tab_label_border_width: 1.0,
-                icon_color: text_color,
-                text_color,
-            }
+    fn active(&self, _style: &Self::Style) -> text_input::Appearance {
+        text_input::Appearance {
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: self.palette().dark_square
         }
+    }
 
-        fn hovered(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = Background::Color([0.51, 0.33, 0.19].into());
-            let tab_label_border_color = [0.0, 0.0, 1.0].into();
-            let text_color = Color::WHITE;
+    fn focused(&self, _style: &Self::Style) -> text_input::Appearance {
+        text_input::Appearance {
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: self.palette().dark_square
+        }
+    }
 
-            Style {
-                tab_label_background,
-                tab_label_border_color,
-                text_color,
-                icon_color: text_color,
-                ..self.active(is_selected)
-            }
+    fn placeholder_color(&self, _style: &Self::Style) -> Color {
+        self.palette().tab_label
+    }
+
+    fn value_color(&self, _style: &Self::Style) -> Color {
+        self.palette().tab_label
+    }
+
+    fn selection_color(&self, _style: &Self::Style) -> Color {
+        Color::WHITE
+    }
+}
+
+impl svg::StyleSheet for Theme {
+    type Style = Svg;
+
+    fn appearance(&self, _style: &Self::Style) -> svg::Appearance {
+        svg::Appearance {
+            color: None,
         }
     }
 }
 
-mod blue {
-    use iced::{Background, Color};
-    use iced_aw::tabs::{self, Style};
+impl tabs::StyleSheet for Theme {
+    type Style = TabBarStyles;
 
-    pub struct TabBar;
-
-    impl tabs::StyleSheet for TabBar {
-        fn active(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = if is_selected {
-                Background::Color([0.41, 0.67, 0.82].into())
-            } else {
-                Background::Color([0.92, 0.97, 1.0].into())
-            };
-
-            let tab_label_border_color = if is_selected {
-                [0.41, 0.67, 0.82].into()
-            } else {
-                [0.92, 0.97, 1.0].into()
-            };
-
-            let text_color = if is_selected {
-                Color::WHITE
-            } else {
-                Color::BLACK
-            };
-
-            Style {
-                background: None,
-                border_color: None,
-                border_width: 0.0,
-                tab_label_background,
-                tab_label_border_color,
-                tab_label_border_width: 1.0,
-                icon_color: text_color,
-                text_color,
-            }
+    fn active(&self, _style: Self::Style, is_active: bool) -> tab_bar::Appearance {
+        let bg = if is_active { self.palette().dark_square } else { self.palette().light_square };
+        let label_color = if is_active { self.palette().label_selected } else { self.palette().tab_label };
+        tab_bar::Appearance {
+            background: Some(iced::Background::Color(bg)),
+            tab_label_background: iced::Background::Color(bg),
+            text_color: label_color,
+            icon_color: label_color,
+            ..Default::default()
         }
+    }
 
-        fn hovered(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = Background::Color([0.21, 0.47, 0.62].into());
-            let tab_label_border_color = [0.0, 0.0, 1.0].into();
-            let text_color = Color::WHITE;
-
-            Style {
-                tab_label_background,
-                tab_label_border_color,
-                text_color,
-                icon_color: text_color,
-                ..self.active(is_selected)
-            }
+    fn hovered(&self, _style: Self::Style, _is_active: bool) -> tab_bar::Appearance {
+        tab_bar::Appearance {
+            tab_label_background: iced::Background::Color(self.palette().dark_square),
+            text_color: self.palette().label_selected,
+            icon_color: self.palette().label_selected,
+            ..Default::default()
         }
     }
 }
 
-mod green {
-    use iced::{Background, Color};
-    use iced_aw::tabs::{self, Style};
+impl scrollable::StyleSheet for Theme {
+    type Style = Scrollable;
 
-    pub struct TabBar;
-
-    impl tabs::StyleSheet for TabBar {
-        fn active(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = if is_selected {
-                Background::Color([0.52, 0.65, 0.4].into())
-            } else {
-                Background::Color([1.0, 1.0, 0.87].into())
-            };
-
-            let tab_label_border_color = if is_selected {
-                [0.52, 0.65, 0.4].into()
-            } else {
-                [1.0, 1.0, 0.87].into()
-            };
-
-            let text_color = if is_selected {
-                Color::WHITE
-            } else {
-                Color::BLACK
-            };
-
-            Style {
-                background: None,
-                border_color: None,
-                border_width: 0.0,
-                tab_label_background,
-                tab_label_border_color,
-                tab_label_border_width: 1.0,
-                icon_color: text_color,
-                text_color,
-            }
+    fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
+        scrollable::Scrollbar {
+            background: Some(iced::Background::Color(self.palette().light_square)),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: self.palette().light_square,
+            scroller: scrollable::Scroller
+                {
+                    color: self.palette().dark_square,
+                    border_radius: 0.,
+                    border_width: 1.,
+                    border_color: self.palette().light_square,
+                }
         }
+    }
 
-        fn hovered(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = Background::Color([0.32, 0.45, 0.2].into());
-            let tab_label_border_color = [0.0, 0.0, 1.0].into();
-            let text_color = Color::WHITE;
-
-            Style {
-                tab_label_background,
-                tab_label_border_color,
-                text_color,
-                icon_color: text_color,
-                ..self.active(is_selected)
-            }
+    fn hovered(&self, _style: &Self::Style) -> scrollable::Scrollbar {
+        scrollable::Scrollbar {
+            background: Some(iced::Background::Color(self.palette().light_square)),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            scroller: scrollable::Scroller
+                {
+                    color: self.palette().dark_square,
+                    border_radius: 1.,
+                    border_width: 1.,
+                    border_color: Color::BLACK,
+                }
         }
     }
 }
 
-mod purple {
-    use iced::{Background, Color};
-    use iced_aw::tabs::{self, Style};
+impl checkbox::StyleSheet for Theme {
+    type Style = Checkbox;
 
-    pub struct TabBar;
-
-    impl tabs::StyleSheet for TabBar {
-        fn active(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = if is_selected {
-                Background::Color([0.6, 0.50, 0.7].into())
-            } else {
-                Background::Color([0.9, 0.86, 0.94].into())
-            };
-
-            let tab_label_border_color = if is_selected {
-                [0.6, 0.50, 0.7].into()
-            } else {
-                [0.9, 0.86, 0.94].into()
-            };
-
-            let text_color = if is_selected {
-                Color::WHITE
-            } else {
-                Color::BLACK
-            };
-
-            Style {
-                background: None,
-                border_color: None,
-                border_width: 0.0,
-                tab_label_background,
-                tab_label_border_color,
-                tab_label_border_width: 1.0,
-                icon_color: text_color,
-                text_color,
-            }
-        }
-
-        fn hovered(&self, is_selected: bool) -> tabs::Style {
-            let tab_label_background = Background::Color([0.4, 0.30, 0.5].into());
-            let tab_label_border_color = [0.0, 0.0, 1.0].into();
-            let text_color = Color::WHITE;
-
-            Style {
-                tab_label_background,
-                tab_label_border_color,
-                text_color,
-                icon_color: text_color,
-                ..self.active(is_selected)
-            }
+    fn active(&self, _style: &Self::Style, _is_checked: bool) -> checkbox::Appearance {
+        checkbox::Appearance {
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: Color::BLACK,
+            checkmark_color: self.palette().tab_label,
+            text_color: Some(self.palette().tab_label),
         }
     }
+
+    fn hovered(&self, _style: &Self::Style, _is_checked: bool) -> checkbox::Appearance {
+        checkbox::Appearance {
+            background: iced::Background::Color(self.palette().dark_square),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: Color::BLACK,
+            checkmark_color: self.palette().label_selected,
+            text_color: Some(self.palette().label_selected),
+        }
+    }
+    
+}
+
+impl pick_list::StyleSheet for Theme {
+    type Style = PickList;
+
+    fn active(&self, _style: &<Self as pick_list::StyleSheet>::Style) -> pick_list::Appearance {
+        pick_list::Appearance {
+            text_color: self.palette().tab_label,
+            placeholder_color: self.palette().tab_label,
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 0.5,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            icon_size: 1.,
+        }
+
+    }
+
+    fn hovered(&self, _style: &<Self as pick_list::StyleSheet>::Style) -> pick_list::Appearance {
+        pick_list::Appearance {
+            text_color: self.palette().label_selected,
+            placeholder_color: self.palette().label_selected,
+            background: iced::Background::Color(self.palette().dark_square),
+            border_radius: 0.5,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            icon_size: 1.,
+        }
+    }
+}
+
+impl menu::StyleSheet for Theme {
+    type Style = Menu;
+
+    fn appearance(&self, _style: &Self::Style) -> menu::Appearance {
+        menu::Appearance {
+            text_color: self.palette().tab_label,
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 0.3,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            selected_text_color: self.palette().label_selected,
+            selected_background: iced::Background::Color(self.palette().dark_square),
+        }
+    }
+}
+
+impl slider::StyleSheet for Theme {
+    type Style = Slider;
+
+    fn active(&self, _style: &Self::Style) -> slider::Appearance {
+        slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: Handle {
+                shape: HandleShape::Rectangle { width: 7, border_radius: 1. },
+                color: self.palette().light_square,
+                border_width: 2.,
+                border_color: self.palette().dark_square
+            },
+        }
+    }
+
+    fn hovered(&self, _style: &Self::Style) -> slider::Appearance {
+        slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: Handle {
+                shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
+                color: self.palette().dark_square,
+                border_width: 2.,
+                border_color: self.palette().light_square
+            },
+        }
+    }
+
+    fn dragging(&self, _style: &Self::Style) -> slider::Appearance {
+        slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: Handle {
+                shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
+                color: self.palette().dark_square,
+                border_width: 2.,
+                border_color: self.palette().light_square
+            },
+        }
+    }
+}
+
+impl radio::StyleSheet for Theme {
+    type Style = Radio;
+
+    fn active(&self, _style: &Radio, _is_selected: bool) -> radio::Appearance {
+        radio::Appearance {
+            background: iced::Background::Color(self.palette().light_square),
+            dot_color: self.palette().tab_label,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            text_color: Some(self.palette().simple_text),
+        }
+    }
+
+    fn hovered(&self, _style: &Self::Style, _is_selected: bool) -> radio::Appearance {
+        radio::Appearance {
+            background: iced::Background::Color(self.palette().dark_square),
+            dot_color: self.palette().label_selected,
+            border_width: 1.,
+            border_color: self.palette().simple_text,
+            text_color: Some(self.palette().simple_text),
+        }
+    }
+
+}
+
+/// Offline Chess Puzzles Palette
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OCPPalette {
+    pub container_bg: Color,
+    pub simple_text: Color,
+    pub label_selected: Color,
+    pub light_square: Color,
+    pub dark_square: Color,
+    pub selected_light_square: Color,
+    pub selected_dark_square: Color,
+    pub tab_label: Color,
+}
+
+impl OCPPalette {
+    pub const BLUE: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(234.0, 248.0, 255),
+        dark_square: rgb!(105.0, 171.0, 211.0),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+
+    pub const BLUE_DARK: Self = Self {
+        container_bg: rgb!(70.,99.,117.),
+        light_square: rgb!(234.0, 248.0, 255),
+        dark_square: rgb!(105.0, 171.0, 211.0),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const GREEN_DARK: Self = Self {
+        container_bg: rgb!(87.,99.,76.),
+        light_square: rgb!(241.0, 241.0, 212.0),
+        dark_square: rgb!(121.0, 147.0, 95.0),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const BROWN_DARK: Self = Self {
+        container_bg: rgb!(116.,99.,86.),
+        light_square: rgb!(240., 217., 181.),
+        dark_square: rgb!(181., 136., 99.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const PURPLE_DARK: Self = Self {
+        container_bg: rgb!(111.,99.,124.),
+        light_square: rgb!(230., 219., 241.),
+        dark_square: rgb!(153., 125., 181.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const GREY_DARK: Self = Self {
+        container_bg: rgb!(88.,99.,104.),
+        light_square: rgb!(222., 227., 230.),
+        dark_square: rgb!(140., 162., 173.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const GREEN: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(241.0, 241.0, 212.0),
+        dark_square: rgb!(121.0, 147.0, 95.0),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const BROWN: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(240., 217., 181.),
+        dark_square: rgb!(181., 136., 99.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const PURPLE: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(230., 219., 241.),
+        dark_square: rgb!(153., 125., 181.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const GREY: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(222., 227., 230.),
+        dark_square: rgb!(140., 162., 173.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+}
+
+#[derive(Default)]
+pub enum ButtonStyle {
+    #[default]
+    Normal,
+    LightSquare,
+    DarkSquare,
+    SelectedLightSquare,
+    SelectedDarkSquare,
 }
