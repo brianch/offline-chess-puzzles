@@ -5,8 +5,8 @@ authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-iced = {version = "0.6.0", features = ["glow","svg"] }
-iced_aw = { git = "https://github.com/iced-rs/iced_aw", default-features = false, features = ["tabs"] }
+iced = {version = "0.7.0", features = ["glow","svg"] }
+iced_aw = {version = "0.3", default-features = false, features = ["tabs"] }
 
 rand = "0.8"
 chess = "3.2.0"

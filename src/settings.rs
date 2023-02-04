@@ -215,8 +215,8 @@ impl Tab for SettingsTab {
                     )
                     .push(
                         Checkbox::new(
-                            self.play_sound,
                             "",
+                            self.play_sound,
                             SettingsMessage::CheckPlaySound,
                         )
                         .size(20),
@@ -231,8 +231,8 @@ impl Tab for SettingsTab {
                     )
                     .push(
                         Checkbox::new(
-                            self.auto_load_next,
                             "",
+                            self.auto_load_next,
                             SettingsMessage::CheckAutoLoad,
                         )
                         .size(20),
@@ -247,8 +247,8 @@ impl Tab for SettingsTab {
                     )
                     .push(
                         Checkbox::new(
-                            self.flip_board,
                             "",
+                            self.flip_board,
                             SettingsMessage::CheckFlipBoard,
                         )
                         .size(20),

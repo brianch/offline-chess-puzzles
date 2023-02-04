@@ -363,7 +363,7 @@ impl pick_list::StyleSheet for Theme {
             border_radius: 0.5,
             border_width: 1.,
             border_color: self.palette().dark_square,
-            icon_size: 1.,
+            handle_color: self.palette().dark_square
         }
 
     }
@@ -376,7 +376,7 @@ impl pick_list::StyleSheet for Theme {
             border_radius: 0.5,
             border_width: 1.,
             border_color: self.palette().dark_square,
-            icon_size: 1.,
+            handle_color: self.palette().dark_square
         }
     }
 }
