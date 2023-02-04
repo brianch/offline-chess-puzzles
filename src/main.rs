@@ -563,7 +563,7 @@ impl Application for OfflinePuzzles {
         let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
         let mut i = 0;
 
-        let is_white = self.puzzle_tab.current_puzzle_side == Color::White;
+        let is_white = (self.puzzle_tab.current_puzzle_side == Color::White) ^ self.settings_tab.flip_board;
 
         for _ in 0..64 {
 

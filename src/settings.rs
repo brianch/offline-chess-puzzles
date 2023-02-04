@@ -11,6 +11,7 @@ pub enum SettingsMessage {
     ChangeSquareSize(String),
     CheckPlaySound(bool),
     CheckAutoLoad(bool),
+    CheckFlipBoard(bool),
     SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::Theme),
     ChangePuzzleDbLocation(String),
@@ -27,6 +28,7 @@ pub struct SettingsTab {
     theme: styles::Theme,
     play_sound: bool,
     auto_load_next: bool,
+    pub flip_board: bool,
 
     puzzle_db_location_value: String,
     search_results_limit_value: String,
@@ -44,6 +46,7 @@ impl SettingsTab {
             theme: styles::Theme::Blue,
             play_sound: config::SETTINGS.play_sound,
             auto_load_next: config::SETTINGS.auto_load_next,
+            flip_board: config::SETTINGS.flip_board,
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
             search_results_limit_value: config::SETTINGS.search_results_limit.to_string(),
             settings_status: String::new(),
@@ -64,11 +67,11 @@ impl SettingsTab {
             }
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -85,11 +88,15 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::CheckAutoLoad(value) => {
                 self.auto_load_next = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
+            }
+            SettingsMessage::CheckFlipBoard(value) => {
+                self.flip_board = value;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
             }
             SettingsMessage::ChangePressed => {
                 let config = config::OfflinePuzzlesConfig {
@@ -99,6 +106,7 @@ impl SettingsTab {
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
                     play_sound: self.play_sound,
                     auto_load_next: self.auto_load_next,
+                    flip_board: self.flip_board,
                     board_theme: self.board_theme,
                     last_min_rating: self.saved_configs.last_min_rating,
                     last_max_rating: self.saved_configs.last_max_rating,
@@ -121,12 +129,13 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, auto_load: bool, pieces: styles::PieceTheme, theme: styles::Theme) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme) -> Option<config::OfflinePuzzlesConfig> {
         let mut config = config::load_config();
         config.board_theme = theme;
         config.piece_theme = pieces;
         config.play_sound = play_sound;
         config.auto_load_next = auto_load;
+        config.flip_board = flip;
         Some(config)
     }
 }
@@ -229,7 +238,23 @@ impl Tab for SettingsTab {
                         .size(20),
                     )
                 )
-        
+            .push(
+                Row::new().spacing(5).align_items(Alignment::Center)
+                    .push(
+                        Text::new("Flip board:")
+                        .width(Length::Shrink)
+                        .horizontal_alignment(alignment::Horizontal::Center),    
+                    )
+                    .push(
+                        Checkbox::new(
+                            self.flip_board,
+                            "",
+                            SettingsMessage::CheckFlipBoard,
+                        )
+                        .size(20),
+                    )
+                )
+            
             /*
             .push(
                 Text::new("Puzzle DB location")

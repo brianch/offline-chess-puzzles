@@ -18,6 +18,7 @@ pub struct OfflinePuzzlesConfig {
     pub search_results_limit: usize,
     pub play_sound: bool,
     pub auto_load_next: bool,
+    pub flip_board: bool,
     pub board_theme: styles::Theme,
     pub last_min_rating: i32,
     pub last_max_rating: i32,
@@ -35,12 +36,13 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             search_results_limit: 20000,
             play_sound: true,
             auto_load_next: true,
+            flip_board: false,
             board_theme: styles::Theme::default(),
             last_min_rating: 0,
             last_max_rating: 1000,
             last_theme: TaticsThemes::All,
-            last_opening: None,
-            last_opening_side: None,
+            last_opening: Some(Openings::Any),
+            last_opening_side: Some(OpeningSide::Any),
         }
     }
 }
