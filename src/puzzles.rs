@@ -1,9 +1,8 @@
-use iced::widget::{Container, Button, Column, Scrollable, Text, TextInput};
+use iced::widget::{Container, Column, Scrollable, Text, TextInput};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
-use std::str::FromStr;
-use chess::{Color, Square, Piece};
+use chess::{Color, Piece};
 use iced_aw::TabLabel;
 
 use crate::{Message, Tab, config, styles};
@@ -11,7 +10,6 @@ use crate::{Message, Tab, config, styles};
 #[derive(Debug, Clone)]
 pub enum PuzzleMessage {
     ChangeTextInputs(String),
-    ShowHint
 }
 
 #[derive(Debug, Clone)]
@@ -36,23 +34,9 @@ impl PuzzleTab {
 
     pub fn update(&mut self, message: PuzzleMessage) -> Command<Message> {
         match message {
-            PuzzleMessage::ShowHint => {
-                Command::perform(
-                    PuzzleTab::get_hint(
-                        String::from(&self.puzzles[self.current_puzzle].moves),
-                        self.current_puzzle_move), Message::ShowHint)
-            }
             PuzzleMessage::ChangeTextInputs(_) => {
                 Command::none()
             }
-        }
-    }
-    pub async fn get_hint(puzzle_moves: String, move_number: usize) -> Option<Square> {        
-        let moves = puzzle_moves.split_whitespace().collect::<Vec<&str>>();
-        if !moves.is_empty() && moves.len() > move_number {
-            Some(Square::from_str(&moves[move_number][..2]).unwrap())
-        } else {
-            None
         }
     }
 
@@ -85,7 +69,7 @@ impl Tab for PuzzleTab {
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
-            let col_info = Column::new().spacing(10).align_items(Alignment::Center)
+            Scrollable::new(Column::new().spacing(10).align_items(Alignment::Center)
                 .spacing(10)
                 .push(
                     Text::new(String::from("Puzzle link: "))
@@ -148,21 +132,18 @@ impl Tab for PuzzleTab {
                         &self.puzzles[self.current_puzzle].game_url,
                         PuzzleMessage::ChangeTextInputs,
                     )
-                );
-                Column::new().spacing(10).align_items(Alignment::Center)
-                    .push(Scrollable::new(col_info).height(Length::Fill))
-                    .push(Button::new(Text::new("Hint")).padding(5).on_press(PuzzleMessage::ShowHint))
+                ))
         } else {
-            Column::new().spacing(10).align_items(Alignment::Center)
+            Scrollable::new(Column::new().spacing(10).align_items(Alignment::Start)
                 .spacing(10)
                 .push(
                     Text::new("No puzzle loaded")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center),    
-                )
+                    .width(Length::Fill)
+                    .horizontal_alignment(alignment::Horizontal::Center),
+                ))
         };
         let content: Element<PuzzleMessage, iced::Renderer<styles::Theme>> = Container::new(col_puzzle_info).align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Center)
+            .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();
 
         content.map(Message::PuzzleInfo)

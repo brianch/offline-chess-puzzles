@@ -140,7 +140,7 @@ pub enum Message {
     PuzzleInfo(PuzzleMessage),
     SelectMode(config::GameMode),
     TabSelected(usize),
-    ShowHint(Option<Square>),
+    ShowHint,
     ShowNextPuzzle,
     GoBackMove,
     RedoPuzzle,
@@ -425,15 +425,12 @@ impl Application for OfflinePuzzles {
                     self.analysis_history.truncate(self.puzzle_tab.current_puzzle_move);
                 }
                 Command::none()
-            } (_, Message::ShowHint(square)) => {
-                if self.game_mode == config::GameMode::Puzzle {
-                    match square {
-                        Some(square) => {
-                            self.hint_square = Some(PositionGUI::chesssquare_to_posgui(square));
-                        } None => {
-                            self.hint_square = None;
-                        }
-                    }
+            } (_, Message::ShowHint) => {
+                let moves = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
+                if !moves.is_empty() && moves.len() > self.puzzle_tab.current_puzzle_move {
+                    self.hint_square = Some(PositionGUI::chesssquare_to_posgui(Square::from_str(&moves[self.puzzle_tab.current_puzzle_move][..2]).unwrap()));
+                } else {
+                    self.hint_square = None;
                 }
                 Command::none()
             } (_, Message::ShowNextPuzzle) => {
@@ -768,8 +765,9 @@ fn gen_view<'a>(
                 Button::new(Text::new("Takeback move")));
         }
     } else if has_puzzles && !is_playing {
-        navigation_row = navigation_row.push(
-            Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle));
+        navigation_row = navigation_row
+            .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
+            .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
     }
 
     board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);

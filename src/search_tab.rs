@@ -531,10 +531,6 @@ impl Tab for SearchTab {
             SearchMesssage::SliderMaxRatingChanged,
         );
 
-        let mut row_search = Row::new().spacing(5).align_items(Alignment::Center);
-        let btn_search = Button::new(
-            Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch);
-
         row_min_rating = row_min_rating.push(Text::new("Min. Rating: ")).push(slider_rating_min).push(
             Text::new(self.slider_min_rating_value.to_string())
                 .width(Length::Shrink)
@@ -546,8 +542,6 @@ impl Tab for SearchTab {
                 .width(Length::Shrink)
                 .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
-
-        row_search = row_search.push(btn_search);
 
         let mut search_col = Column::new().spacing(10).align_items(Alignment::Center)
                 .push(row_min_rating)
@@ -576,9 +570,12 @@ impl Tab for SearchTab {
             }
         }
 
+        let btn_search = Button::new(
+            Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch);
+        let row_search = Row::new().spacing(5).align_items(Alignment::Center).push(btn_search);
+
         // Promotion piece selector
         let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
-
         for i in 0..4 {
             let piece;
             let image;
@@ -618,14 +615,17 @@ impl Tab for SearchTab {
             ));            
         }
 
-        let scroll = Scrollable::new(search_col).height(Length::Fill);
-        let mut search_tab_col = Column::new().spacing(10).align_items(Alignment::Center).push(scroll);
         if self.show_searching_msg {
-            search_tab_col = search_tab_col.push(Text::new("Searching, please wait..."));
+            search_col = search_col.push(Text::new("Searching, please wait..."));
         }
-        search_tab_col = search_tab_col.push(row_search).push(Text::new("Promotion piece:")).push(row_promotion);
+        search_col = search_col
+            .push(Row::new().padding(10)) //just for separation
+            .push(row_search)
+            .push(Text::new("Promotion piece:"))
+            .push(row_promotion);
 
-        let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(search_tab_col)
+        let scroll = Scrollable::new(search_col).height(Length::Shrink);
+        let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(scroll)
             .align_x(alignment::Horizontal::Center)
             .align_y(alignment::Vertical::Top).height(Length::Fill)
             .into();
