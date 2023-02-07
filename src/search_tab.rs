@@ -5,6 +5,7 @@ use std::io::BufReader;
 
 use iced_aw::TabLabel;
 use chess::{Piece};
+use crate::config::load_config;
 use crate::{Tab, Message, config, styles};
 
 #[derive(Debug, Clone)]
@@ -370,10 +371,12 @@ impl SearchTab {
                 SearchTab::save_search_settings(self.slider_min_rating_value,
                     self.slider_max_rating_value,
                     self.theme, self.opening, self.opening_side);
+
+                let config = load_config();                    
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
-                           self.theme, self.opening, self.opening_side), Message::LoadPuzzle)
+                           self.theme, self.opening, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
             }
         }
     }
@@ -399,7 +402,7 @@ impl SearchTab {
         }
     }
     
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
     
         let reader = csv::ReaderBuilder::new()
@@ -431,7 +434,7 @@ impl SearchTab {
                                     puzzles.push(record);
                                 }
                             }
-                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                            if puzzles.len() == result_limit {
                                 break;
                             }
                         }
@@ -445,7 +448,7 @@ impl SearchTab {
                                     puzzles.push(record);
                                 }
                             }
-                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                            if puzzles.len() == result_limit {
                                 break;
                             }
                         }
@@ -459,7 +462,7 @@ impl SearchTab {
                                     puzzles.push(record);
                                 }
                             }
-                            if puzzles.len() == config::SETTINGS.search_results_limit {
+                            if puzzles.len() == result_limit {
                                 break;
                             }
                         }
@@ -473,7 +476,7 @@ impl SearchTab {
                             puzzles.push(record);
                         }
                     }
-                    if puzzles.len() == config::SETTINGS.search_results_limit {
+                    if puzzles.len() == result_limit {
                         break;
                     }
                 }

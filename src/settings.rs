@@ -161,11 +161,6 @@ impl Tab for SettingsTab {
         let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
             .spacing(10)
             .push(
-                Text::new("(Search limit REQUIRE restart)")
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center),    
-            )
-            .push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                 .push(
                     Text::new("Piece Theme:")
@@ -265,7 +260,7 @@ impl Tab for SettingsTab {
                 Row::new().spacing(5).align_items(Alignment::Center)
     
                 .push(
-                    Text::new("Search Result limit:")
+                    Text::new("Get the first")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
@@ -275,8 +270,14 @@ impl Tab for SettingsTab {
                         &self.search_results_limit_value,
                         SettingsMessage::ChangeSearchResultLimit,
                     )
+                    .width(Length::Units(80))
                     .padding(10)
                     .size(20),
+                )
+                .push(
+                    Text::new(" puzzles")
+                    .width(Length::Shrink)
+                    .horizontal_alignment(alignment::Horizontal::Center),    
                 )
             )
             .push(
@@ -290,7 +291,7 @@ impl Tab for SettingsTab {
                 .vertical_alignment(alignment::Vertical::Bottom),
             );
         let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Top).height(Length::Fill)
+            .align_y(alignment::Vertical::Top).height(Length::Fill).width(Length::Fill)
             .into();
 
         content.map(Message::Settings)

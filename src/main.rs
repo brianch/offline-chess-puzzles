@@ -718,8 +718,8 @@ fn gen_view<'a>(
                 Svg::from_path(
                     String::from("pieces/") + &piece_theme.to_string() + text)
             )
-            .width(Length::Units(((size.height - 117.) / 8.) as u16))
-            .height(Length::Units(((size.height - 117.) / 8.) as u16))
+            .width(Length::Units(((size.height - 110.) / 8.) as u16))
+            .height(Length::Units(((size.height - 110.) / 8.) as u16))
             .on_press(Message::SelectSquare(pos))
             .style(square_style)
         );
