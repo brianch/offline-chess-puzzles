@@ -611,8 +611,8 @@ impl Tab for SearchTab {
                     Svg::from_path(
                         String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
                 )
-                .width(Length::Units(config::SETTINGS.square_size))
-                .height(Length::Units(config::SETTINGS.square_size))
+                .width(Length::Units(60))
+                .height(Length::Units(60))
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
                 .style(square_style)
             ));            

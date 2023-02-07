@@ -8,7 +8,6 @@ use crate::{Message, Tab, config, styles};
 
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {
-    ChangeSquareSize(String),
     CheckPlaySound(bool),
     CheckAutoLoad(bool),
     CheckFlipBoard(bool),
@@ -21,8 +20,8 @@ pub enum SettingsMessage {
 
 #[derive(Debug, Clone)]
 pub struct SettingsTab {
-    square_size_value: String,
-
+    pub window_width: u32,
+    pub window_height: u32,
     piece_theme: styles::PieceTheme,
     pub board_theme: styles::Theme,
     theme: styles::Theme,
@@ -40,7 +39,8 @@ pub struct SettingsTab {
 impl SettingsTab {
     pub fn new() -> Self {
         SettingsTab {
-            square_size_value: config::SETTINGS.square_size.to_string(),
+            window_width: config::SETTINGS.window_width,
+            window_height: config::SETTINGS.window_width,
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
             theme: styles::Theme::Blue,
@@ -56,15 +56,6 @@ impl SettingsTab {
 
     pub fn update(&mut self, message: SettingsMessage) -> Command<Message> {
         match message {
-            SettingsMessage::ChangeSquareSize(value) => {
-                if value.is_empty() {
-                    self.square_size_value = String::from("0");
-                } else if let Ok(new_val) = value.parse::<u16>() {
-                    self.square_size_value = new_val.to_string();
-                    self.settings_status = String::from("");
-                }
-                Command::none()
-            }
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
                 Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
@@ -100,7 +91,8 @@ impl SettingsTab {
             }
             SettingsMessage::ChangePressed => {
                 let config = config::OfflinePuzzlesConfig {
-                    square_size: self.square_size_value.parse().unwrap(),
+                    window_width: self.window_width,
+                    window_height: self.window_height,
                     puzzle_db_location: String::from(&self.puzzle_db_location_value),
                     piece_theme: self.piece_theme,
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
@@ -112,7 +104,7 @@ impl SettingsTab {
                     last_max_rating: self.saved_configs.last_max_rating,
                     last_theme: self.saved_configs.last_theme,
                     last_opening: self.saved_configs.last_opening,
-                    last_opening_side: self.saved_configs.last_opening_side,                    
+                    last_opening_side: self.saved_configs.last_opening_side,
                 };
                 let file = std::fs::File::create("settings.json");
                 match file {
@@ -126,6 +118,20 @@ impl SettingsTab {
                 }
                 Command::none()
             }
+        }
+    }
+
+    pub fn save_window_size(width: u32, height: u32) {
+        let mut config = config::load_config();
+        config.window_width = width;
+        config.window_height = height;
+        let file = std::fs::File::create("settings.json");
+        match file {
+            Ok(file) => {
+                if !serde_json::to_writer_pretty(file, &config).is_ok() {
+                    println!("Error saving config file.");
+                }
+            } Err(_) => println!("Error opening settings file")
         }
     }
 
@@ -155,7 +161,7 @@ impl Tab for SettingsTab {
         let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
             .spacing(10)
             .push(
-                Text::new("(Size and search limit REQUIRE restart)")
+                Text::new("(Search limit REQUIRE restart)")
                 .width(Length::Shrink)
                 .horizontal_alignment(alignment::Horizontal::Center),    
             )
@@ -189,23 +195,6 @@ impl Tab for SettingsTab {
                     )
                 )
             )
-            .push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(
-                        Text::new("Square size:")
-                        .width(Length::Shrink)
-                        .horizontal_alignment(alignment::Horizontal::Center),    
-                    )
-                    .push(
-                        TextInput::new(
-                            &self.square_size_value.to_string(),
-                            &self.square_size_value.to_string(),
-                            SettingsMessage::ChangeSquareSize,
-                        )
-                        .padding(10)
-                        .size(20),
-                    )
-                )
             .push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                     .push(

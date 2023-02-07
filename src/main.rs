@@ -1,8 +1,12 @@
 #![windows_subsystem = "windows"]
 
 use iced::widget::{Svg, Container, Button, Row, Column, Text, Radio};
-use iced::{Application, Element};
+use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
+use iced::window;
+use iced_lazy::responsive;
+use iced_native::{Event};
+
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 use std::str::FromStr;
@@ -141,7 +145,8 @@ pub enum Message {
     GoBackMove,
     RedoPuzzle,
     LoadPuzzle(Option<Vec<config::Puzzle>>),
-    ChangeSettings(Option<config::OfflinePuzzlesConfig>)
+    ChangeSettings(Option<config::OfflinePuzzlesConfig>),
+    EventOccurred(iced_native::Event),
 }
 
 //#[derive(Clone)]
@@ -554,151 +559,54 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
+            } (_, Message::EventOccurred(event)) => {
+                if let Event::Window(window::Event::CloseRequested) = event {
+                    SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
+                    window::close()
+                } else if let Event::Window(window::Event::Resized { width, height }) = event {
+                    self.settings_tab.window_width = width;
+                    self.settings_tab.window_height = height;
+                    Command::none()
+                } else {
+                    Command::none()
+                }
             }
         }
     }
 
+    fn subscription(&self) -> Subscription<Message> {
+        iced_native::subscription::events().map(Message::EventOccurred)
+    }
+
     fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
-        let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
-        let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
-        let mut i = 0;
-
-        let is_white = (self.puzzle_tab.current_puzzle_side == Color::White) ^ self.settings_tab.flip_board;
-
-        for _ in 0..64 {
-
-            let rol: i32 = if is_white { 7 - i / 8 } else { i / 8 };
-            let col: i32 = if is_white { i % 8 } else { 7 - (i % 8) };
-
-            let pos = PositionGUI::new(rol, col);
-
-            let (piece, color) =
-                match self.game_mode {
-                    config::GameMode::Analysis => {
-                        (self.analysis.current_position().piece_on(pos.posgui_to_square()),
-                        self.analysis.current_position().color_on(pos.posgui_to_square()))
-                    } config::GameMode::Puzzle => {
-                        (self.board.piece_on(pos.posgui_to_square()),
-                        self.board.color_on(pos.posgui_to_square()))
-                    }
-                };
-
-            let mut text = "";
-            if let Some(piece) = piece {
-                if color.unwrap() == Color::White {
-                    text = match piece {
-                        Piece::Pawn => "/wP.svg",
-                        Piece::Rook => "/wR.svg",
-                        Piece::Knight => "/wN.svg",
-                        Piece::Bishop => "/wB.svg",
-                        Piece::Queen => "/wQ.svg",
-                        Piece::King => "/wK.svg"
-                    };
-                } else {
-                    text = match piece {
-                        Piece::Pawn => "/bP.svg",
-                        Piece::Rook => "/bR.svg",
-                        Piece::Knight => "/bN.svg",
-                        Piece::Bishop => "/bB.svg",
-                        Piece::Queen => "/bQ.svg",
-                        Piece::King => "/bK.svg"
-                    };
-                }
-            }
-
-            let selected =
-                if self.game_mode == config::GameMode::Puzzle {
-                    self.from_square == Some(pos)    ||
-                    self.last_move_from == Some(pos) ||
-                    self.last_move_to == Some(pos)   ||
-                    self.hint_square == Some(pos)
-                } else {
-                    self.from_square == Some(pos)
-                };
-
-            let square_style = if (pos.get_row() * 9 + pos.get_col()) % 2 == 1 {
-                if selected {
-                    styles::ButtonStyle::SelectedLightSquare
-                } else {   
-                    styles::ButtonStyle::LightSquare
-                }
-            } else {
-                #[allow(clippy::collapsible_else_if)]
-                if selected {
-                    styles::ButtonStyle::SelectedDarkSquare
-                } else {
-                    styles::ButtonStyle::DarkSquare
-                }
-            };
-
-            board_row = board_row.push(Button::new(
-                    Svg::from_path(
-                        String::from("pieces/") + &self.settings_tab.saved_configs.piece_theme.to_string() + text)
-                )
-                .width(Length::Units(config::SETTINGS.square_size))
-                .height(Length::Units(config::SETTINGS.square_size))
-                .on_press(Message::SelectSquare(pos))
-                .style(square_style)
-            );
-
-            i += 1;
-            if i % 8 == 0 {
-                board_col = board_col.push(board_row);
-                board_row = Row::new().spacing(0).align_items(Alignment::Center);
-            }
-        }
-
-        let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
-            .push(Text::new("Mode:")
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center))
-            .push(
-                Radio::new(config::GameMode::Puzzle, "Puzzle", Some(self.game_mode), Message::SelectMode))
-            .push(
-                Radio::new(config::GameMode::Analysis, "Analysis", Some(self.game_mode), Message::SelectMode));
-
-        let mut status_col = Column::new().padding(3).align_items(Alignment::Center);
-
-        let mut row_result = Row::new().spacing(0).align_items(Alignment::Center);
-        row_result = row_result.push(Text::new(&self.puzzle_status)
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center));
-
-        status_col = status_col.push(row_result);
-
-        let mut navigation_row = Row::new().padding(3).spacing(50);
-        let has_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
-        if has_puzzles {
-            navigation_row = navigation_row.push(
-                    Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle));
-        } else {
-            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
-        }
-        if self.game_mode == config::GameMode::Analysis {
-            if self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
-                navigation_row = navigation_row.push(
-                    Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
-            } else {
-                navigation_row = navigation_row.push(
-                    Button::new(Text::new("Takeback move")));
-            }
-        } else if has_puzzles && !self.puzzle_tab.is_playing {
-            navigation_row = navigation_row.push(
-                Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle));
-        }
-
-        board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
-        let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
-        layout_row = layout_row.push(board_col);
-
-        let tabs = Tabs::new(self.active_tab, Message::TabSelected)
-                .push(self.search_tab.tab_label(), self.search_tab.view())
-                .push(self.settings_tab.tab_label(), self.settings_tab.view())
-                .push(self.puzzle_tab.tab_label(), self.puzzle_tab.view())
-                .tab_bar_position(iced_aw::TabBarPosition::Top);    
-
-        layout_row = layout_row.push(tabs);
-        Container::new(layout_row)
+        let resp = responsive(move |size| {
+            gen_view(
+                self.game_mode,
+                self.puzzle_tab.current_puzzle_side,
+                self.settings_tab.flip_board,
+                self.board.clone(),
+                self.analysis.current_position().clone(),
+                self.from_square,
+                self.last_move_from,
+                self.last_move_to,
+                self.hint_square,
+                self.settings_tab.saved_configs.piece_theme,
+                self.puzzle_status.clone(),
+                //has_puzzles:
+                !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1,
+                self.analysis_history.len(),
+                self.puzzle_tab.current_puzzle_move,
+                !self.puzzle_tab.is_playing,
+                self.active_tab,
+                self.search_tab.tab_label(),
+                self.settings_tab.tab_label(),
+                self.puzzle_tab.tab_label(),
+                self.search_tab.view(),
+                self.settings_tab.view(),
+                self.puzzle_tab.view(),
+                size,
+            )});
+        Container::new(resp)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(1)
@@ -708,6 +616,173 @@ impl Application for OfflinePuzzles {
     fn theme(&self) -> Self::Theme {
         self.settings_tab.board_theme
     }
+}
+
+fn gen_view<'a>(
+    game_mode: config::GameMode,
+    current_puzzle_side: Color,
+    flip_board: bool,
+    board: Board,
+    analysis: Board,
+    from_square: Option<PositionGUI>,
+    last_move_from: Option<PositionGUI>,
+    last_move_to: Option<PositionGUI>,
+    hint_square: Option<PositionGUI>,
+    piece_theme: styles::PieceTheme,
+    puzzle_status: String,
+    has_puzzles: bool,
+    analysis_history_len: usize,
+    current_puzzle_move: usize,
+    is_playing: bool,
+    active_tab: usize,
+
+    search_tab_label: TabLabel,
+    settings_tab_label: TabLabel,
+    puzzle_tab_label: TabLabel,
+    search_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
+    settings_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
+    puzzle_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
+    size: Size
+) -> Element<'a, Message, iced::Renderer<styles::Theme>> {
+
+    let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
+    let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
+    let mut i = 0;
+
+    let is_white = (current_puzzle_side == Color::White) ^ flip_board;
+
+    for _ in 0..64 {
+
+        let rol: i32 = if is_white { 7 - i / 8 } else { i / 8 };
+        let col: i32 = if is_white { i % 8 } else { 7 - (i % 8) };
+
+        let pos = PositionGUI::new(rol, col);
+
+        let (piece, color) =
+            match game_mode {
+                config::GameMode::Analysis => {
+                    (analysis.piece_on(pos.posgui_to_square()),
+                    analysis.color_on(pos.posgui_to_square()))
+                } config::GameMode::Puzzle => {
+                    (board.piece_on(pos.posgui_to_square()),
+                    board.color_on(pos.posgui_to_square()))
+                }
+            };
+
+        let mut text = "";
+        if let Some(piece) = piece {
+            if color.unwrap() == Color::White {
+                text = match piece {
+                    Piece::Pawn => "/wP.svg",
+                    Piece::Rook => "/wR.svg",
+                    Piece::Knight => "/wN.svg",
+                    Piece::Bishop => "/wB.svg",
+                    Piece::Queen => "/wQ.svg",
+                    Piece::King => "/wK.svg"
+                };
+            } else {
+                text = match piece {
+                    Piece::Pawn => "/bP.svg",
+                    Piece::Rook => "/bR.svg",
+                    Piece::Knight => "/bN.svg",
+                    Piece::Bishop => "/bB.svg",
+                    Piece::Queen => "/bQ.svg",
+                    Piece::King => "/bK.svg"
+                };
+            }
+        }
+
+        let selected =
+            if game_mode == config::GameMode::Puzzle {
+                from_square == Some(pos)    ||
+                last_move_from == Some(pos) ||
+                last_move_to == Some(pos)   ||
+                hint_square == Some(pos)
+            } else {
+                from_square == Some(pos)
+            };
+
+        let square_style :styles::ButtonStyle = if (pos.get_row() * 9 + pos.get_col()) % 2 == 1 {
+            if selected {
+                styles::ButtonStyle::SelectedLightSquare
+            } else {   
+                styles::ButtonStyle::LightSquare
+            }
+        } else {
+            #[allow(clippy::collapsible_else_if)]
+            if selected {
+                styles::ButtonStyle::SelectedDarkSquare
+            } else {
+                styles::ButtonStyle::DarkSquare
+            }
+        };
+
+        board_row = board_row.push(Button::new(
+                Svg::from_path(
+                    String::from("pieces/") + &piece_theme.to_string() + text)
+            )
+            .width(Length::Units(((size.height - 117.) / 8.) as u16))
+            .height(Length::Units(((size.height - 117.) / 8.) as u16))
+            .on_press(Message::SelectSquare(pos))
+            .style(square_style)
+        );
+
+        i += 1;
+        if i % 8 == 0 {
+            board_col = board_col.push(board_row);
+            board_row = Row::new().spacing(0).align_items(Alignment::Center);
+        }
+    }
+
+    let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
+        .push(Text::new("Mode:")
+            .width(Length::Shrink)
+            .horizontal_alignment(alignment::Horizontal::Center))
+        .push(
+            Radio::new(config::GameMode::Puzzle, "Puzzle", Some(game_mode), Message::SelectMode))
+        .push(
+            Radio::new(config::GameMode::Analysis, "Analysis", Some(game_mode), Message::SelectMode));
+
+    let mut status_col = Column::new().padding(3).align_items(Alignment::Center);
+
+    let mut row_result = Row::new().spacing(0).align_items(Alignment::Center);
+    row_result = row_result.push(Text::new(puzzle_status)
+            .horizontal_alignment(alignment::Horizontal::Center)
+            .vertical_alignment(alignment::Vertical::Center));
+
+    status_col = status_col.push(row_result);
+
+    let mut navigation_row = Row::new().padding(3).spacing(50);
+    if has_puzzles {
+        navigation_row = navigation_row.push(
+                Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle));
+    } else {
+        navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
+    }
+    if game_mode == config::GameMode::Analysis {
+        if analysis_history_len > current_puzzle_move {
+            navigation_row = navigation_row.push(
+                Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
+        } else {
+            navigation_row = navigation_row.push(
+                Button::new(Text::new("Takeback move")));
+        }
+    } else if has_puzzles && !is_playing {
+        navigation_row = navigation_row.push(
+            Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle));
+    }
+
+    board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
+    let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
+    layout_row = layout_row.push(board_col);
+
+    let tabs = Tabs::new(active_tab, Message::TabSelected)
+            .push(search_tab_label, search_tab)
+            .push(settings_tab_label, settings_tab)
+            .push(puzzle_tab_label, puzzle_tab)
+            .tab_bar_position(iced_aw::TabBarPosition::Top);    
+
+    layout_row.push(tabs).into()
 }
 
 trait Tab {
@@ -739,12 +814,13 @@ fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
             size: (
-                (config::SETTINGS.square_size * 8) as u32 + 450,
-                (config::SETTINGS.square_size * 8) as u32 + 117,
+                config::SETTINGS.window_width, //(config::SETTINGS.square_size * 8) as u32 + 450,
+                config::SETTINGS.window_height,//(config::SETTINGS.square_size * 8) as u32 + 120,
             ),
             resizable: true,
             ..iced::window::Settings::default()
         },
+        exit_on_close_request:false,
         ..Settings::default()
     })
 }

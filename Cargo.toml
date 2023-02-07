@@ -7,6 +7,8 @@ edition = "2021"
 [dependencies]
 iced = {version = "0.7.0", features = ["glow","svg"] }
 iced_aw = {version = "0.3", default-features = false, features = ["tabs"] }
+iced_lazy = "0.4.0"
+iced_native = "0.8.0"
 
 rand = "0.8"
 chess = "3.2.0"

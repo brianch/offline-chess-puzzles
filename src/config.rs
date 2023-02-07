@@ -12,7 +12,8 @@ pub enum GameMode {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OfflinePuzzlesConfig {
-    pub square_size: u16,
+    pub window_width: u32,
+    pub window_height: u32,
     pub puzzle_db_location: String,
     pub piece_theme: styles::PieceTheme,
     pub search_results_limit: usize,
@@ -30,7 +31,8 @@ pub struct OfflinePuzzlesConfig {
 impl ::std::default::Default for OfflinePuzzlesConfig {
     fn default() -> Self {
         Self {
-            square_size: 60,
+            window_width: 930,
+            window_height: 600,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
             piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
