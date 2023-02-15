@@ -1,5 +1,9 @@
 #![windows_subsystem = "windows"]
 
+use eval::{EngineState, Engine};
+use std::path::Path;
+use std::str::FromStr;
+use std::sync::mpsc::{self, Sender};
 use iced::widget::{Svg, Container, Button, Row, Column, Text, Radio};
 use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
@@ -9,7 +13,7 @@ use iced_native::{Event};
 
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
-use std::str::FromStr;
+
 use soloud::{Soloud, Wav, audio, AudioExt, LoadExt};
 use rand::thread_rng;
 use rand::seq::SliceRandom;
@@ -24,6 +28,8 @@ use settings::{SettingsMessage, SettingsTab};
 
 mod puzzles;
 use puzzles::{PuzzleMessage, PuzzleTab};
+
+mod eval;
 
 extern crate serde;
 #[macro_use]
@@ -147,6 +153,10 @@ pub enum Message {
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
     EventOccurred(iced_native::Event),
+    StartEngine,
+    EngineStopped,
+    UpdateEval((Option<String>, Option<String>)),
+    EngineReady(mpsc::Sender<String>),
 }
 
 //#[derive(Clone)]
@@ -160,6 +170,12 @@ struct OfflinePuzzles {
 
     analysis: Game,
     analysis_history: Vec<Board>,
+    engine_state: EngineState,
+    engine_btn_label: String,
+    engine_eval: String,
+    engine: Engine,
+    engine_sender: Option<Sender<String>>,
+    engine_move: String,
 
     active_tab: usize,
     search_tab: SearchTab,
@@ -182,6 +198,16 @@ impl Default for OfflinePuzzles {
 
             analysis: Game::new(),
             analysis_history: vec![Board::default()],
+            engine_state: EngineState::TurnedOff,
+            engine_btn_label: String::from("Start Engine"),
+            engine_eval: String::new(),
+            engine: Engine::new(
+                config::SETTINGS.engine_path.clone(),
+                config::SETTINGS.engine_limit.clone(),
+                String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+            ),
+            engine_sender: None,
+            engine_move: String::new(),
 
             puzzle_status: String::from("Use the search."),
             search_tab: SearchTab::new(),
@@ -211,6 +237,92 @@ fn load_one_piece_sound() -> Option<Wav> {
         Ok(_) => Some(sound),
         Err(_) => None,
     }
+}
+
+// The chess crate has a bug on how it returns the en passant square
+// https://github.com/jordanbray/chess/issues/36
+// For communication with the engine we need to pass the correct value,
+// so this ugly solution is needed.
+fn san_correct_ep(fen: String) -> String {
+    let mut tokens_vec: Vec<&str> = fen.split_whitespace().collect::<Vec<&str>>();
+    let mut new_ep_square = String::from("-");
+    if let Some(en_passant) = tokens_vec.get(3) {
+        if en_passant != &"-" {
+            let rank = if String::from(&en_passant[1..2]).parse::<usize>().unwrap() == 4 {
+                3
+            } else {
+                6
+            };
+            new_ep_square = String::from(&en_passant[0..1]) + &rank.to_string();
+        }
+    }
+    tokens_vec[3] = &new_ep_square;
+    tokens_vec.join(" ")
+}
+
+fn coord_to_san(board: Board, coords: String) -> Option<String> {
+    let coords = if coords.len() > 4 {
+        String::from(&coords[0..4]) + "=" + &coords[4..5].to_uppercase()
+    } else {
+        coords
+    };
+    let mut san = None;
+    let orig_square = Square::from_str(&coords[0..2]).unwrap();
+    let dest_square = Square::from_str(&coords[2..4]).unwrap();
+    let piece = board.piece_on(orig_square);
+    if let Some(piece) = piece {
+        if coords == "0-0" || coords == "0-0-0" {
+            san = Some(String::from(coords));
+        } else {
+            let mut san_str = String::new();
+            let is_en_passant = piece == Piece::Pawn && 
+                board.piece_on(dest_square).is_none() &&
+                dest_square.get_file() != orig_square.get_file();
+            let is_normal_capture = board.piece_on(dest_square).is_some();
+            match piece {
+                Piece::Pawn => san_str.push_str(&coords[0..1]),
+                Piece::Bishop => san_str.push_str("B"),
+                Piece::Knight => san_str.push_str("N"),
+                Piece::Rook => san_str.push_str("R"),
+                Piece::Queen => san_str.push_str("Q"),
+                Piece::King => san_str.push_str("K"),
+            }
+            if is_en_passant {
+                san_str.push_str(&"x");
+                san_str.push_str(&coords[2..4]);
+                san_str.push_str(" e.p.");
+            } else if is_normal_capture {
+                let simple_capture = san_str.clone() + &"x" + &coords[2..];
+                let try_move = ChessMove::from_san(&board, &simple_capture);
+                if let Ok(_) = try_move {
+                    san_str.push_str(&"x");
+                    san_str.push_str(&coords[2..]);
+                } else {
+                    //the simple notation can only fail because of ambiguity, so we try to specify
+                    //either the file or the rank
+                    let capture_with_file = san_str.clone() + &coords[0..1] + &"x" + &coords[2..];
+                    let try_move_file = ChessMove::from_san(&board, &capture_with_file);
+                    if let Ok(_) = try_move_file {
+                        san_str.push_str(&coords[0..1]);
+                        san_str.push_str(&"x");
+                        san_str.push_str(&coords[2..]);
+                    } else {
+                        san_str.push_str(&coords[1..2]);
+                        san_str.push_str(&"x");
+                        san_str.push_str(&coords[2..]);
+                    }
+                }
+            } else {
+                if piece==Piece::Pawn {
+                    san_str = String::from(&coords[2..]);
+                } else {
+                    san_str.push_str(&coords[2..]);
+                }
+            }
+            san = Some(san_str);
+        }
+    }
+    san
 }
 
 fn get_notation_string(board: Board, promo_piece: Piece, from: PositionGUI, to: PositionGUI) -> String {
@@ -299,6 +411,12 @@ impl Application for OfflinePuzzles {
 
                     if self.analysis.make_move(move_made) {
                         self.analysis_history.push(self.analysis.current_position());
+                        self.engine.position = self.analysis.current_position().to_string();
+                        if let Some(sender) = &self.engine_sender {
+                            if let Err(e) = sender.send(san_correct_ep(self.analysis.current_position().to_string())) {
+                                eprintln!("Lost contact with the engine: {}", e);
+                            }
+                        }
                         if self.settings_tab.saved_configs.play_sound {
                             if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
                                 soloud.play(wav);
@@ -468,6 +586,11 @@ impl Application for OfflinePuzzles {
                 if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
                     self.analysis_history.pop();
                     self.analysis = Game::new_with_board(*self.analysis_history.last().unwrap());
+                    if let Some(sender) = &self.engine_sender {
+                        if let Err(e) = sender.send(san_correct_ep(self.analysis.current_position().to_string())) {
+                            eprintln!("Lost contact with the engine: {}", e);
+                        }
+                    }
                 }
                 Command::none()
             } (_, Message::RedoPuzzle) => {
@@ -549,6 +672,7 @@ impl Application for OfflinePuzzles {
                 if let Some(settings) = message {
                     self.settings_tab.saved_configs = settings;
                     self.search_tab.piece_theme_promotion = self.settings_tab.saved_configs.piece_theme;
+                    self.engine.engine_path = self.settings_tab.engine_path.clone();
                 }
                 Command::none()
             }
@@ -567,12 +691,69 @@ impl Application for OfflinePuzzles {
                 } else {
                     Command::none()
                 }
+            } (_, Message::StartEngine) => {
+                match self.engine_state {
+                    EngineState::TurnedOff => {
+                        //Check if the path is correct first
+                        if Path::new(&self.engine.engine_path).exists() {
+                            self.engine.position = san_correct_ep(self.analysis.current_position().to_string());
+                            self.engine_state = EngineState::Start(self.engine.clone());
+                            self.engine_btn_label = String::from("Stop Engine");
+                        }
+                    } _ => {
+                        if let Some(sender) = &self.engine_sender {
+                            sender.send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                        }
+                    }
+                }
+                Command::none()
+            } (_, Message::EngineStopped) => {
+                self.engine_state = EngineState::TurnedOff;
+                self.engine_eval = String::new();
+                self.engine_move = String::new();
+                self.engine_btn_label = String::from("Start Engine");
+                Command::none()
+            } (_, Message::EngineReady(sender)) => {
+                self.engine_sender = Some(sender);
+                Command::none()
+            } (_, Message::UpdateEval(eval)) => {
+                match self.engine_state {
+                    EngineState::TurnedOff => {
+                        Command::none()
+                    } _ => {
+                        let (eval, best_move) = eval;                
+                        if let Some(eval_str) = eval {
+                            //Keep the values relative to white, like it's usually done in GUIs
+                            if !eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
+                                let eval = (eval_str.parse::<f32>().unwrap() * -1.).to_string();
+                                self.engine_eval = eval.to_string().clone();    
+                            } else {
+                                self.engine_eval = eval_str;
+                            }
+                        }
+                        if let Some(best_move) = best_move {
+                            if let Some(best_move) = coord_to_san(self.analysis.current_position(), best_move) {
+                                self.engine_move = best_move;
+                            }
+                        }
+                        Command::none()
+                    }
+                }
             }
         }
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        iced_native::subscription::events().map(Message::EventOccurred)
+        match self.engine_state {
+            EngineState::TurnedOff => {
+                iced_native::subscription::events().map(Message::EventOccurred)
+            } _ => {
+                Subscription::batch(vec![
+                    self.engine.run(),
+                    iced_native::subscription::events().map(Message::EventOccurred)
+                ])
+            }
+        }
     }
 
     fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
@@ -595,6 +776,10 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.current_puzzle_move,
                 !self.puzzle_tab.is_playing,
                 self.active_tab,
+                self.engine_eval.clone(),
+                self.engine_move.clone(),
+
+                self.engine_btn_label.clone(),
                 self.search_tab.tab_label(),
                 self.settings_tab.tab_label(),
                 self.puzzle_tab.tab_label(),
@@ -632,7 +817,10 @@ fn gen_view<'a>(
     current_puzzle_move: usize,
     is_playing: bool,
     active_tab: usize,
+    engine_eval: String,
+    engine_move: String,
 
+    engine_btn_label: String,
     search_tab_label: TabLabel,
     settings_tab_label: TabLabel,
     puzzle_tab_label: TabLabel,
@@ -714,12 +902,19 @@ fn gen_view<'a>(
             }
         };
 
+        //Reserve more space below the board if we'll show the engine eval
+        let board_height = if engine_eval.is_empty() {
+            ((size.height - 110.) / 8.) as u16
+        } else {
+            ((size.height - 145.) / 8.) as u16
+        };
+
         board_row = board_row.push(Button::new(
                 Svg::from_path(
                     String::from("pieces/") + &piece_theme.to_string() + text)
             )
-            .width(Length::Units(((size.height - 110.) / 8.) as u16))
-            .height(Length::Units(((size.height - 110.) / 8.) as u16))
+            .width(Length::Units(board_height))
+            .height(Length::Units(board_height))
             .on_press(Message::SelectSquare(pos))
             .style(square_style)
         );
@@ -764,6 +959,8 @@ fn gen_view<'a>(
             navigation_row = navigation_row.push(
                 Button::new(Text::new("Takeback move")));
         }
+        navigation_row = navigation_row
+            .push(Button::new(Text::new(engine_btn_label)).on_press(Message::StartEngine));
     } else if has_puzzles && !is_playing {
         navigation_row = navigation_row
             .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
@@ -771,6 +968,14 @@ fn gen_view<'a>(
     }
 
     board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
+    if !engine_eval.is_empty() {
+        board_col = board_col.push(
+            Row::new().padding(5).spacing(15)
+            .push(Text::new(String::from("Eval: ") + &engine_eval))
+            .push(Text::new(String::from("Best move: ") + &engine_move))
+        );
+    }
+
     let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
     layout_row = layout_row.push(board_col);
 

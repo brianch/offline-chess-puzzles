@@ -1,4 +1,6 @@
 {
+  "engine_path": "/usr/local/bin/stockfish",
+  "engine_limit": "depth 40",
   "window_width": 930,
   "window_height": 600,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",

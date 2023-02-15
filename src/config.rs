@@ -12,6 +12,8 @@ pub enum GameMode {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OfflinePuzzlesConfig {
+    pub engine_path: Option<String>,
+    pub engine_limit: String,
     pub window_width: u32,
     pub window_height: u32,
     pub puzzle_db_location: String,
@@ -31,6 +33,8 @@ pub struct OfflinePuzzlesConfig {
 impl ::std::default::Default for OfflinePuzzlesConfig {
     fn default() -> Self {
         Self {
+            engine_path: None,
+            engine_limit: String::from("depth 40"),
             window_width: 930,
             window_height: 600,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),

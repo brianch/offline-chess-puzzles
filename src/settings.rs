@@ -1,4 +1,4 @@
-use iced::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList};
+use iced::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList, Scrollable};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
@@ -15,11 +15,13 @@ pub enum SettingsMessage {
     SelectBoardTheme(styles::Theme),
     ChangePuzzleDbLocation(String),
     ChangeSearchResultLimit(String),
+    ChangeEnginePath(String),
     ChangePressed
 }
 
 #[derive(Debug, Clone)]
 pub struct SettingsTab {
+    pub engine_path: String,
     pub window_width: u32,
     pub window_height: u32,
     piece_theme: styles::PieceTheme,
@@ -39,6 +41,7 @@ pub struct SettingsTab {
 impl SettingsTab {
     pub fn new() -> Self {
         SettingsTab {
+            engine_path: config::SETTINGS.engine_path.clone().unwrap_or_default(),
             window_width: config::SETTINGS.window_width,
             window_height: config::SETTINGS.window_width,
             piece_theme: config::SETTINGS.piece_theme,
@@ -58,15 +61,19 @@ impl SettingsTab {
         match message {
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
                 Command::none()
+            }
+            SettingsMessage::ChangeEnginePath(value) => {
+                self.engine_path = value;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::ChangeSearchResultLimit(value) => {
                 if value.is_empty() {
@@ -79,18 +86,25 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::CheckAutoLoad(value) => {
                 self.auto_load_next = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::CheckFlipBoard(value) => {
                 self.flip_board = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
             }
             SettingsMessage::ChangePressed => {
+                let engine_path = if self.engine_path.is_empty() {
+                    None
+                } else {
+                    Some(self.engine_path.clone())
+                };
                 let config = config::OfflinePuzzlesConfig {
+                    engine_path: engine_path,
+                    engine_limit: self.saved_configs.engine_limit.clone(),
                     window_width: self.window_width,
                     window_height: self.window_height,
                     puzzle_db_location: String::from(&self.puzzle_db_location_value),
@@ -135,13 +149,19 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme, engine: String) -> Option<config::OfflinePuzzlesConfig> {
+        let engine = if engine.is_empty() {
+            None
+        } else {
+            Some(engine)
+        };
         let mut config = config::load_config();
         config.board_theme = theme;
         config.piece_theme = pieces;
         config.play_sound = play_sound;
         config.auto_load_next = auto_load;
         config.flip_board = flip;
+        config.engine_path = engine;
         Some(config)
     }
 }
@@ -166,31 +186,27 @@ impl Tab for SettingsTab {
                     Text::new("Piece Theme:")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
-                )
-                .push(
+                ).push(
                     PickList::new(
                         &styles::PieceTheme::ALL[..],
                         Some(self.piece_theme),
                         SettingsMessage::SelectPieceTheme
                     )
                 )
-            )
-            .push(
+            ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                 .push(
                     Text::new("Board Theme:")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
-                )
-                .push(
+                ).push(
                     PickList::new(
                         &styles::Theme::ALL[..],
                         Some(self.board_theme),
                         SettingsMessage::SelectBoardTheme
                     )
                 )
-            )
-            .push(
+            ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                     .push(
                         Text::new("Play sound on moves:")
@@ -205,15 +221,13 @@ impl Tab for SettingsTab {
                         )
                         .size(20),
                     )
-                )
-            .push(
+            ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                     .push(
                         Text::new("Auto load next puzzle:")
                         .width(Length::Shrink)
                         .horizontal_alignment(alignment::Horizontal::Center),    
-                    )
-                    .push(
+                    ).push(
                         Checkbox::new(
                             "",
                             self.auto_load_next,
@@ -221,8 +235,7 @@ impl Tab for SettingsTab {
                         )
                         .size(20),
                     )
-                )
-            .push(
+            ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
                     .push(
                         Text::new("Flip board:")
@@ -237,34 +250,13 @@ impl Tab for SettingsTab {
                         )
                         .size(20),
                     )
-                )
-            
-            /*
-            .push(
-                Text::new("Puzzle DB location")
-                .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Center),    
-            )
-            .push(
-                TextInput::new(
-                    &mut self.puzzle_db_location,
-                    "Username",
-                    &self.puzzle_db_location_value,
-                    SettingsMessage::ChangePuzzleDbLocation,
-                )
-                .padding(10)
-                .size(32),
-            )
-            */
-            .push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-    
+            ).push(
+                Row::new().spacing(5).align_items(Alignment::Center)    
                 .push(
                     Text::new("Get the first")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
-                )
-                .push(
+                ).push(
                     TextInput::new(
                         &self.search_results_limit_value,
                         &self.search_results_limit_value,
@@ -273,26 +265,39 @@ impl Tab for SettingsTab {
                     .width(Length::Units(80))
                     .padding(10)
                     .size(20),
-                )
-                .push(
+                ).push(
                     Text::new(" puzzles")
                     .width(Length::Shrink)
                     .horizontal_alignment(alignment::Horizontal::Center),    
                 )
-            )
-            .push(
+            ).push(
+                Text::new("Engine path (with .exe name):")
+                .width(Length::Shrink)
+                .horizontal_alignment(alignment::Horizontal::Center),
+            ).push(
+                TextInput::new(
+                    &self.engine_path,
+                    &self.engine_path,
+                    SettingsMessage::ChangeEnginePath,
+                )
+                .width(Length::Units(200))
+                .padding(10)
+                .size(20),
+            ).push(
                 Button::new(
                     Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed)
-            )
-            .push(
+            ).push(
                 Text::new(&self.settings_status)
                 .width(Length::Shrink)
                 .horizontal_alignment(alignment::Horizontal::Center)
                 .vertical_alignment(alignment::Vertical::Bottom),
             );
-        let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(col_settings).align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Top).height(Length::Fill).width(Length::Fill)
-            .into();
+        let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(
+            Scrollable::new(
+                Column::new().spacing(10).align_items(Alignment::Start)
+                .spacing(10).push(col_settings)
+            )).align_x(alignment::Horizontal::Center).align_y(alignment::Vertical::Top)
+            .height(Length::Fill).width(Length::Fill).into();
 
         content.map(Message::Settings)
     }
