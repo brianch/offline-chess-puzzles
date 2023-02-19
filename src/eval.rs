@@ -1,14 +1,20 @@
 use iced::{Subscription, subscription};
 use lazy_static::__Deref;
-use std::{process::{Stdio, Child}, io::{BufReader, Write, BufRead}, sync::mpsc};
+use std::process::Stdio;
+use tokio::sync::mpsc::{self, Receiver};
+use tokio::process::{Command, Child};
+use tokio::io::{BufReader, AsyncWriteExt, AsyncBufReadExt};
+use tokio::time::timeout;
+use std::time::Duration;
 
 use crate::Message;
 
 pub const STOP_COMMAND: &str = "STOP";
+pub const EXIT_APP_COMMAND: &str = "EXIT";
 
 pub enum EngineState {
     Start(Engine),
-    Thinking(Child, String, mpsc::Receiver<String>),
+    Thinking(Child, String, Receiver<String>),
     TurnedOff,
 }
 
@@ -38,93 +44,113 @@ impl Engine {
             |state| async move {
                 match state {
                     EngineState::Start(engine_data) => {
-                        let (sender, receiver) = mpsc::channel();
+                        let (sender, receiver) = mpsc::channel(100);
 
-                        let mut child = std::process::Command::new(engine_data.engine_path)
+                        let mut child = Command::new(engine_data.engine_path)
+                            .kill_on_drop(true)
                             .stdin(Stdio::piped())
                             .stdout(Stdio::piped())
                             .spawn()
-                            .expect("Error calling engine");                            
+                            .expect("Error calling engine");
                         let pos = String::from("position fen ") + &engine_data.position + &String::from("\n");
                         let limit = String::from("go ") + &engine_data.search_up_to + &"\n";
 
-                        child.stdin.as_mut().unwrap().write_all(b"uci\n").expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"isready\n").expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(b"uci\n").await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(b"isready\n").await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).await.expect("Error communicating with engine");
 
                         (Some(Message::EngineReady(sender)), EngineState::Thinking(child, engine_data.search_up_to, receiver))
 
-                    } EngineState::Thinking(mut child, search_up_to, receiver) => {
+                    } EngineState::Thinking(mut child, search_up_to, mut receiver) => {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
-                            if &msg == STOP_COMMAND {
-                                child.stdin.as_mut().unwrap().write_all(b"stop\n").expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(b"quit\n").expect("Error communicating with engine");
-                                if let Err(e) = child.kill() {
-                                    eprintln!("Error killing the engine process: {} ", e);
-                                }                                
-                                return (Some(Message::EngineStopped), EngineState::TurnedOff);
+                            if &msg == STOP_COMMAND {                            
+                                child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
+                                child.kill().await.expect("Error killing the engine process");
+                                return (Some(Message::EngineStopped(false)), EngineState::TurnedOff);
+                            } else if &msg == EXIT_APP_COMMAND {
+                                child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
+                                child.kill().await.expect("Error killing the engine process");
+                                return (Some(Message::EngineStopped(true)), EngineState::TurnedOff);
                             } else {
                                 let pos = String::from("position fen ") + &msg + &String::from("\n");
                                 let limit = String::from("go ") + &search_up_to + &"\n";
 
-                                child.stdin.as_mut().unwrap().write_all(b"stop\n").expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
+                                //child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").await.expect("Error communicating with engine");
+                                //child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).await.expect("Error communicating with engine");
                             }
                         }
-                        let stdout = child.stdout.as_mut().unwrap();
                         let mut buf_str = String::new();
-                        let mut reader = BufReader::new(stdout);
                         let mut eval = None;
                         let mut best_move = None;
-                        let Ok(_bytes)  = ({
-                            reader.read_line(&mut buf_str)
-                        }) else {
-                            panic!("error reading engine output")
-                        };
-                        let vector: Vec<&str> = buf_str.split_whitespace().collect::<Vec<&str>>();
-                        if let Some(index) = vector.iter().position(|&x| x == "mate") {
-                            let mate_in = vector.get(index+1).unwrap();
-                            let eval_num = mate_in.parse::<f32>().ok();
-                            if let Some(e) = eval_num {
-                                eval = Some(String::from("Mate in ") + &e.to_string());
-                            }
-                            for i in (index + 1)..vector.len() {
-                                if let Some(token) = vector.get(i) {
-                                    if String::from(token.deref()) == "pv" {
-                                        best_move = Some(vector.get(i+1).unwrap().to_string());
+
+                        if let Some(out) = child.stdout.as_mut() {
+                            let mut reader = BufReader::new(out);
+                            loop {
+                                let read_timeout = timeout(Duration::from_millis(50),
+                                    reader.read_line(&mut buf_str)
+                                ).await;
+                                if let Ok(timeout) = read_timeout {
+                                    if let Ok(read_result) = timeout {
+                                        if read_result == 0 {
+                                            break;
+                                        }
+                                        let vector: Vec<&str> = buf_str.split_whitespace().collect::<Vec<&str>>();
+                                        if let Some(index) = vector.iter().position(|&x| x == "mate") {
+                                            let mate_in = vector.get(index+1).unwrap();
+                                            let eval_num = mate_in.parse::<f32>().ok();
+                                            if let Some(e) = eval_num {
+                                                eval = Some(String::from("Mate in ") + &e.to_string());
+                                            }
+                                            for i in (index + 1)..vector.len() {
+                                                if let Some(token) = vector.get(i) {
+                                                    if String::from(token.deref()) == "pv" {
+                                                        // I thought we could just unwrap, but at least Koivisto sometimes
+                                                        // returns lines with nothing in the pv
+                                                        if let Some(best) = vector.get(i+1) {
+                                                            best_move = Some(best.to_string());
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else if let Some(index) = vector.iter().position(|&x| x == "score") {
+                                            let score = vector.get(index+2).unwrap();
+                                            let eval_num = score.parse::<f32>().ok();
+                                            if let Some(e) = eval_num {
+                                                eval = Some(format!("{:.2}",(e / 100.)));
+                                            }
+                                            for i in (index + 1)..vector.len() {
+                                                if let Some(token) = vector.get(i) {
+                                                    if String::from(token.deref()) == "pv" {
+                                                        if let Some(best) = vector.get(i+1) {
+                                                            best_move = Some(best.to_string());
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        buf_str.clear();
+                                    } else {
                                         break;
                                     }
-                                }
-                            }
-                        } else if let Some(index) = vector.iter().position(|&x| x == "score") {
-                            let score = vector.get(index+2).unwrap();
-                            let eval_num = score.parse::<f32>().ok();
-                            if let Some(e) = eval_num {
-                                eval = Some(format!("{:.2}",(e / 100.)));
-                            }
-                            for i in (index + 1)..vector.len() {
-                                if let Some(token) = vector.get(i) {
-                                    if String::from(token.deref()) == "pv" {
-                                        best_move = Some(vector.get(i+1).unwrap().to_string());
-                                        break;
-                                    }
+                                } else {
+                                    break;
                                 }
                             }
                         }
-                        // Just to ping the engine and guarantee we'll have something to read,
-                        // it's really stupid, but the read_line (or read) never returns if the engine
-                        // don't send anything.
-                        child.stdin.as_mut().unwrap().write_all(b"isready\n").expect("Error communicating with engine");
                         (Some(Message::UpdateEval((eval, best_move))), EngineState::Thinking(child, search_up_to, receiver))
                     } EngineState::TurnedOff => {
-                        (Some(Message::EngineStopped), EngineState::TurnedOff)
+                        (Some(Message::EngineStopped(false)), EngineState::TurnedOff)
                     }
                 }
             }

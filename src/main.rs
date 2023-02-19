@@ -3,7 +3,7 @@
 use eval::{EngineState, Engine};
 use std::path::Path;
 use std::str::FromStr;
-use std::sync::mpsc::{self, Sender};
+use tokio::sync::mpsc::{self, Sender};
 use iced::widget::{Svg, Container, Button, Row, Column, Text, Radio};
 use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
@@ -154,7 +154,7 @@ pub enum Message {
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
     EventOccurred(iced_native::Event),
     StartEngine,
-    EngineStopped,
+    EngineStopped(bool),
     UpdateEval((Option<String>, Option<String>)),
     EngineReady(mpsc::Sender<String>),
 }
@@ -271,8 +271,10 @@ fn coord_to_san(board: Board, coords: String) -> Option<String> {
     let dest_square = Square::from_str(&coords[2..4]).unwrap();
     let piece = board.piece_on(orig_square);
     if let Some(piece) = piece {
-        if coords == "0-0" || coords == "0-0-0" {
-            san = Some(String::from(coords));
+        if coords == "e1g1" || coords == "e8g8" {
+            san = Some(String::from("0-0"));
+        } else if coords == "e1c1" || coords == "e8c8" {
+            san = Some(String::from("0-0-0"));
         } else {
             let mut san_str = String::new();
             let is_en_passant = piece == Piece::Pawn && 
@@ -413,7 +415,7 @@ impl Application for OfflinePuzzles {
                         self.analysis_history.push(self.analysis.current_position());
                         self.engine.position = self.analysis.current_position().to_string();
                         if let Some(sender) = &self.engine_sender {
-                            if let Err(e) = sender.send(san_correct_ep(self.analysis.current_position().to_string())) {
+                            if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
                                 eprintln!("Lost contact with the engine: {}", e);
                             }
                         }
@@ -587,7 +589,7 @@ impl Application for OfflinePuzzles {
                     self.analysis_history.pop();
                     self.analysis = Game::new_with_board(*self.analysis_history.last().unwrap());
                     if let Some(sender) = &self.engine_sender {
-                        if let Err(e) = sender.send(san_correct_ep(self.analysis.current_position().to_string())) {
+                        if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
                             eprintln!("Lost contact with the engine: {}", e);
                         }
                     }
@@ -682,8 +684,17 @@ impl Application for OfflinePuzzles {
                 self.search_tab.update(message)
             } (_, Message::EventOccurred(event)) => {
                 if let Event::Window(window::Event::CloseRequested) = event {
-                    SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
-                    window::close()
+                    match self.engine_state {
+                        EngineState::TurnedOff => {
+                            SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
+                            window::close()        
+                        } _ => {
+                            if let Some(sender) = &self.engine_sender {
+                                sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
+                            }
+                            Command::none()
+                        }
+                    }                        
                 } else if let Event::Window(window::Event::Resized { width, height }) = event {
                     self.settings_tab.window_width = width;
                     self.settings_tab.window_height = height;
@@ -702,17 +713,22 @@ impl Application for OfflinePuzzles {
                         }
                     } _ => {
                         if let Some(sender) = &self.engine_sender {
-                            sender.send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                            sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
                         }
                     }
                 }
                 Command::none()
-            } (_, Message::EngineStopped) => {
-                self.engine_state = EngineState::TurnedOff;
-                self.engine_eval = String::new();
-                self.engine_move = String::new();
-                self.engine_btn_label = String::from("Start Engine");
-                Command::none()
+            } (_, Message::EngineStopped(exit)) => {
+                if exit {
+                    SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
+                    window::close()
+                } else {
+                    self.engine_state = EngineState::TurnedOff;
+                    self.engine_eval = String::new();
+                    self.engine_move = String::new();
+                    self.engine_btn_label = String::from("Start Engine");
+                    Command::none()
+                }
             } (_, Message::EngineReady(sender)) => {
                 self.engine_sender = Some(sender);
                 Command::none()
@@ -727,6 +743,10 @@ impl Application for OfflinePuzzles {
                             if !eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
                                 let eval = (eval_str.parse::<f32>().unwrap() * -1.).to_string();
                                 self.engine_eval = eval.to_string().clone();    
+                            } else if eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
+                                let tokens: Vec<&str> = eval_str.split_whitespace().collect();
+                                let distance_to_mate = (tokens[2].parse::<f32>().unwrap() * -1.).to_string();
+                                self.engine_eval = String::from("Mate in ") + &distance_to_mate;
                             } else {
                                 self.engine_eval = eval_str;
                             }
@@ -906,7 +926,7 @@ fn gen_view<'a>(
         let board_height = if engine_eval.is_empty() {
             ((size.height - 110.) / 8.) as u16
         } else {
-            ((size.height - 145.) / 8.) as u16
+            ((size.height - 140.) / 8.) as u16
         };
 
         board_row = board_row.push(Button::new(
