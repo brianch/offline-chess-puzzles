@@ -67,16 +67,22 @@ impl Engine {
                     } EngineState::Thinking(mut child, search_up_to, mut receiver) => {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
-                            if &msg == STOP_COMMAND {                            
+                            if &msg == STOP_COMMAND || &msg == EXIT_APP_COMMAND {
                                 child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                 child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
-                                child.kill().await.expect("Error killing the engine process");
-                                return (Some(Message::EngineStopped(false)), EngineState::TurnedOff);
-                            } else if &msg == EXIT_APP_COMMAND {
-                                child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
-                                child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
-                                child.kill().await.expect("Error killing the engine process");
-                                return (Some(Message::EngineStopped(true)), EngineState::TurnedOff);
+                                let terminate_timeout = timeout(Duration::from_millis(50),
+                                    child.wait()
+                                ).await;
+                                if let Err(_) = terminate_timeout {
+                                    eprintln!("Engine didn't quit, killing the process now...");
+                                    let kill_result = timeout(Duration::from_millis(50),
+                                        child.kill()
+                                    ).await;
+                                    if let Err(e) = kill_result {
+                                        eprintln!("Error killing the engine process: {e}");
+                                    }
+                                }
+                                return (Some(Message::EngineStopped(&msg == EXIT_APP_COMMAND)), EngineState::TurnedOff);
                             } else {
                                 let pos = String::from("position fen ") + &msg + &String::from("\n");
                                 let limit = String::from("go ") + &search_up_to + &"\n";
@@ -104,33 +110,20 @@ impl Engine {
                                             break;
                                         }
                                         let vector: Vec<&str> = buf_str.split_whitespace().collect::<Vec<&str>>();
-                                        if let Some(index) = vector.iter().position(|&x| x == "mate") {
-                                            let mate_in = vector.get(index+1).unwrap();
-                                            let eval_num = mate_in.parse::<f32>().ok();
+                                        if let Some(index) = vector.iter().position(|&x| x == "score") {
+                                            let eval_num = vector.get(index+2).unwrap().parse::<f32>().ok();
                                             if let Some(e) = eval_num {
-                                                eval = Some(String::from("Mate in ") + &e.to_string());
+                                                if vector.get(index+1).unwrap() == &"mate" {
+                                                    eval = Some(String::from("Mate in ") + &e.to_string());
+                                                } else {
+                                                    eval = Some(format!("{:.2}",(e / 100.)));
+                                                }
                                             }
-                                            for i in (index + 1)..vector.len() {
+                                            for i in (index + 3)..vector.len() {
                                                 if let Some(token) = vector.get(i) {
                                                     if String::from(token.deref()) == "pv" {
                                                         // I thought we could just unwrap, but at least Koivisto sometimes
                                                         // returns lines with nothing in the pv
-                                                        if let Some(best) = vector.get(i+1) {
-                                                            best_move = Some(best.to_string());
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        } else if let Some(index) = vector.iter().position(|&x| x == "score") {
-                                            let score = vector.get(index+2).unwrap();
-                                            let eval_num = score.parse::<f32>().ok();
-                                            if let Some(e) = eval_num {
-                                                eval = Some(format!("{:.2}",(e / 100.)));
-                                            }
-                                            for i in (index + 1)..vector.len() {
-                                                if let Some(token) = vector.get(i) {
-                                                    if String::from(token.deref()) == "pv" {
                                                         if let Some(best) = vector.get(i+1) {
                                                             best_move = Some(best.to_string());
                                                             break;
