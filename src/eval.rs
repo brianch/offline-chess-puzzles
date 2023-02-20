@@ -68,6 +68,7 @@ impl Engine {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
                             if &msg == STOP_COMMAND || &msg == EXIT_APP_COMMAND {
+                                drop(receiver);
                                 child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                 child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
                                 let terminate_timeout = timeout(Duration::from_millis(50),

@@ -724,6 +724,10 @@ impl Application for OfflinePuzzles {
                     window::close()
                 } else {
                     self.engine_state = EngineState::TurnedOff;
+                    if let Some(sender) = &self.engine_sender {
+                        drop(sender);
+                        self.engine_sender = None;
+                    }
                     self.engine_eval = String::new();
                     self.engine_move = String::new();
                     self.engine_btn_label = String::from("Start Engine");
