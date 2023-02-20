@@ -1,4 +1,4 @@
-use iced::widget::{Container, Button, Column, Text, Radio, Row, Svg, PickList, Slider, Scrollable};
+use iced::widget::{Container, Button, column, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 use std::io::BufReader;
@@ -501,68 +501,50 @@ impl Tab for SearchTab {
     }
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
-        
-        let row_theme = Row::new().spacing(5).align_items(Alignment::Center)
-        .push(
+
+        let mut search_col = column![
+            row![
+                Text::new("Min. Rating: "),
+                Slider::new(
+                    0..=3000,
+                    self.slider_min_rating_value,
+                    SearchMesssage::SliderMinRatingChanged,
+                ),
+                Text::new(self.slider_min_rating_value.to_string())
+            ].width(Length::Fill),
+            row![
+                Text::new("Max. Rating: "),
+                Slider::new(
+                    0..=3000,
+                    self.slider_max_rating_value,
+                    SearchMesssage::SliderMaxRatingChanged,
+                ),
+                Text::new(self.slider_max_rating_value.to_string())
+                ].width(Length::Fill),
+            Text::new("Tactics theme:"),
             PickList::new(
                 &TaticsThemes::ALL[..],
                 Some(self.theme),
                 SearchMesssage::SelectTheme
-            )
-        );
-
-        let row_opening = Row::new().spacing(5).align_items(Alignment::Center)
-        .push(
+            ),
+            Text::new("In the opening:"),
             PickList::new(
                 &Openings::ALL[..],
                 self.opening,
                 SearchMesssage::SelectOpening
             )
-        );
-
-        let mut row_min_rating = Row::new().spacing(5).align_items(Alignment::Center);
-        let slider_rating_min = Slider::new(
-            0..=3000,
-            self.slider_min_rating_value,
-            SearchMesssage::SliderMinRatingChanged,
-        );
-
-        let mut row_max_rating = Row::new().spacing(5).align_items(Alignment::Center);
-        let slider_rating_max = Slider::new(
-            0..=3000,
-            self.slider_max_rating_value,
-            SearchMesssage::SliderMaxRatingChanged,
-        );
-
-        row_min_rating = row_min_rating.push(Text::new("Min. Rating: ")).push(slider_rating_min).push(
-            Text::new(self.slider_min_rating_value.to_string())
-        ).width(Length::Fill);
-
-        row_max_rating = row_max_rating.push(Text::new("Max. Rating: ")).push(slider_rating_max).push(
-            Text::new(self.slider_max_rating_value.to_string())
-        ).width(Length::Fill);
-
-        let mut search_col = Column::new().spacing(10).align_items(Alignment::Center)
-                .push(row_min_rating)
-                .push(row_max_rating)
-                .push(Text::new("Tactics theme:"))
-                .push(row_theme)
-                .push(Text::new("In the opening:"))
-                .push(row_opening);
+        ].spacing(10).align_items(Alignment::Center);
 
         if let Some(op) = self.opening {
             if op != Openings::Any {
-                let row_color = Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide))
-                    .push(Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide))
-                    .push(Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide));
+                let row_color = row![
+                    Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide),
+                    Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide),
+                    Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide)
+                ].spacing(5).align_items(Alignment::Center);
                 search_col = search_col.push(Text::new("Side: ")).push(row_color);
             }
         }
-
-        let btn_search = Button::new(
-            Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch);
-        let row_search = Row::new().spacing(5).align_items(Alignment::Center).push(btn_search);
 
         // Promotion piece selector
         let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
@@ -604,12 +586,12 @@ impl Tab for SearchTab {
             ));            
         }
 
+        search_col = search_col.push(Space::new(Length::Fill, Length::Units(10)));
         if self.show_searching_msg {
             search_col = search_col.push(Text::new("Searching, please wait..."));
         }
         search_col = search_col
-            .push(Row::new().padding(10)) //just for separation
-            .push(row_search)
+            .push(Button::new(Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch))
             .push(Text::new("Promotion piece:"))
             .push(row_promotion);
 

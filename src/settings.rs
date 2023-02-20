@@ -1,4 +1,4 @@
-use iced::widget::{Button, Container, Checkbox, Column, Text, TextInput, Row, PickList, Scrollable};
+use iced::widget::{Button, Container, Checkbox, column, Column, Text, TextInput, row, PickList, Scrollable};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
@@ -178,94 +178,69 @@ impl Tab for SettingsTab {
     }
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
-        let col_settings = Column::new().spacing(10).align_items(Alignment::Center)
-            .spacing(10)
-            .push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                .push(Text::new("Piece Theme:"))
-                .push(
-                    PickList::new(
-                        &styles::PieceTheme::ALL[..],
-                        Some(self.piece_theme),
-                        SettingsMessage::SelectPieceTheme
-                    )
+        let col_settings = column![
+            row![
+                Text::new("Piece Theme:"),
+                PickList::new(
+                    &styles::PieceTheme::ALL[..],
+                    Some(self.piece_theme),
+                    SettingsMessage::SelectPieceTheme
                 )
-            ).push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                .push(Text::new("Board Theme:"))
-                .push(
-                    PickList::new(
-                        &styles::Theme::ALL[..],
-                        Some(self.board_theme),
-                        SettingsMessage::SelectBoardTheme
-                    )
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new("Board Theme:"),
+                PickList::new(
+                    &styles::Theme::ALL[..],
+                    Some(self.board_theme),
+                    SettingsMessage::SelectBoardTheme
                 )
-            ).push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(Text::new("Play sound on moves:"))
-                    .push(
-                        Checkbox::new(
-                            "",
-                            self.play_sound,
-                            SettingsMessage::CheckPlaySound,
-                        )
-                        .size(20),
-                    )
-            ).push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(Text::new("Auto load next puzzle:"))
-                    .push(
-                        Checkbox::new(
-                            "",
-                            self.auto_load_next,
-                            SettingsMessage::CheckAutoLoad,
-                        )
-                        .size(20),
-                    )
-            ).push(
-                Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(Text::new("Flip board:"))
-                    .push(
-                        Checkbox::new(
-                            "",
-                            self.flip_board,
-                            SettingsMessage::CheckFlipBoard,
-                        )
-                        .size(20),
-                    )
-            ).push(
-                Row::new().spacing(5).align_items(Alignment::Center)    
-                    .push(Text::new("Get the first"))
-                    .push(
-                        TextInput::new(
-                            &self.search_results_limit_value,
-                            &self.search_results_limit_value,
-                            SettingsMessage::ChangeSearchResultLimit,
-                        )
-                        .width(Length::Units(80))
-                        .padding(10)
-                        .size(20))
-                    .push(Text::new(" puzzles")
-                )
-            ).push(
-                Text::new("Engine path (with .exe name):")
-            ).push(
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new("Play sound on moves:"),
+                Checkbox::new(
+                    "",
+                    self.play_sound,
+                    SettingsMessage::CheckPlaySound,
+                ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new("Auto load next puzzle:"),
+                Checkbox::new(
+                    "",
+                    self.auto_load_next,
+                    SettingsMessage::CheckAutoLoad,
+                ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new("Flip board:"),
+                Checkbox::new(
+                    "",
+                    self.flip_board,
+                    SettingsMessage::CheckFlipBoard,
+                ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![   
+                Text::new("Get the first"),
                 TextInput::new(
-                    &self.engine_path,
-                    &self.engine_path,
-                    SettingsMessage::ChangeEnginePath,
-                )
-                .width(Length::Units(200))
-                .padding(10)
-                .size(20),
-            ).push(
-                Button::new(Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed)
-            ).push(
-                Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
-            );
+                    &self.search_results_limit_value,
+                    &self.search_results_limit_value,
+                    SettingsMessage::ChangeSearchResultLimit,
+                ).width(Length::Units(80)).padding(10).size(20),
+                Text::new(" puzzles")
+            ].spacing(5).align_items(Alignment::Center),
+            Text::new("Engine path (with .exe name):"),
+            TextInput::new(
+                &self.engine_path,
+                &self.engine_path,
+                SettingsMessage::ChangeEnginePath,
+            ).width(Length::Units(200)).padding(10).size(20),
+            Button::new(Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed),
+            Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
+
+        ].spacing(10).align_items(Alignment::Center);
         let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(
             Scrollable::new(
-                Column::new().spacing(10).spacing(10).push(col_settings)
+                Column::new().spacing(10).push(col_settings)
             )
         ).align_x(alignment::Horizontal::Center).height(Length::Fill).width(Length::Fill).into();
 

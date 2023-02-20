@@ -4,7 +4,7 @@ use eval::{EngineState, Engine};
 use std::path::Path;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{Svg, Container, Button, Row, Column, Text, Radio};
+use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio};
 use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
 use iced::window;
@@ -946,20 +946,11 @@ fn gen_view<'a>(
         }
     }
 
-    let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
-        .push(Text::new("Mode:"))
-        .push(
-            Radio::new(config::GameMode::Puzzle, "Puzzle", Some(game_mode), Message::SelectMode))
-        .push(
-            Radio::new(config::GameMode::Analysis, "Analysis", Some(game_mode), Message::SelectMode));
-
-    let mut status_col = Column::new().padding(3).align_items(Alignment::Center);
-
-    let mut row_result = Row::new().spacing(0).align_items(Alignment::Center);
-    row_result = row_result.push(Text::new(puzzle_status)
-            .vertical_alignment(alignment::Vertical::Center));
-
-    status_col = status_col.push(row_result);
+    let game_mode_row = row![
+        Text::new("Mode:"),
+        Radio::new(config::GameMode::Puzzle, "Puzzle", Some(game_mode), Message::SelectMode),
+        Radio::new(config::GameMode::Analysis, "Analysis", Some(game_mode), Message::SelectMode)
+    ].spacing(10).padding(10).align_items(Alignment::Center);
 
     let mut navigation_row = Row::new().padding(3).spacing(50);
     if has_puzzles {
@@ -984,17 +975,15 @@ fn gen_view<'a>(
             .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
     }
 
-    board_col = board_col.push(status_col).push(game_mode_row).push(navigation_row);
+    board_col = board_col.push(Text::new(puzzle_status)).push(game_mode_row).push(navigation_row);
     if !engine_eval.is_empty() {
         board_col = board_col.push(
-            Row::new().padding(5).spacing(15)
-            .push(Text::new(String::from("Eval: ") + &engine_eval))
-            .push(Text::new(String::from("Best move: ") + &engine_move))
+            row![
+                Text::new(String::from("Eval: ") + &engine_eval),
+                Text::new(String::from("Best move: ") + &engine_move)
+            ].padding(5).spacing(15)
         );
     }
-
-    let mut layout_row = Row::new().spacing(30).align_items(Alignment::Start);
-    layout_row = layout_row.push(board_col);
 
     let tabs = Tabs::new(active_tab, Message::TabSelected)
             .push(search_tab_label, search_tab)
@@ -1002,7 +991,7 @@ fn gen_view<'a>(
             .push(puzzle_tab_label, puzzle_tab)
             .tab_bar_position(iced_aw::TabBarPosition::Top);    
 
-    layout_row.push(tabs).into()
+    row![board_col,tabs].spacing(30).align_items(Alignment::Start).into()
 }
 
 trait Tab {

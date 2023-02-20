@@ -1,4 +1,4 @@
-use iced::widget::{Container, Column, Scrollable, Text, TextInput};
+use iced::widget::{Container, column, Scrollable, Text, TextInput};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 
@@ -69,44 +69,36 @@ impl Tab for PuzzleTab {
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
-            Scrollable::new(Column::new().spacing(10).align_items(Alignment::Center)
-                .spacing(10)
-                .push(
-                    Text::new(String::from("Puzzle link: "))
-                ).push(
-                    TextInput::new("",
-                    &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
-                    PuzzleMessage::ChangeTextInputs)                        
-                ).push(Text::new("FEN:")
-                ).push(
-                    TextInput::new(
-                        &self.puzzles[self.current_puzzle].fen,
-                        &self.puzzles[self.current_puzzle].fen,
-                        PuzzleMessage::ChangeTextInputs,
-                    )
-                ).push(Text::new(String::from("Rating: ") + &self.puzzles[self.current_puzzle].rating.to_string())
-                ).push(Text::new(String::from("Rating Deviation: ") + &self.puzzles[self.current_puzzle].rating_deviation.to_string())
-                ).push(Text::new(String::from("Popularity (-100 to 100): ") + &self.puzzles[self.current_puzzle].popularity.to_string())
-                ).push(Text::new(String::from("Times Played (on lichess): ") + &self.puzzles[self.current_puzzle].nb_plays.to_string())
-                ).push(Text::new("Themes:")
-                ).push(Text::new(&self.puzzles[self.current_puzzle].themes)
-                ).push(Text::new("Game url: ")
-                ).push(
-                    TextInput::new(
-                        &self.puzzles[self.current_puzzle].game_url,
-                        &self.puzzles[self.current_puzzle].game_url,
-                        PuzzleMessage::ChangeTextInputs,
-                    )
+            Scrollable::new(column![
+                Text::new(String::from("Puzzle link: ")),
+                TextInput::new("",
+                &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
+                PuzzleMessage::ChangeTextInputs),
+                Text::new("FEN:"),
+                TextInput::new(
+                    &self.puzzles[self.current_puzzle].fen,
+                    &self.puzzles[self.current_puzzle].fen,
+                    PuzzleMessage::ChangeTextInputs,
+                ),
+                Text::new(String::from("Rating: ") + &self.puzzles[self.current_puzzle].rating.to_string()),
+                Text::new(String::from("Rating Deviation: ") + &self.puzzles[self.current_puzzle].rating_deviation.to_string()),
+                Text::new(String::from("Popularity (-100 to 100): ") + &self.puzzles[self.current_puzzle].popularity.to_string()),
+                Text::new(String::from("Times Played (on lichess): ") + &self.puzzles[self.current_puzzle].nb_plays.to_string()),
+                Text::new("Themes:"),
+                Text::new(&self.puzzles[self.current_puzzle].themes),
+                Text::new("Game url: "),
+                TextInput::new(
+                    &self.puzzles[self.current_puzzle].game_url,
+                    &self.puzzles[self.current_puzzle].game_url,
+                    PuzzleMessage::ChangeTextInputs,
                 )
-            )
+            ].spacing(10).align_items(Alignment::Center))
         } else {
-            Scrollable::new(Column::new().spacing(10)
-                .spacing(10)
-                .push(
+            Scrollable::new(column![
                     Text::new("No puzzle loaded")
                     .horizontal_alignment(alignment::Horizontal::Center)
                     .width(Length::Fill)
-                ))
+                ].spacing(10))
         };
         let content: Element<PuzzleMessage, iced::Renderer<styles::Theme>> = Container::new(col_puzzle_info)
             .align_x(alignment::Horizontal::Center).height(Length::Fill).into();
