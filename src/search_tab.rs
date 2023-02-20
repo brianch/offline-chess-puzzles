@@ -536,39 +536,26 @@ impl Tab for SearchTab {
 
         row_min_rating = row_min_rating.push(Text::new("Min. Rating: ")).push(slider_rating_min).push(
             Text::new(self.slider_min_rating_value.to_string())
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
 
         row_max_rating = row_max_rating.push(Text::new("Max. Rating: ")).push(slider_rating_max).push(
             Text::new(self.slider_max_rating_value.to_string())
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center),
         ).width(Length::Fill);
 
         let mut search_col = Column::new().spacing(10).align_items(Alignment::Center)
                 .push(row_min_rating)
                 .push(row_max_rating)
-                .push(Text::new("Tactics theme:")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center))
+                .push(Text::new("Tactics theme:"))
                 .push(row_theme)
-                .push(Text::new("In the opening:")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center))
-                .push(row_opening)
-                .width(Length::Shrink);
+                .push(Text::new("In the opening:"))
+                .push(row_opening);
 
         if let Some(op) = self.opening {
             if op != Openings::Any {
                 let row_color = Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(
-                        Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide)
-                    ).push(
-                        Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide)
-                    ).push(
-                        Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide)
-                    );
+                    .push(Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide))
+                    .push(Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide))
+                    .push(Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide));
                 search_col = search_col.push(Text::new("Side: ")).push(row_color);
             }
         }
@@ -608,8 +595,7 @@ impl Tab for SearchTab {
                 };
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
                 .push(Button::new(
-                    Svg::from_path(
-                        String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
+                    Svg::from_path(String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
                 )
                 .width(Length::Units(60))
                 .height(Length::Units(60))
@@ -627,10 +613,9 @@ impl Tab for SearchTab {
             .push(Text::new("Promotion piece:"))
             .push(row_promotion);
 
-        let scroll = Scrollable::new(search_col).height(Length::Shrink);
+        let scroll = Scrollable::new(search_col);
         let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(scroll)
-            .align_x(alignment::Horizontal::Center)
-            .align_y(alignment::Vertical::Top).height(Length::Fill)
+            .align_x(alignment::Horizontal::Center).height(Length::Fill)
             .into();
         
         content.map(Message::Search)

@@ -947,9 +947,7 @@ fn gen_view<'a>(
     }
 
     let game_mode_row = Row::new().spacing(10).padding(10).align_items(Alignment::Center)
-        .push(Text::new("Mode:")
-            .width(Length::Shrink)
-            .horizontal_alignment(alignment::Horizontal::Center))
+        .push(Text::new("Mode:"))
         .push(
             Radio::new(config::GameMode::Puzzle, "Puzzle", Some(game_mode), Message::SelectMode))
         .push(
@@ -959,7 +957,6 @@ fn gen_view<'a>(
 
     let mut row_result = Row::new().spacing(0).align_items(Alignment::Center);
     row_result = row_result.push(Text::new(puzzle_status)
-            .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center));
 
     status_col = status_col.push(row_result);

@@ -182,11 +182,8 @@ impl Tab for SettingsTab {
             .spacing(10)
             .push(
                 Row::new().spacing(5).align_items(Alignment::Center)
+                .push(Text::new("Piece Theme:"))
                 .push(
-                    Text::new("Piece Theme:")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center),    
-                ).push(
                     PickList::new(
                         &styles::PieceTheme::ALL[..],
                         Some(self.piece_theme),
@@ -195,11 +192,8 @@ impl Tab for SettingsTab {
                 )
             ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
+                .push(Text::new("Board Theme:"))
                 .push(
-                    Text::new("Board Theme:")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center),    
-                ).push(
                     PickList::new(
                         &styles::Theme::ALL[..],
                         Some(self.board_theme),
@@ -208,11 +202,7 @@ impl Tab for SettingsTab {
                 )
             ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(
-                        Text::new("Play sound on moves:")
-                        .width(Length::Shrink)
-                        .horizontal_alignment(alignment::Horizontal::Center),    
-                    )
+                    .push(Text::new("Play sound on moves:"))
                     .push(
                         Checkbox::new(
                             "",
@@ -223,11 +213,8 @@ impl Tab for SettingsTab {
                     )
             ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
+                    .push(Text::new("Auto load next puzzle:"))
                     .push(
-                        Text::new("Auto load next puzzle:")
-                        .width(Length::Shrink)
-                        .horizontal_alignment(alignment::Horizontal::Center),    
-                    ).push(
                         Checkbox::new(
                             "",
                             self.auto_load_next,
@@ -237,11 +224,7 @@ impl Tab for SettingsTab {
                     )
             ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)
-                    .push(
-                        Text::new("Flip board:")
-                        .width(Length::Shrink)
-                        .horizontal_alignment(alignment::Horizontal::Center),    
-                    )
+                    .push(Text::new("Flip board:"))
                     .push(
                         Checkbox::new(
                             "",
@@ -252,28 +235,20 @@ impl Tab for SettingsTab {
                     )
             ).push(
                 Row::new().spacing(5).align_items(Alignment::Center)    
-                .push(
-                    Text::new("Get the first")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center),    
-                ).push(
-                    TextInput::new(
-                        &self.search_results_limit_value,
-                        &self.search_results_limit_value,
-                        SettingsMessage::ChangeSearchResultLimit,
-                    )
-                    .width(Length::Units(80))
-                    .padding(10)
-                    .size(20),
-                ).push(
-                    Text::new(" puzzles")
-                    .width(Length::Shrink)
-                    .horizontal_alignment(alignment::Horizontal::Center),    
+                    .push(Text::new("Get the first"))
+                    .push(
+                        TextInput::new(
+                            &self.search_results_limit_value,
+                            &self.search_results_limit_value,
+                            SettingsMessage::ChangeSearchResultLimit,
+                        )
+                        .width(Length::Units(80))
+                        .padding(10)
+                        .size(20))
+                    .push(Text::new(" puzzles")
                 )
             ).push(
                 Text::new("Engine path (with .exe name):")
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center),
             ).push(
                 TextInput::new(
                     &self.engine_path,
@@ -284,20 +259,15 @@ impl Tab for SettingsTab {
                 .padding(10)
                 .size(20),
             ).push(
-                Button::new(
-                    Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed)
+                Button::new(Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed)
             ).push(
-                Text::new(&self.settings_status)
-                .width(Length::Shrink)
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Bottom),
+                Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
             );
         let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(
             Scrollable::new(
-                Column::new().spacing(10).align_items(Alignment::Start)
-                .spacing(10).push(col_settings)
-            )).align_x(alignment::Horizontal::Center).align_y(alignment::Vertical::Top)
-            .height(Length::Fill).width(Length::Fill).into();
+                Column::new().spacing(10).spacing(10).push(col_settings)
+            )
+        ).align_x(alignment::Horizontal::Center).height(Length::Fill).width(Length::Fill).into();
 
         content.map(Message::Settings)
     }
