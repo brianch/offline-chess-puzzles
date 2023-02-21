@@ -45,13 +45,14 @@ impl Engine {
                 match state {
                     EngineState::Start(engine_data) => {
                         let (sender, receiver) = mpsc::channel(100);
+                        let mut cmd = Command::new(engine_data.engine_path);
+                        cmd.kill_on_drop(true).stdin(Stdio::piped()).stdout(Stdio::piped());
+                        #[cfg(target_os = "windows")]
+                        //"CREATE_NO_WINDOW" flag
+                        // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
+                        cmd.creation_flags(0x08000000);
+                        let mut child = cmd.spawn().expect("Error calling engine");
 
-                        let mut child = Command::new(engine_data.engine_path)
-                            .kill_on_drop(true)
-                            .stdin(Stdio::piped())
-                            .stdout(Stdio::piped())
-                            .spawn()
-                            .expect("Error calling engine");
                         let pos = String::from("position fen ") + &engine_data.position + &String::from("\n");
                         let limit = String::from("go ") + &engine_data.search_up_to + &"\n";
 
