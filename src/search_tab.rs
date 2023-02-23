@@ -579,14 +579,14 @@ impl Tab for SearchTab {
                 .push(Button::new(
                     Svg::from_path(String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
                 )
-                .width(Length::Units(60))
-                .height(Length::Units(60))
+                .width(60)
+                .height(60)
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
                 .style(square_style)
             ));            
         }
 
-        search_col = search_col.push(Space::new(Length::Fill, Length::Units(10)));
+        search_col = search_col.push(Space::new(Length::Fill, 10));
         if self.show_searching_msg {
             search_col = search_col.push(Text::new("Searching, please wait..."));
         }

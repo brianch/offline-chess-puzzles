@@ -334,7 +334,7 @@ impl checkbox::StyleSheet for Theme {
             border_radius: 1.,
             border_width: 1.,
             border_color: Color::BLACK,
-            checkmark_color: self.palette().tab_label,
+            icon_color: self.palette().tab_label,
             text_color: Some(self.palette().tab_label),
         }
     }
@@ -345,7 +345,7 @@ impl checkbox::StyleSheet for Theme {
             border_radius: 1.,
             border_width: 1.,
             border_color: Color::BLACK,
-            checkmark_color: self.palette().label_selected,
+            icon_color: self.palette().label_selected,
             text_color: Some(self.palette().label_selected),
         }
     }

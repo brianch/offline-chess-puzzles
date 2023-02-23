@@ -225,7 +225,7 @@ impl Tab for SettingsTab {
                     &self.search_results_limit_value,
                     &self.search_results_limit_value,
                     SettingsMessage::ChangeSearchResultLimit,
-                ).width(Length::Units(80)).padding(10).size(20),
+                ).width(80).padding(10).size(20),
                 Text::new(" puzzles")
             ].spacing(5).align_items(Alignment::Center),
             Text::new("Engine path (with .exe name):"),
@@ -233,7 +233,7 @@ impl Tab for SettingsTab {
                 &self.engine_path,
                 &self.engine_path,
                 SettingsMessage::ChangeEnginePath,
-            ).width(Length::Units(200)).padding(10).size(20),
+            ).width(200).padding(10).size(20),
             Button::new(Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed),
             Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
 

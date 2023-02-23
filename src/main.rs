@@ -938,8 +938,8 @@ fn gen_view<'a>(
                 Svg::from_path(
                     String::from("pieces/") + &piece_theme.to_string() + text)
             )
-            .width(Length::Units(board_height))
-            .height(Length::Units(board_height))
+            .width(board_height)
+            .height(board_height)
             .on_press(Message::SelectSquare(pos))
             .style(square_style)
         );
