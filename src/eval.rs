@@ -4,6 +4,8 @@ use lazy_static::__Deref;
 use std::process::Stdio;
 use async_std::channel::{unbounded, Receiver};
 use async_std::process::{Command, Child};
+#[cfg(target_os = "windows")]
+use async_std::os::windows::process::CommandExt;
 use async_std::io::{BufReader, WriteExt};
 use async_std::io::timeout;
 use std::time::Duration;
