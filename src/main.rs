@@ -3,7 +3,7 @@
 use eval::{EngineState, Engine};
 use std::path::Path;
 use std::str::FromStr;
-use tokio::sync::mpsc::{self, Sender};
+use async_std::channel::{Sender};
 use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio};
 use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
@@ -156,7 +156,7 @@ pub enum Message {
     StartEngine,
     EngineStopped(bool),
     UpdateEval((Option<String>, Option<String>)),
-    EngineReady(mpsc::Sender<String>),
+    EngineReady(Sender<String>),
 }
 
 //#[derive(Clone)]
@@ -415,7 +415,7 @@ impl Application for OfflinePuzzles {
                         self.analysis_history.push(self.analysis.current_position());
                         self.engine.position = self.analysis.current_position().to_string();
                         if let Some(sender) = &self.engine_sender {
-                            if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
+                            if let Err(e) = sender.try_send(san_correct_ep(self.analysis.current_position().to_string())) {
                                 eprintln!("Lost contact with the engine: {}", e);
                             }
                         }
@@ -589,7 +589,7 @@ impl Application for OfflinePuzzles {
                     self.analysis_history.pop();
                     self.analysis = Game::new_with_board(*self.analysis_history.last().unwrap());
                     if let Some(sender) = &self.engine_sender {
-                        if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
+                        if let Err(e) = sender.try_send(san_correct_ep(self.analysis.current_position().to_string())) {
                             eprintln!("Lost contact with the engine: {}", e);
                         }
                     }
@@ -691,7 +691,7 @@ impl Application for OfflinePuzzles {
                             window::close()        
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
-                                sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
+                                sender.try_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
                             }
                             Command::none()
                         }
@@ -714,7 +714,7 @@ impl Application for OfflinePuzzles {
                         }
                     } _ => {
                         if let Some(sender) = &self.engine_sender {
-                            sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                            sender.try_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
                         }
                     }
                 }

@@ -5,7 +5,7 @@ authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-iced = {version = "0.8.0", features = ["glow","svg", "tokio"] }
+iced = {version = "0.8.0", features = ["glow","svg", "async-std"] }
 iced_aw = {version = "0.4", default-features = false, features = ["tabs"] }
 iced_lazy = "0.5.0"
 iced_native = "0.9.1"
@@ -17,7 +17,7 @@ serde = "1.0.152"
 serde_derive = "1.0.152"
 serde_json = "1.0.93"
 lazy_static = "1.4.0"
-tokio = { version = "1.25.0", features = ["process", "io-std", "io-util", "sync"] }
+async-std = "1.12.0"
 [target.'cfg(not(windows))'.dependencies]
 soloud = "1.0.2"
 [target.'cfg(windows)'.dependencies]

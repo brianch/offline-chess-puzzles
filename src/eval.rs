@@ -1,10 +1,11 @@
+use async_std::io::prelude::BufReadExt;
 use iced::{Subscription, subscription};
 use lazy_static::__Deref;
 use std::process::Stdio;
-use tokio::sync::mpsc::{self, Receiver};
-use tokio::process::{Command, Child};
-use tokio::io::{BufReader, AsyncWriteExt, AsyncBufReadExt};
-use tokio::time::timeout;
+use async_std::channel::{unbounded, Receiver};
+use async_std::process::{Command, Child};
+use async_std::io::{BufReader, WriteExt};
+use async_std::io::timeout;
 use std::time::Duration;
 
 use crate::Message;
@@ -44,7 +45,7 @@ impl Engine {
             |state| async move {
                 match state {
                     EngineState::Start(engine_data) => {
-                        let (sender, receiver) = mpsc::channel(100);
+                        let (sender, receiver) = unbounded();
                         let mut cmd = Command::new(engine_data.engine_path);
                         cmd.kill_on_drop(true).stdin(Stdio::piped()).stdout(Stdio::piped());
                         #[cfg(target_os = "windows")]
@@ -65,7 +66,7 @@ impl Engine {
 
                         (Some(Message::EngineReady(sender)), EngineState::Thinking(child, engine_data.search_up_to, receiver))
 
-                    } EngineState::Thinking(mut child, search_up_to, mut receiver) => {
+                    } EngineState::Thinking(mut child, search_up_to, receiver) => {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
                             if &msg == STOP_COMMAND || &msg == EXIT_APP_COMMAND {
@@ -73,14 +74,11 @@ impl Engine {
                                 child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                 child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
                                 let terminate_timeout = timeout(Duration::from_millis(50),
-                                    child.wait()
+                                    child.status()
                                 ).await;
                                 if let Err(_) = terminate_timeout {
                                     eprintln!("Engine didn't quit, killing the process now...");
-                                    let kill_result = timeout(Duration::from_millis(50),
-                                        child.kill()
-                                    ).await;
-                                    if let Err(e) = kill_result {
+                                    if let Err(e) = child.kill() {
                                         eprintln!("Error killing the engine process: {e}");
                                     }
                                 }
@@ -106,38 +104,34 @@ impl Engine {
                                 let read_timeout = timeout(Duration::from_millis(50),
                                     reader.read_line(&mut buf_str)
                                 ).await;
-                                if let Ok(timeout) = read_timeout {
-                                    if let Ok(read_result) = timeout {
-                                        if read_result == 0 {
-                                            break;
-                                        }
-                                        let vector: Vec<&str> = buf_str.split_whitespace().collect::<Vec<&str>>();
-                                        if let Some(index) = vector.iter().position(|&x| x == "score") {
-                                            let eval_num = vector.get(index+2).unwrap().parse::<f32>().ok();
-                                            if let Some(e) = eval_num {
-                                                if vector.get(index+1).unwrap() == &"mate" {
-                                                    eval = Some(String::from("Mate in ") + &e.to_string());
-                                                } else {
-                                                    eval = Some(format!("{:.2}",(e / 100.)));
-                                                }
+                                if let Ok(read_result) = read_timeout {
+                                    if read_result == 0 {
+                                        break;
+                                    }
+                                    let vector: Vec<&str> = buf_str.split_whitespace().collect::<Vec<&str>>();
+                                    if let Some(index) = vector.iter().position(|&x| x == "score") {
+                                        let eval_num = vector.get(index+2).unwrap().parse::<f32>().ok();
+                                        if let Some(e) = eval_num {
+                                            if vector.get(index+1).unwrap() == &"mate" {
+                                                eval = Some(String::from("Mate in ") + &e.to_string());
+                                            } else {
+                                                eval = Some(format!("{:.2}",(e / 100.)));
                                             }
-                                            for i in (index + 3)..vector.len() {
-                                                if let Some(token) = vector.get(i) {
-                                                    if String::from(token.deref()) == "pv" {
-                                                        // I thought we could just unwrap, but at least Koivisto sometimes
-                                                        // returns lines with nothing in the pv
-                                                        if let Some(best) = vector.get(i+1) {
-                                                            best_move = Some(best.to_string());
-                                                            break;
-                                                        }
+                                        }
+                                        for i in (index + 3)..vector.len() {
+                                            if let Some(token) = vector.get(i) {
+                                                if String::from(token.deref()) == "pv" {
+                                                    // I thought we could just unwrap, but at least Koivisto sometimes
+                                                    // returns lines with nothing in the pv
+                                                    if let Some(best) = vector.get(i+1) {
+                                                        best_move = Some(best.to_string());
+                                                        break;
                                                     }
                                                 }
                                             }
                                         }
-                                        buf_str.clear();
-                                    } else {
-                                        break;
                                     }
+                                    buf_str.clear();
                                 } else {
                                     break;
                                 }
