@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use eval::{EngineState, Engine};
+use eval::{Engine, EngineStatus};
 use std::path::Path;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
@@ -170,7 +170,7 @@ struct OfflinePuzzles {
 
     analysis: Game,
     analysis_history: Vec<Board>,
-    engine_state: EngineState,
+    engine_state: EngineStatus,
     engine_btn_label: String,
     engine_eval: String,
     engine: Engine,
@@ -198,7 +198,7 @@ impl Default for OfflinePuzzles {
 
             analysis: Game::new(),
             analysis_history: vec![Board::default()],
-            engine_state: EngineState::TurnedOff,
+            engine_state: EngineStatus::TurnedOff,
             engine_btn_label: String::from("Start Engine"),
             engine_eval: String::new(),
             engine: Engine::new(
@@ -686,7 +686,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::EventOccurred(event)) => {
                 if let Event::Window(window::Event::CloseRequested) = event {
                     match self.engine_state {
-                        EngineState::TurnedOff => {
+                        EngineStatus::TurnedOff => {
                             SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
                             window::close()        
                         } _ => {
@@ -705,26 +705,24 @@ impl Application for OfflinePuzzles {
                 }
             } (_, Message::StartEngine) => {
                 match self.engine_state {
-                    EngineState::TurnedOff => {
+                    EngineStatus::TurnedOff => {
                         //Check if the path is correct first
                         if Path::new(&self.engine.engine_path).exists() {
                             self.engine.position = san_correct_ep(self.analysis.current_position().to_string());
-                            self.engine_state = EngineState::Start(self.engine.clone());
+                            self.engine_state = EngineStatus::Started;
                             self.engine_btn_label = String::from("Stop Engine");
                         }
                     } _ => {
                         if let Some(sender) = &self.engine_sender {
                             sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                            drop(sender);
+                            self.engine_sender = None;
                         }
                     }
                 }
                 Command::none()
             } (_, Message::EngineStopped(exit)) => {
-                self.engine_state = EngineState::TurnedOff;
-                if let Some(sender) = &self.engine_sender {
-                    drop(sender);
-                    self.engine_sender = None;
-                }
+                self.engine_state = EngineStatus::TurnedOff;
                 if exit {
                     SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
                     window::close()
@@ -739,7 +737,7 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::UpdateEval(eval)) => {
                 match self.engine_state {
-                    EngineState::TurnedOff => {
+                    EngineStatus::TurnedOff => {
                         Command::none()
                     } _ => {
                         let (eval, best_move) = eval;                
@@ -770,7 +768,7 @@ impl Application for OfflinePuzzles {
 
     fn subscription(&self) -> Subscription<Message> {
         match self.engine_state {
-            EngineState::TurnedOff => {
+            EngineStatus::TurnedOff => {
                 iced_native::subscription::events().map(Message::EventOccurred)
             } _ => {
                 Subscription::batch(vec![

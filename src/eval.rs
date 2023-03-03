@@ -18,6 +18,11 @@ pub enum EngineState {
     TurnedOff,
 }
 
+pub enum EngineStatus {
+    Started,
+    TurnedOff,
+}
+
 #[derive(Debug, Clone)]
 pub struct Engine {
     pub engine_path: String,
@@ -64,7 +69,6 @@ impl Engine {
                         child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).await.expect("Error communicating with engine");
 
                         (Some(Message::EngineReady(sender)), EngineState::Thinking(child, engine_data.search_up_to, receiver))
-
                     } EngineState::Thinking(mut child, search_up_to, mut receiver) => {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
@@ -72,12 +76,12 @@ impl Engine {
                                 drop(receiver);
                                 child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                 child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
-                                let terminate_timeout = timeout(Duration::from_millis(50),
+                                let terminate_timeout = timeout(Duration::from_millis(1000),
                                     child.wait()
                                 ).await;
                                 if let Err(_) = terminate_timeout {
                                     eprintln!("Engine didn't quit, killing the process now...");
-                                    let kill_result = timeout(Duration::from_millis(50),
+                                    let kill_result = timeout(Duration::from_millis(500),
                                         child.kill()
                                     ).await;
                                     if let Err(e) = kill_result {
@@ -88,7 +92,6 @@ impl Engine {
                             } else {
                                 let pos = String::from("position fen ") + &msg + &String::from("\n");
                                 let limit = String::from("go ") + &search_up_to + &"\n";
-
                                 child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                 //child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").await.expect("Error communicating with engine");
                                 //child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").await.expect("Error communicating with engine");
@@ -145,7 +148,8 @@ impl Engine {
                         }
                         (Some(Message::UpdateEval((eval, best_move))), EngineState::Thinking(child, search_up_to, receiver))
                     } EngineState::TurnedOff => {
-                        (Some(Message::EngineStopped(false)), EngineState::TurnedOff)
+                        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                        (None, EngineState::TurnedOff)
                     }
                 }
             }
