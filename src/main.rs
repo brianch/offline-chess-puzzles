@@ -226,7 +226,7 @@ impl Default for OfflinePuzzles {
 }
 
 fn load_two_pieces_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
-    let two_pieces_sound = BufReader::new(StdFile::open("2pieces.wav").unwrap());
+    let two_pieces_sound = BufReader::new(StdFile::open("2pieces.ogg").unwrap());
     match Decoder::new(two_pieces_sound) {
         Err(_) => None,
         Ok(dec) => Some(dec.buffered())
@@ -234,7 +234,7 @@ fn load_two_pieces_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
 }
 
 fn load_one_piece_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
-    let one_pieces_sound = BufReader::new(StdFile::open("1piece.wav").unwrap());
+    let one_pieces_sound = BufReader::new(StdFile::open("1piece.ogg").unwrap());
     match Decoder::new(one_pieces_sound) {
         Err(_) => None,
         Ok(dec) => Some(dec.buffered())

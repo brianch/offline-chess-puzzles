@@ -25,7 +25,7 @@ jobs:
           mkdir offline-chess-puzzles
           cp -R pieces offline-chess-puzzles/
           cp -R puzzles offline-chess-puzzles/
-          cp *.wav offline-chess-puzzles/
+          cp *.ogg offline-chess-puzzles/
           cp settings.json offline-chess-puzzles/
           cp LICENSE offline-chess-puzzles/
           cp README.md offline-chess-puzzles/
@@ -57,7 +57,7 @@ jobs:
           mkdir offline-chess-puzzles
           cp -R pieces offline-chess-puzzles/
           cp -R puzzles offline-chess-puzzles/
-          cp *.wav offline-chess-puzzles/
+          cp *.ogg offline-chess-puzzles/
           cp settings.json offline-chess-puzzles/
           cp LICENSE offline-chess-puzzles/
           cp README.md offline-chess-puzzles/
@@ -89,7 +89,7 @@ jobs:
           mkdir offline-chess-puzzles
           cp -R pieces offline-chess-puzzles/
           cp -R puzzles offline-chess-puzzles/
-          cp *.wav offline-chess-puzzles/
+          cp *.ogg offline-chess-puzzles/
           cp settings.json offline-chess-puzzles/
           cp LICENSE offline-chess-puzzles/
           cp README.md offline-chess-puzzles/
