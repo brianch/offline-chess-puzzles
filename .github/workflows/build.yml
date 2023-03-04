@@ -18,6 +18,10 @@ jobs:
     name: Build Linux
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+      - run: |
+          sudo apt-get update
+          sudo apt-get install libasound2-dev
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --verbose
       - name: Prepare directory to upload as an artifact
