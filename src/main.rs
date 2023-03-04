@@ -1,7 +1,9 @@
 #![windows_subsystem = "windows"]
 
 use eval::{Engine, EngineStatus};
+use std::io::BufReader;
 use std::path::Path;
+use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
 use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio};
@@ -14,7 +16,9 @@ use iced_native::{Event};
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 
-use soloud::{Soloud, Wav, audio, AudioExt, LoadExt};
+use rodio::{Decoder, OutputStream, Sink};
+use rodio::source::{Source, Buffered};
+
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
@@ -182,9 +186,8 @@ struct OfflinePuzzles {
     settings_tab: SettingsTab,
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
-    sound_player: Option<Soloud>,
-    two_pieces_sound: Option<Wav>,
-    one_piece_sound: Option<Wav>
+    two_pieces_sound: Option<Buffered<Decoder<BufReader<StdFile>>>>,
+    one_piece_sound: Option<Buffered<Decoder<BufReader<StdFile>>>>
 }
 
 impl Default for OfflinePuzzles {
@@ -216,26 +219,25 @@ impl Default for OfflinePuzzles {
             active_tab: 0,
 
             game_mode: config::GameMode::Puzzle,
-            sound_player: Soloud::default().ok(),
             two_pieces_sound: load_two_pieces_sound(),
             one_piece_sound: load_one_piece_sound(),
         }
     }
 }
 
-fn load_two_pieces_sound() -> Option<Wav> {
-    let mut sound = audio::Wav::default();
-    match sound.load("2pieces.wav") {
-        Ok(_) => Some(sound),
+fn load_two_pieces_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
+    let two_pieces_sound = BufReader::new(StdFile::open("2pieces.wav").unwrap());
+    match Decoder::new(two_pieces_sound) {
         Err(_) => None,
+        Ok(dec) => Some(dec.buffered())
     }
 }
 
-fn load_one_piece_sound() -> Option<Wav> {
-    let mut sound = audio::Wav::default();
-    match sound.load("1piece.wav") {
-        Ok(_) => Some(sound),
+fn load_one_piece_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
+    let one_pieces_sound = BufReader::new(StdFile::open("1piece.wav").unwrap());
+    match Decoder::new(one_pieces_sound) {
         Err(_) => None,
+        Ok(dec) => Some(dec.buffered())
     }
 }
 
@@ -420,8 +422,15 @@ impl Application for OfflinePuzzles {
                             }
                         }
                         if self.settings_tab.saved_configs.play_sound {
-                            if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
-                                soloud.play(wav);
+                            if let Some(audio) = self.one_piece_sound.clone() {
+                                std::thread::spawn(move || {
+                                    if let Ok((_stream, handle)) = OutputStream::try_default() {
+                                        if let Ok(sink) = Sink::try_new(&handle) {
+                                            sink.append(audio);
+                                            sink.sleep_until_end();
+                                        }
+                                    }
+                                });
                             }
                         }
                     }
@@ -451,8 +460,15 @@ impl Application for OfflinePuzzles {
 
                         if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
                             if self.settings_tab.saved_configs.play_sound {
-                                if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.one_piece_sound) {
-                                    soloud.play(wav);
+                                if let Some(audio) = self.one_piece_sound.clone() {
+                                    std::thread::spawn(move || {
+                                        if let Ok((_stream, handle)) = OutputStream::try_default() {
+                                            if let Ok(sink) = Sink::try_new(&handle) {
+                                                sink.append(audio);
+                                                sink.sleep_until_end();
+                                            }
+                                        }
+                                    });
                                 }
                             }
                             if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
@@ -502,8 +518,15 @@ impl Application for OfflinePuzzles {
                             }
                         } else {
                             if self.settings_tab.saved_configs.play_sound {
-                                if let (Some(soloud), Some(wav)) = (&self.sound_player, &self.two_pieces_sound) {
-                                    soloud.play(wav);
+                                if let Some(audio) = self.two_pieces_sound.clone() {
+                                    std::thread::spawn(move || {
+                                        if let Ok((_stream, handle)) = OutputStream::try_default() {
+                                            if let Ok(sink) = Sink::try_new(&handle) {
+                                                sink.append(audio);
+                                                sink.sleep_until_end();
+                                            }
+                                        }
+                                    });
                                 }
                             }
                             movement = ChessMove::new(

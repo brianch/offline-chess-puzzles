@@ -18,7 +18,4 @@ serde_derive = "1.0.152"
 serde_json = "1.0.93"
 lazy_static = "1.4.0"
 tokio = { version = "1.25.0", features = ["process", "io-std", "io-util", "sync"] }
-[target.'cfg(not(windows))'.dependencies]
-soloud = "1.0.2"
-[target.'cfg(windows)'.dependencies]
-soloud = { version = "1.0.2", default-features = false, features = ["winmm"] }
+rodio = "0.17.1"
