@@ -26,18 +26,19 @@ jobs:
       - run: cargo build --release --verbose
       - name: Prepare directory to upload as an artifact
         run: |
-          mkdir offline-chess-puzzles
-          cp -R pieces offline-chess-puzzles/
-          cp -R puzzles offline-chess-puzzles/
-          cp *.ogg offline-chess-puzzles/
-          cp settings.json offline-chess-puzzles/
-          cp LICENSE offline-chess-puzzles/
-          cp README.md offline-chess-puzzles/
-          cp target/release/offline-chess-puzzles offline-chess-puzzles/
+          mkdir zip
+          mkdir zip/offline-chess-puzzles
+          cp -R pieces zip/offline-chess-puzzles/
+          cp -R puzzles zip/offline-chess-puzzles/
+          cp *.ogg zip/offline-chess-puzzles/
+          cp settings.json zip/offline-chess-puzzles/
+          cp LICENSE zip/offline-chess-puzzles/
+          cp README.md zip/offline-chess-puzzles/
+          cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
       - uses: actions/upload-artifact@v3
         with:
           name: linux-release-bin
-          path: offline-chess-puzzles/
+          path: zip/
 
   build-windows-64:
 
@@ -58,18 +59,19 @@ jobs:
       - run: cargo build --release --verbose
       - name: Prepare directory to upload as an artifact
         run: |
-          mkdir offline-chess-puzzles
-          cp -R pieces offline-chess-puzzles/
-          cp -R puzzles offline-chess-puzzles/
-          cp *.ogg offline-chess-puzzles/
-          cp settings.json offline-chess-puzzles/
-          cp LICENSE offline-chess-puzzles/
-          cp README.md offline-chess-puzzles/
-          cp target/release/offline-chess-puzzles.exe offline-chess-puzzles/
+          mkdir zip
+          mkdir zip/offline-chess-puzzles
+          cp -R pieces zip/offline-chess-puzzles/
+          cp -R puzzles zip/offline-chess-puzzles/
+          cp *.ogg zip/offline-chess-puzzles/
+          cp settings.json zip/offline-chess-puzzles/
+          cp LICENSE zip/offline-chess-puzzles/
+          cp README.md zip/offline-chess-puzzles/
+          cp target/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release
-          path: offline-chess-puzzles/
+          path: zip/
 
   build-windows-32:
 
@@ -90,16 +92,17 @@ jobs:
       - run: cargo build --release --target i686-pc-windows-msvc --verbose
       - name: Prepare directory to upload as an artifact
         run: |
-          mkdir offline-chess-puzzles
-          cp -R pieces offline-chess-puzzles/
-          cp -R puzzles offline-chess-puzzles/
-          cp *.ogg offline-chess-puzzles/
-          cp settings.json offline-chess-puzzles/
-          cp LICENSE offline-chess-puzzles/
-          cp README.md offline-chess-puzzles/
-          cp target/i686-pc-windows-msvc/release/offline-chess-puzzles.exe offline-chess-puzzles/
+          mkdir zip
+          mkdir zip/offline-chess-puzzles
+          cp -R pieces zip/offline-chess-puzzles/
+          cp -R puzzles zip/offline-chess-puzzles/
+          cp *.ogg zip/offline-chess-puzzles/
+          cp settings.json zip/offline-chess-puzzles/
+          cp LICENSE zip/offline-chess-puzzles/
+          cp README.md zip/offline-chess-puzzles/
+          cp target/i686-pc-windows-msvc/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release-i686
-          path: offline-chess-puzzles/
+          path: zip/
 
