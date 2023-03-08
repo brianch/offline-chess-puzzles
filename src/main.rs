@@ -194,16 +194,13 @@ impl SoundPlayback {
         sound_playback
     }
     pub fn play_audio(&self, audio: u8) {
-        let handle = self.handle.clone();
         let audio = match audio {
             SoundPlayback::ONE_PIECE_SOUND => self.one_piece_sound.clone(),
             _ => self.two_pieces_sound.clone(),
         };
-        std::thread::spawn(move || {
-            if let Err(e) = handle.play_raw(audio.convert_samples()) {
-                eprintln!("{e}");
-            }
-        });
+        if let Err(e) = self.handle.play_raw(audio.convert_samples()) {
+            eprintln!("{e}");
+        }
     }
 }
 
