@@ -16,7 +16,7 @@ use iced_native::{Event};
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
 
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, OutputStreamHandle};
 use rodio::source::{Source, Buffered};
 
 use rand::thread_rng;
@@ -163,6 +163,50 @@ pub enum Message {
     EngineReady(mpsc::Sender<String>),
 }
 
+struct SoundPlayback {
+    // it's not directly used, but we need to keep it: https://github.com/RustAudio/rodio/issues/330
+    stream: OutputStream,
+    handle: OutputStreamHandle,
+    one_piece_sound: Buffered<Decoder<BufReader<StdFile>>>,
+    two_pieces_sound: Buffered<Decoder<BufReader<StdFile>>>,
+}
+
+impl SoundPlayback {
+    pub const ONE_PIECE_SOUND: u8 = 0;
+    pub const TWO_PIECE_SOUND: u8 = 1;
+    pub fn init_sound() -> Option<Self> {
+        let mut sound_playback = None;
+        if let Ok((stream, handle)) = OutputStream::try_default() {
+            let one_pieces_sound = StdFile::open("1piece.ogg");
+            let two_pieces_sound = StdFile::open("2pieces.ogg");
+
+            if let (Ok(one_piece), Ok(two_piece)) = (one_pieces_sound, two_pieces_sound) {
+                sound_playback = Some(
+                    SoundPlayback {
+                        stream: stream,
+                        handle: handle,
+                        one_piece_sound: Decoder::new(BufReader::new(one_piece)).unwrap().buffered(),
+                        two_pieces_sound: Decoder::new(BufReader::new(two_piece)).unwrap().buffered()
+                    }
+                );
+            }
+        }
+        sound_playback
+    }
+    pub fn play_audio(&self, audio: u8) {
+        let handle = self.handle.clone();
+        let audio = match audio {
+            SoundPlayback::ONE_PIECE_SOUND => self.one_piece_sound.clone(),
+            _ => self.two_pieces_sound.clone(),
+        };
+        std::thread::spawn(move || {
+            if let Err(e) = handle.play_raw(audio.convert_samples()) {
+                eprintln!("{e}");
+            }
+        });
+    }
+}
+
 //#[derive(Clone)]
 struct OfflinePuzzles {
     from_square: Option<PositionGUI>,
@@ -186,8 +230,7 @@ struct OfflinePuzzles {
     settings_tab: SettingsTab,
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
-    two_pieces_sound: Option<Buffered<Decoder<BufReader<StdFile>>>>,
-    one_piece_sound: Option<Buffered<Decoder<BufReader<StdFile>>>>
+    sound_playback: Option<SoundPlayback>,
 }
 
 impl Default for OfflinePuzzles {
@@ -219,25 +262,8 @@ impl Default for OfflinePuzzles {
             active_tab: 0,
 
             game_mode: config::GameMode::Puzzle,
-            two_pieces_sound: load_two_pieces_sound(),
-            one_piece_sound: load_one_piece_sound(),
+            sound_playback: SoundPlayback::init_sound(),
         }
-    }
-}
-
-fn load_two_pieces_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
-    let two_pieces_sound = BufReader::new(StdFile::open("2pieces.ogg").unwrap());
-    match Decoder::new(two_pieces_sound) {
-        Err(_) => None,
-        Ok(dec) => Some(dec.buffered())
-    }
-}
-
-fn load_one_piece_sound() -> Option<Buffered<Decoder<BufReader<StdFile>>>> {
-    let one_pieces_sound = BufReader::new(StdFile::open("1piece.ogg").unwrap());
-    match Decoder::new(one_pieces_sound) {
-        Err(_) => None,
-        Ok(dec) => Some(dec.buffered())
     }
 }
 
@@ -422,15 +448,8 @@ impl Application for OfflinePuzzles {
                             }
                         }
                         if self.settings_tab.saved_configs.play_sound {
-                            if let Some(audio) = self.one_piece_sound.clone() {
-                                std::thread::spawn(move || {
-                                    if let Ok((_stream, handle)) = OutputStream::try_default() {
-                                        if let Ok(sink) = Sink::try_new(&handle) {
-                                            sink.append(audio);
-                                            sink.sleep_until_end();
-                                        }
-                                    }
-                                });
+                            if let Some(audio) = &self.sound_playback {
+                                audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
                             }
                         }
                     }
@@ -460,16 +479,9 @@ impl Application for OfflinePuzzles {
 
                         if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
                             if self.settings_tab.saved_configs.play_sound {
-                                if let Some(audio) = self.one_piece_sound.clone() {
-                                    std::thread::spawn(move || {
-                                        if let Ok((_stream, handle)) = OutputStream::try_default() {
-                                            if let Ok(sink) = Sink::try_new(&handle) {
-                                                sink.append(audio);
-                                                sink.sleep_until_end();
-                                            }
-                                        }
-                                    });
-                                }
+                                if let Some(audio) = &self.sound_playback {
+                                    audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
+                                }    
                             }
                             if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
                                 if self.settings_tab.saved_configs.auto_load_next {
@@ -518,16 +530,9 @@ impl Application for OfflinePuzzles {
                             }
                         } else {
                             if self.settings_tab.saved_configs.play_sound {
-                                if let Some(audio) = self.two_pieces_sound.clone() {
-                                    std::thread::spawn(move || {
-                                        if let Ok((_stream, handle)) = OutputStream::try_default() {
-                                            if let Ok(sink) = Sink::try_new(&handle) {
-                                                sink.append(audio);
-                                                sink.sleep_until_end();
-                                            }
-                                        }
-                                    });
-                                }
+                                if let Some(audio) = &self.sound_playback {
+                                    audio.play_audio(SoundPlayback::TWO_PIECE_SOUND);
+                                }    
                             }
                             movement = ChessMove::new(
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
