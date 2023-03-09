@@ -478,8 +478,8 @@ pub struct OCPPalette {
 impl OCPPalette {
     pub const BLUE: Self = Self {
         container_bg: Color::WHITE,
-        light_square: rgb!(234.0, 248.0, 255),
-        dark_square: rgb!(105.0, 171.0, 211.0),
+        light_square: rgb!(235.0, 249.0, 255),
+        dark_square: rgb!(110.0, 174.0, 213.0),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::BLACK,
@@ -489,8 +489,8 @@ impl OCPPalette {
 
     pub const BLUE_DARK: Self = Self {
         container_bg: rgb!(70.,99.,117.),
-        light_square: rgb!(234.0, 248.0, 255),
-        dark_square: rgb!(105.0, 171.0, 211.0),
+        light_square: rgb!(235.0, 249.0, 255),
+        dark_square: rgb!(110.0, 174.0, 213.0),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::WHITE,
@@ -499,8 +499,8 @@ impl OCPPalette {
     };
     pub const GREEN_DARK: Self = Self {
         container_bg: rgb!(87.,99.,76.),
-        light_square: rgb!(241.0, 241.0, 212.0),
-        dark_square: rgb!(121.0, 147.0, 95.0),
+        light_square: rgb!(238.0, 240.0, 203.0),
+        dark_square: rgb!(136.0, 161.0, 111.0),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::WHITE,
@@ -509,8 +509,8 @@ impl OCPPalette {
     };
     pub const BROWN_DARK: Self = Self {
         container_bg: rgb!(116.,99.,86.),
-        light_square: rgb!(240., 217., 181.),
-        dark_square: rgb!(181., 136., 99.),
+        light_square: rgb!(241., 221., 186.),
+        dark_square: rgb!(186., 142., 107.),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::WHITE,
@@ -518,9 +518,9 @@ impl OCPPalette {
         tab_label: Color::BLACK,
     };
     pub const PURPLE_DARK: Self = Self {
-        container_bg: rgb!(111.,99.,124.),
-        light_square: rgb!(230., 219., 241.),
-        dark_square: rgb!(153., 125., 181.),
+        container_bg: rgb!(89.,77.,101.),
+        light_square: rgb!(233., 223., 242.),
+        dark_square: rgb!(162., 136., 188.),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::WHITE,
@@ -528,7 +528,7 @@ impl OCPPalette {
         tab_label: Color::BLACK,
     };
     pub const GREY_DARK: Self = Self {
-        container_bg: rgb!(88.,99.,104.),
+        container_bg: rgb!(71.,86.,92.),
         light_square: rgb!(222., 227., 230.),
         dark_square: rgb!(140., 162., 173.),
         selected_light_square: rgb!(205,210,106),
@@ -539,8 +539,8 @@ impl OCPPalette {
     };
     pub const GREEN: Self = Self {
         container_bg: Color::WHITE,
-        light_square: rgb!(241.0, 241.0, 212.0),
-        dark_square: rgb!(121.0, 147.0, 95.0),
+        light_square: rgb!(238.0, 240.0, 203.0),
+        dark_square: rgb!(136.0, 161.0, 111.0),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::BLACK,
@@ -549,8 +549,8 @@ impl OCPPalette {
     };
     pub const BROWN: Self = Self {
         container_bg: Color::WHITE,
-        light_square: rgb!(240., 217., 181.),
-        dark_square: rgb!(181., 136., 99.),
+        light_square: rgb!(241., 221., 186.),
+        dark_square: rgb!(186., 142., 107.),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::BLACK,
@@ -559,8 +559,8 @@ impl OCPPalette {
     };
     pub const PURPLE: Self = Self {
         container_bg: Color::WHITE,
-        light_square: rgb!(230., 219., 241.),
-        dark_square: rgb!(153., 125., 181.),
+        light_square: rgb!(233., 223., 242.),
+        dark_square: rgb!(162., 136., 188.),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::BLACK,
