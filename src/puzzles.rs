@@ -1,7 +1,6 @@
-use iced::widget::{Container, column, Scrollable, Text, TextInput};
+use iced::widget::{Container, column as col, row, Scrollable, Text, TextInput, Button};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
-
 use chess::{Color, Piece};
 use iced_aw::TabLabel;
 
@@ -10,6 +9,7 @@ use crate::{Message, Tab, config, styles};
 #[derive(Debug, Clone)]
 pub enum PuzzleMessage {
     ChangeTextInputs(String),
+    CopyText(String),
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +38,8 @@ impl PuzzleTab {
         match message {
             PuzzleMessage::ChangeTextInputs(_) => {
                 Command::none()
+            } PuzzleMessage::CopyText(text) => {
+                iced::clipboard::write::<Message>(text)
             }
         }
     }
@@ -71,17 +73,23 @@ impl Tab for PuzzleTab {
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
-            Scrollable::new(column![
+            Scrollable::new(col![
                 Text::new(String::from("Puzzle link: ")),
-                TextInput::new("",
-                &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
-                PuzzleMessage::ChangeTextInputs),
+                row![
+                    TextInput::new("",
+                        &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
+                    PuzzleMessage::ChangeTextInputs),
+                    Button::new(Text::new("Copy")).on_press(PuzzleMessage::CopyText("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
+                ],
                 Text::new("FEN:"),
-                TextInput::new(
-                    &self.current_puzzle_fen,
-                    &self.current_puzzle_fen,
-                    PuzzleMessage::ChangeTextInputs,
-                ),
+                row![
+                    TextInput::new(
+                        &self.current_puzzle_fen,
+                        &self.current_puzzle_fen,
+                        PuzzleMessage::ChangeTextInputs,
+                    ),
+                    Button::new(Text::new("Copy")).on_press(PuzzleMessage::CopyText(self.current_puzzle_fen.clone())),
+                ],
                 Text::new(String::from("Rating: ") + &self.puzzles[self.current_puzzle].rating.to_string()),
                 Text::new(String::from("Rating Deviation: ") + &self.puzzles[self.current_puzzle].rating_deviation.to_string()),
                 Text::new(String::from("Popularity (-100 to 100): ") + &self.puzzles[self.current_puzzle].popularity.to_string()),
@@ -89,14 +97,17 @@ impl Tab for PuzzleTab {
                 Text::new("Themes:"),
                 Text::new(&self.puzzles[self.current_puzzle].themes),
                 Text::new("Game url: "),
-                TextInput::new(
-                    &self.puzzles[self.current_puzzle].game_url,
-                    &self.puzzles[self.current_puzzle].game_url,
-                    PuzzleMessage::ChangeTextInputs,
-                )
+                row![
+                    TextInput::new(
+                        &self.puzzles[self.current_puzzle].game_url,
+                        &self.puzzles[self.current_puzzle].game_url,
+                        PuzzleMessage::ChangeTextInputs,
+                    ),
+                    Button::new(Text::new("Copy")).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
+                ],
             ].spacing(10).align_items(Alignment::Center))
         } else {
-            Scrollable::new(column![
+            Scrollable::new(col![
                     Text::new("No puzzle loaded")
                     .horizontal_alignment(alignment::Horizontal::Center)
                     .width(Length::Fill)

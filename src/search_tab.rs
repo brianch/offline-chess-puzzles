@@ -1,4 +1,4 @@
-use iced::widget::{Container, Button, column, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
+use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
 use iced::{Element};
 use iced::{alignment, Command, Alignment, Length};
 use std::io::BufReader;
@@ -502,7 +502,7 @@ impl Tab for SearchTab {
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
 
-        let mut search_col = column![
+        let mut search_col = col![
             row![
                 Text::new("Min. Rating: "),
                 Slider::new(
