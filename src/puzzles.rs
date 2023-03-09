@@ -19,6 +19,7 @@ pub struct PuzzleTab {
     pub current_puzzle_move: usize,
     pub current_puzzle_side: Color,
     pub is_playing: bool,
+    pub current_puzzle_fen: String
 }
 
 impl PuzzleTab {
@@ -29,6 +30,7 @@ impl PuzzleTab {
             current_puzzle_move: 1,
             current_puzzle_side: Color::White,
             is_playing: false,
+            current_puzzle_fen: String::new(),
         }
     }
 
@@ -76,8 +78,8 @@ impl Tab for PuzzleTab {
                 PuzzleMessage::ChangeTextInputs),
                 Text::new("FEN:"),
                 TextInput::new(
-                    &self.puzzles[self.current_puzzle].fen,
-                    &self.puzzles[self.current_puzzle].fen,
+                    &self.current_puzzle_fen,
+                    &self.current_puzzle_fen,
                     PuzzleMessage::ChangeTextInputs,
                 ),
                 Text::new(String::from("Rating: ") + &self.puzzles[self.current_puzzle].rating.to_string()),

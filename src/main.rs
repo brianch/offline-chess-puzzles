@@ -509,6 +509,7 @@ impl Application for OfflinePuzzles {
                                         self.puzzle_status = String::from("Black to move!");
                                     }
                                     self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                                    self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                                 } else {
                                     self.puzzle_status = String::from("Well done!");
                                     self.puzzle_tab.is_playing = false;
@@ -610,6 +611,7 @@ impl Application for OfflinePuzzles {
                 } else {
                     self.puzzle_status = String::from("Black to move!");
                 }
+                self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                 self.puzzle_tab.is_playing = true;
                 self.game_mode = config::GameMode::Puzzle;
@@ -688,6 +690,7 @@ impl Application for OfflinePuzzles {
                         } else {
                             self.puzzle_status = String::from("Black to move!");
                         }
+                        self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                         self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                         self.puzzle_tab.is_playing = true;
                     } else {
