@@ -18,6 +18,7 @@ pub enum EngineState {
     TurnedOff,
 }
 
+#[derive(PartialEq)]
 pub enum EngineStatus {
     Started,
     TurnedOff,

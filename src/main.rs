@@ -567,6 +567,11 @@ impl Application for OfflinePuzzles {
                 if message == config::GameMode::Analysis {
                     self.analysis = Game::new_with_board(self.board);
                 } else {
+                    if self.engine_state != EngineStatus::TurnedOff {
+                        if let Some(sender) = &self.engine_sender {
+                            sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                        }
+                    }
                     self.analysis_history.truncate(self.puzzle_tab.current_puzzle_move);
                 }
                 Command::none()
@@ -651,6 +656,11 @@ impl Application for OfflinePuzzles {
                 self.from_square = None;
                 self.search_tab.show_searching_msg = false;
                 self.game_mode = config::GameMode::Puzzle;
+                if self.engine_state != EngineStatus::TurnedOff {
+                    if let Some(sender) = &self.engine_sender {
+                        sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
+                    }
+                }
                 if let Some(puzzles_vec) = puzzles_vec {
                     if !puzzles_vec.is_empty() {
                         self.puzzle_tab.puzzles = puzzles_vec;
