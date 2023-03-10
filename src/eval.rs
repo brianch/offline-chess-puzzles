@@ -61,15 +61,65 @@ impl Engine {
 
                         let pos = String::from("position fen ") + &engine_data.position + &String::from("\n");
                         let limit = String::from("go ") + &engine_data.search_up_to + &"\n";
+                        let mut uciok = false;
+                        let mut readyok = false;
 
                         child.stdin.as_mut().unwrap().write_all(b"uci\n").await.expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"isready\n").await.expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").await.expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").await.expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).await.expect("Error communicating with engine");
-                        child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).await.expect("Error communicating with engine");
-
-                        (Some(Message::EngineReady(sender)), EngineState::Thinking(child, engine_data.search_up_to, receiver))
+                        let mut reader = BufReader::new(child.stdout.as_mut().unwrap());
+                        let mut buf_str = String::new();
+                        loop {
+                            let uciok_timeout = timeout(Duration::from_millis(5000),
+                                reader.read_line(&mut buf_str)
+                            ).await;
+                            if let Err(_) = uciok_timeout {
+                                break;
+                            } else {
+                                if buf_str.contains("uciok") {
+                                    uciok = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if uciok {
+                            child.stdin.as_mut().unwrap().write_all(b"ucinewgame\n").await.expect("Error communicating with engine");
+                            child.stdin.as_mut().unwrap().write_all(b"isready\n").await.expect("Error communicating with engine");
+                            buf_str = String::new();
+                            loop {
+                                let readyok_timeout = timeout(Duration::from_millis(5000),
+                                    reader.read_line(&mut buf_str)
+                                ).await;
+                                if let Err(_) = readyok_timeout {
+                                    break;
+                                } else {
+                                    if buf_str.contains("readyok") {
+                                        readyok = true;
+                                        break;
+                                    }
+                                }
+                            }    
+                            if readyok {        
+                                child.stdin.as_mut().unwrap().write_all(b"setoption name UCI_AnalyseMode value true\n").await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(pos.as_bytes()).await.expect("Error communicating with engine");
+                                child.stdin.as_mut().unwrap().write_all(limit.as_bytes()).await.expect("Error communicating with engine");
+                                return (Some(Message::EngineReady(sender)), EngineState::Thinking(child, engine_data.search_up_to, receiver));
+                            }
+                        }
+                        eprintln!("Engine took too long to start, aborting...");
+                        child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
+                        child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
+                        let terminate_timeout = timeout(Duration::from_millis(1000),
+                            child.wait()
+                        ).await;
+                        if let Err(_) = terminate_timeout {
+                            eprintln!("Engine didn't quit, killing the process now...");
+                            let kill_result = timeout(Duration::from_millis(500),
+                                child.kill()
+                            ).await;
+                            if let Err(e) = kill_result {
+                                eprintln!("Error killing the engine process: {e}");
+                            }
+                        }
+                        return (Some(Message::EngineStopped(false)), EngineState::TurnedOff);
                     } EngineState::Thinking(mut child, search_up_to, mut receiver) => {
                         let msg = receiver.try_recv();
                         if let Ok(msg) = msg {
