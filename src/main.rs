@@ -831,11 +831,11 @@ impl Application for OfflinePuzzles {
                 self.hint_square,
                 self.settings_tab.saved_configs.piece_theme,
                 self.puzzle_status.clone(),
-                //has_puzzles:
+                //has_more_puzzles:
                 !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1,
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
-                !self.puzzle_tab.is_playing,
+                self.puzzle_tab.is_playing,
                 self.active_tab,
                 self.engine_eval.clone(),
                 self.engine_move.clone(),
@@ -873,7 +873,7 @@ fn gen_view<'a>(
     hint_square: Option<PositionGUI>,
     piece_theme: styles::PieceTheme,
     puzzle_status: String,
-    has_puzzles: bool,
+    has_more_puzzles: bool,
     analysis_history_len: usize,
     current_puzzle_move: usize,
     is_playing: bool,
@@ -994,12 +994,6 @@ fn gen_view<'a>(
     ].spacing(10).padding(10).align_items(Alignment::Center);
 
     let mut navigation_row = Row::new().padding(3).spacing(50);
-    if has_puzzles {
-        navigation_row = navigation_row.push(
-                Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle));
-    } else {
-        navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
-    }
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
             navigation_row = navigation_row.push(
@@ -1010,7 +1004,17 @@ fn gen_view<'a>(
         }
         navigation_row = navigation_row
             .push(Button::new(Text::new(engine_btn_label)).on_press(Message::StartEngine));
-    } else if has_puzzles && !is_playing {
+    } else if has_more_puzzles {
+        navigation_row = navigation_row
+            .push(Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle))
+            .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
+            .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
+    } else if !is_playing {
+        navigation_row = navigation_row
+            .push(Button::new(Text::new("Next puzzle")))
+            .push(Button::new(Text::new("Redo Puzzle")))
+            .push(Button::new(Text::new("Hint")));
+    } else {
         navigation_row = navigation_row
             .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
             .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
