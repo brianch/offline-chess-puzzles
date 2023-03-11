@@ -296,9 +296,9 @@ fn coord_to_san(board: Board, coords: String) -> Option<String> {
     let dest_square = Square::from_str(&coords[2..4]).unwrap();
     let piece = board.piece_on(orig_square);
     if let Some(piece) = piece {
-        if coords == "e1g1" || coords == "e8g8" {
+        if piece == Piece::King && (coords == "e1g1" || coords == "e8g8") {
             san = Some(String::from("0-0"));
-        } else if coords == "e1c1" || coords == "e8c8" {
+        } else if piece == Piece::King && (coords == "e1c1" || coords == "e8c8") {
             san = Some(String::from("0-0-0"));
         } else {
             let mut san_str = String::new();
