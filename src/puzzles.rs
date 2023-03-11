@@ -12,13 +12,18 @@ pub enum PuzzleMessage {
     CopyText(String),
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum GameStatus {
+    Playing, PuzzleEnded, NoPuzzles, 
+}
+
 #[derive(Debug, Clone)]
 pub struct PuzzleTab {
     pub puzzles: Vec<config::Puzzle>,
     pub current_puzzle: usize,
     pub current_puzzle_move: usize,
     pub current_puzzle_side: Color,
-    pub is_playing: bool,
+    pub game_status: GameStatus,
     pub current_puzzle_fen: String
 }
 
@@ -29,7 +34,7 @@ impl PuzzleTab {
             current_puzzle: 0,
             current_puzzle_move: 1,
             current_puzzle_side: Color::White,
-            is_playing: false,
+            game_status: GameStatus::NoPuzzles,
             current_puzzle_fen: String::new(),
         }
     }
@@ -57,6 +62,10 @@ impl PuzzleTab {
             }
         }
         promotion
+    }
+
+    pub fn is_playing(&self) -> bool {
+        self.game_status != GameStatus::NoPuzzles
     }
 }
 

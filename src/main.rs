@@ -31,7 +31,7 @@ mod settings;
 use settings::{SettingsMessage, SettingsTab};
 
 mod puzzles;
-use puzzles::{PuzzleMessage, PuzzleTab};
+use puzzles::{PuzzleMessage, PuzzleTab, GameStatus};
 
 mod eval;
 
@@ -404,7 +404,7 @@ impl Application for OfflinePuzzles {
                         config::GameMode::Puzzle => { self.board.color_on(pos.posgui_to_square()) }
                     };
 
-                if (self.puzzle_tab.is_playing || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
+                if (self.puzzle_tab.is_playing() || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
                     self.hint_square = None;
                     self.from_square = Some(pos);
                 }
@@ -422,7 +422,7 @@ impl Application for OfflinePuzzles {
                     };
                 // If the user clicked on another piece of his own side,
                 // just replace the previous selection and exit
-                if self.puzzle_tab.is_playing && color == Some(side) {
+                if self.puzzle_tab.is_playing() && color == Some(side) {
                     self.from_square = Some(to);
                     return Command::none()
                 }
@@ -511,19 +511,21 @@ impl Application for OfflinePuzzles {
                                     self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                                     self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                                 } else {
+                                    self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
                                     self.puzzle_status = String::from("Well done!");
-                                    self.puzzle_tab.is_playing = false;
                                 }
                             } else {
-                                self.board = Board::default();
-                                // quite meaningless but allows the user to use the takeback button
-                                // to analyze a full game in analysis mode after the puzzles ended.
-                                self.analysis_history = vec![self.board];
-                                self.puzzle_tab.current_puzzle_move = 1;
-
+                                if self.settings_tab.saved_configs.auto_load_next {
+                                    self.board = Board::default();
+                                    // quite meaningless but allows the user to use the takeback button
+                                    // to analyze a full game in analysis mode after the puzzles ended.
+                                    self.analysis_history = vec![self.board];
+                                    self.puzzle_tab.current_puzzle_move = 1;
+                                    self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
+                                }
                                 self.last_move_from = None;
                                 self.last_move_to = None;
-                                self.puzzle_tab.is_playing = false;
+                                self.puzzle_tab.game_status = GameStatus::NoPuzzles;
                                 self.puzzle_status = String::from("All puzzles done for this search!");
                             }
                         } else {
@@ -613,7 +615,7 @@ impl Application for OfflinePuzzles {
                 }
                 self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                self.puzzle_tab.is_playing = true;
+                self.puzzle_tab.game_status = GameStatus::Playing;
                 self.game_mode = config::GameMode::Puzzle;
                 Command::none()
             } (_, Message::GoBackMove) => {
@@ -652,7 +654,7 @@ impl Application for OfflinePuzzles {
                     self.puzzle_status = String::from("Black to move!");
                 }
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                self.puzzle_tab.is_playing = true;
+                self.puzzle_tab.game_status = GameStatus::Playing;
                 Command::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
                 self.from_square = None;
@@ -692,20 +694,20 @@ impl Application for OfflinePuzzles {
                         }
                         self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                         self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                        self.puzzle_tab.is_playing = true;
+                        self.puzzle_tab.game_status = GameStatus::Playing;
                     } else {
                         // Just putting the default position to make it obvious the search ended.
                         self.board = Board::default();
                         self.last_move_from = None;
                         self.last_move_to = None;
-                        self.puzzle_tab.is_playing = false;
+                        self.puzzle_tab.game_status = GameStatus::NoPuzzles;
                         self.puzzle_status = String::from("Sorry, no puzzle found");
                     }
                 } else {
                     self.board = Board::default();
                     self.last_move_from = None;
                     self.last_move_to = None;
-                    self.puzzle_tab.is_playing = false;
+                    self.puzzle_tab.game_status = GameStatus::NoPuzzles;
                     self.puzzle_status = String::from("Sorry, no puzzle found");
                 }
                 Command::none()
@@ -835,7 +837,7 @@ impl Application for OfflinePuzzles {
                 !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1,
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
-                self.puzzle_tab.is_playing,
+                self.puzzle_tab.game_status,
                 self.active_tab,
                 self.engine_eval.clone(),
                 self.engine_move.clone(),
@@ -876,7 +878,7 @@ fn gen_view<'a>(
     has_more_puzzles: bool,
     analysis_history_len: usize,
     current_puzzle_move: usize,
-    is_playing: bool,
+    game_status: GameStatus,
     active_tab: usize,
     engine_eval: String,
     engine_move: String,
@@ -996,28 +998,30 @@ fn gen_view<'a>(
     let mut navigation_row = Row::new().padding(3).spacing(50);
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
-            navigation_row = navigation_row.push(
-                Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
+            navigation_row = navigation_row.push(Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
         } else {
-            navigation_row = navigation_row.push(
-                Button::new(Text::new("Takeback move")));
+            navigation_row = navigation_row.push(Button::new(Text::new("Takeback move")));
         }
-        navigation_row = navigation_row
-            .push(Button::new(Text::new(engine_btn_label)).on_press(Message::StartEngine));
-    } else if has_more_puzzles {
-        navigation_row = navigation_row
-            .push(Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle))
-            .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
-            .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
-    } else if !is_playing {
-        navigation_row = navigation_row
-            .push(Button::new(Text::new("Next puzzle")))
-            .push(Button::new(Text::new("Redo Puzzle")))
-            .push(Button::new(Text::new("Hint")));
+        navigation_row = navigation_row.push(Button::new(Text::new(engine_btn_label)).on_press(Message::StartEngine));
     } else {
-        navigation_row = navigation_row
-            .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
-            .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
+        if has_more_puzzles {
+            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle))
+        } else {
+            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
+        }
+        if game_status == GameStatus::NoPuzzles {
+            navigation_row = navigation_row
+                .push(Button::new(Text::new("Redo Puzzle")))
+                .push(Button::new(Text::new("Hint")));
+        } else if game_status == GameStatus::PuzzleEnded {
+            navigation_row = navigation_row
+                .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new("Hint")));
+        } else {
+            navigation_row = navigation_row
+                .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
+        }
     }
 
     board_col = board_col.push(Text::new(puzzle_status)).push(game_mode_row).push(navigation_row);
