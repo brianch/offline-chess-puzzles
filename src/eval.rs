@@ -68,7 +68,7 @@ impl Engine {
                         let mut reader = BufReader::new(child.stdout.as_mut().unwrap());
                         let mut buf_str = String::new();
                         loop {
-                            let uciok_timeout = timeout(Duration::from_millis(5000),
+                            let uciok_timeout = timeout(Duration::from_millis(7000),
                                 reader.read_line(&mut buf_str)
                             ).await;
                             if let Err(_) = uciok_timeout {
@@ -85,7 +85,7 @@ impl Engine {
                             child.stdin.as_mut().unwrap().write_all(b"isready\n").await.expect("Error communicating with engine");
                             buf_str = String::new();
                             loop {
-                                let readyok_timeout = timeout(Duration::from_millis(5000),
+                                let readyok_timeout = timeout(Duration::from_millis(7000),
                                     reader.read_line(&mut buf_str)
                                 ).await;
                                 if let Err(_) = readyok_timeout {
