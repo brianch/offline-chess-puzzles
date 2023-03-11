@@ -521,11 +521,12 @@ impl Application for OfflinePuzzles {
                                     // to analyze a full game in analysis mode after the puzzles ended.
                                     self.analysis_history = vec![self.board];
                                     self.puzzle_tab.current_puzzle_move = 1;
+                                    self.puzzle_tab.game_status = GameStatus::NoPuzzles;
+                                } else {
                                     self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
                                 }
                                 self.last_move_from = None;
                                 self.last_move_to = None;
-                                self.puzzle_tab.game_status = GameStatus::NoPuzzles;
                                 self.puzzle_status = String::from("All puzzles done for this search!");
                             }
                         } else {
