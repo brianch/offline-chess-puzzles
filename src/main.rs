@@ -117,7 +117,7 @@ impl PositionGUI {
         Square::make_square(rank, file)
     }
 
-    pub fn chesssquare_to_posgui(square: Square) -> PositionGUI {
+    pub fn chesssquare_to_posgui(square: &Square) -> PositionGUI {
         let col = match square.get_file() {
             File::A => 0,
             File::B => 1,
@@ -216,7 +216,6 @@ struct OfflinePuzzles {
     analysis: Game,
     analysis_history: Vec<Board>,
     engine_state: EngineStatus,
-    engine_btn_label: String,
     engine_eval: String,
     engine: Engine,
     engine_sender: Option<Sender<String>>,
@@ -242,7 +241,6 @@ impl Default for OfflinePuzzles {
             analysis: Game::new(),
             analysis_history: vec![Board::default()],
             engine_state: EngineStatus::TurnedOff,
-            engine_btn_label: String::from("Start Engine"),
             engine_eval: String::new(),
             engine: Engine::new(
                 config::SETTINGS.engine_path.clone(),
@@ -497,8 +495,8 @@ impl Application for OfflinePuzzles {
                                         Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                                         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+                                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
 
                                     self.board = self.board.make_move_new(movement);
                                     self.analysis_history = vec![self.board];
@@ -539,8 +537,8 @@ impl Application for OfflinePuzzles {
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
 
-                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
 
                             self.board = self.board.make_move_new(movement);
                             self.analysis_history.push(self.board);
@@ -582,7 +580,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::ShowHint) => {
                 let moves = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
                 if !moves.is_empty() && moves.len() > self.puzzle_tab.current_puzzle_move {
-                    self.hint_square = Some(PositionGUI::chesssquare_to_posgui(Square::from_str(&moves[self.puzzle_tab.current_puzzle_move][..2]).unwrap()));
+                    self.hint_square = Some(PositionGUI::chesssquare_to_posgui(&Square::from_str(&moves[self.puzzle_tab.current_puzzle_move][..2]).unwrap()));
                 } else {
                     self.hint_square = None;
                 }
@@ -603,8 +601,8 @@ impl Application for OfflinePuzzles {
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                     Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
@@ -643,8 +641,8 @@ impl Application for OfflinePuzzles {
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                     Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
@@ -682,8 +680,8 @@ impl Application for OfflinePuzzles {
                                 Square::from_str(&puzzle_moves[0][..2]).unwrap(),
                                 Square::from_str(&puzzle_moves[0][2..4]).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                        self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(movement.get_source()));
-                        self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(movement.get_dest()));
+                        self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                        self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
 
                         self.board = self.board.make_move_new(movement);
                         self.analysis_history = vec![self.board];
@@ -751,7 +749,6 @@ impl Application for OfflinePuzzles {
                         if Path::new(&self.engine.engine_path).exists() {
                             self.engine.position = san_correct_ep(self.analysis.current_position().to_string());
                             self.engine_state = EngineStatus::Started;
-                            self.engine_btn_label = String::from("Stop Engine");
                         }
                     } _ => {
                         if let Some(sender) = &self.engine_sender {
@@ -770,7 +767,6 @@ impl Application for OfflinePuzzles {
                 } else {
                     self.engine_eval = String::new();
                     self.engine_move = String::new();
-                    self.engine_btn_label = String::from("Start Engine");
                     Command::none()
                 }
             } (_, Message::EngineReady(sender)) => {
@@ -826,24 +822,24 @@ impl Application for OfflinePuzzles {
                 self.game_mode,
                 self.puzzle_tab.current_puzzle_side,
                 self.settings_tab.flip_board,
-                self.board.clone(),
-                self.analysis.current_position().clone(),
+                &self.board,
+                &self.analysis.current_position(),
                 self.from_square,
                 self.last_move_from,
                 self.last_move_to,
                 self.hint_square,
                 self.settings_tab.saved_configs.piece_theme,
-                self.puzzle_status.clone(),
+                &self.puzzle_status,
                 //has_more_puzzles:
                 !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1,
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
                 self.puzzle_tab.game_status,
                 self.active_tab,
-                self.engine_eval.clone(),
-                self.engine_move.clone(),
+                &self.engine_eval,
+                &self.engine_move,
 
-                self.engine_btn_label.clone(),
+                self.engine_state != EngineStatus::TurnedOff,
                 self.search_tab.tab_label(),
                 self.settings_tab.tab_label(),
                 self.puzzle_tab.tab_label(),
@@ -868,23 +864,23 @@ fn gen_view<'a>(
     game_mode: config::GameMode,
     current_puzzle_side: Color,
     flip_board: bool,
-    board: Board,
-    analysis: Board,
+    board: &Board,
+    analysis: &Board,
     from_square: Option<PositionGUI>,
     last_move_from: Option<PositionGUI>,
     last_move_to: Option<PositionGUI>,
     hint_square: Option<PositionGUI>,
     piece_theme: styles::PieceTheme,
-    puzzle_status: String,
+    puzzle_status: &'a str,
     has_more_puzzles: bool,
     analysis_history_len: usize,
     current_puzzle_move: usize,
     game_status: GameStatus,
     active_tab: usize,
-    engine_eval: String,
-    engine_move: String,
+    engine_eval: &str,
+    engine_move: &str,
 
-    engine_btn_label: String,
+    engine_started: bool,
     search_tab_label: TabLabel,
     settings_tab_label: TabLabel,
     puzzle_tab_label: TabLabel,
@@ -1003,7 +999,11 @@ fn gen_view<'a>(
         } else {
             navigation_row = navigation_row.push(Button::new(Text::new("Takeback move")));
         }
-        navigation_row = navigation_row.push(Button::new(Text::new(engine_btn_label)).on_press(Message::StartEngine));
+        if engine_started {
+            navigation_row = navigation_row.push(Button::new(Text::new("Stop Engine")).on_press(Message::StartEngine));
+        } else {
+            navigation_row = navigation_row.push(Button::new(Text::new("Start Engine")).on_press(Message::StartEngine));
+        }
     } else {
         if has_more_puzzles {
             navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle))
