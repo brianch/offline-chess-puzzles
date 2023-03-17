@@ -6,17 +6,75 @@ use std::io::BufReader;
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::config::load_config;
-use crate::{Tab, Message, config, styles};
+use crate::{Tab, Message, config, styles, lang};
 
 #[derive(Debug, Clone)]
 pub enum SearchMesssage {
     SliderMinRatingChanged(i32),
     SliderMaxRatingChanged(i32),
-    SelectTheme(TaticsThemes),
+    SelectTheme(PickListWrapper<TaticsThemes>),
     SelectOpening(Openings),
     SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
+}
+
+#[derive(Debug, Clone)]
+pub struct PickListWrapper<D: DisplayTranslated> {
+    pub lang: lang::Language,
+    pub item: D,
+}
+
+impl<D: DisplayTranslated> std::fmt::Display for PickListWrapper<D> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&lang::tr(&self.lang, self.item.to_str_tr()))
+    }
+}
+
+impl<D: DisplayTranslated + std::cmp::PartialEq> PartialEq for PickListWrapper<D> {
+    fn eq(&self, other: &Self) -> bool {
+        self.item == other.item
+    }
+}
+impl<D: DisplayTranslated + std::cmp::PartialEq> Eq for PickListWrapper<D> {}
+
+impl PickListWrapper<TaticsThemes> {
+    pub fn get_themes(lang: lang::Language) -> Vec<PickListWrapper<TaticsThemes>> {
+        let mut themes_wrapper = Vec::new();
+        for theme in TaticsThemes::ALL {
+            themes_wrapper.push(
+                PickListWrapper::<TaticsThemes> {
+                    lang: lang,
+                    item: theme,
+                }
+            );
+        }
+        themes_wrapper
+    }
+
+    pub fn new_theme(lang: lang::Language, theme: TaticsThemes) -> Self {
+        Self { lang, item: theme}
+    }
+}
+
+impl PickListWrapper<lang::Language> {
+    pub fn get_langs(lang: lang::Language) -> Vec<PickListWrapper<lang::Language>> {
+        let mut themes_wrapper = Vec::new();
+        for item in lang::Language::ALL {
+            themes_wrapper.push(
+                PickListWrapper::<lang::Language> { lang, item }
+            );
+        }
+        themes_wrapper
+    }
+
+    pub fn new_lang(lang: lang::Language, item: lang::Language) -> Self {
+        Self { lang, item }
+    }
+}
+
+pub trait DisplayTranslated {
+    fn to_str_tr(&self) -> &str;
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
@@ -32,6 +90,7 @@ pub enum TaticsThemes {
 }
 
 impl TaticsThemes {
+
     const ALL: [TaticsThemes; 61] = [
         TaticsThemes::All,
         TaticsThemes::Opening, TaticsThemes::Middlegame, TaticsThemes::Endgame, TaticsThemes::RookEndgame,
@@ -61,6 +120,13 @@ impl TaticsThemes {
 
         TaticsThemes::Master, TaticsThemes::MasterVsMaster, TaticsThemes::SuperGM
     ];
+
+    pub fn get_tr_key(&self) -> &str {
+        match self {
+            TaticsThemes::All => "themes_all",
+            _ => self.get_tag_name(),
+        }
+    }
     
     pub fn get_tag_name(&self) -> &str {
         match self {
@@ -133,90 +199,18 @@ impl TaticsThemes {
             TaticsThemes::SuperGM => "superGM",
         }
     }
+
+}
+
+impl DisplayTranslated for TaticsThemes {
+    fn to_str_tr(&self) -> &str {
+        self.get_tr_key()
+    }
 }
 
 impl Default for TaticsThemes {
     fn default() -> TaticsThemes {
         TaticsThemes::Mate
-    }
-}
-
-impl std::fmt::Display for TaticsThemes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                TaticsThemes::All => "all",
-                TaticsThemes::Opening => "Opening",
-                TaticsThemes::Middlegame=> "Middlegame",
-                TaticsThemes::Endgame => "Endgame",
-                TaticsThemes::RookEndgame => "Rook endgame",
-                TaticsThemes::BishopEndgame => "Bishop endgame",
-                TaticsThemes::PawnEndgame => "Pawn endgame",
-                TaticsThemes::KnightEndgame => "Knight endgame",
-                TaticsThemes::QueenEndgame => "Queen endgame",
-                TaticsThemes::QueenRookEndgame => "Queen and rook endgame",
-        
-                TaticsThemes::AdvancedPawn => "Advanced pawn",
-                TaticsThemes::AtackingF2F7 => "Attacking f2/f7",
-                TaticsThemes::CapturingDefender => "Capturing defender",
-                TaticsThemes::DiscoveredAttack => "Discovered attack",
-                TaticsThemes::DoubleCheck => "Double check",
-                TaticsThemes::ExposedKing => "Exposed king",
-                TaticsThemes::Fork => "Fork",
-                TaticsThemes::HangingPiece => "Hanging piece",
-                TaticsThemes::KingsideAttack => "Kingside attack",
-                TaticsThemes::Pin => "Pin",
-                TaticsThemes::QueensideAttack => "Queenside attack",
-                TaticsThemes::Sacrifice => "Sacrifice",
-                TaticsThemes::Skewer => "Skewer",
-                TaticsThemes::TrappedPiece => "Trapped piece",
-
-                TaticsThemes::Attraction => "Attraction",
-                TaticsThemes::Clearance => "Clearance",
-                TaticsThemes::DefensiveMove => "Defensive move",
-                TaticsThemes::Deflection => "Deflection",
-                TaticsThemes::Interference => "Interference",
-                TaticsThemes::Intermezzo => "Intermezzo",
-                TaticsThemes::QuietMove => "Quiet move",
-                TaticsThemes::XRayAttack => "X-Ray attack",
-                TaticsThemes::Zugzwang => "Zugzwang",
-        
-                TaticsThemes::Mate => "Mate",
-                TaticsThemes::MateIn1 => "Mate in 1",
-                TaticsThemes::MateIn2 => "Mate in 2",
-                TaticsThemes::MateIn3 => "Mate in 3",
-                TaticsThemes::MateIn4 => "Mate in 4",
-                TaticsThemes::MateIn5 => "Mate in 5",
-                TaticsThemes::AnastasiaMate => "Anastasia mate",
-                TaticsThemes::ArabianMate => "Arabian mate",
-                TaticsThemes::BackRankMate => "Back-rank mate",
-                TaticsThemes::BodenMate => "Boden's mate",
-                TaticsThemes::DoubleBishopMate => "Double bishop mate",
-                TaticsThemes::DovetailMate => "Dovetail mate",
-                TaticsThemes::HookMate => "Hook mate",
-                TaticsThemes::SmotheredMate => "Smothered mate",
-
-                TaticsThemes::Castling => "Castling",
-                TaticsThemes::EnPassant => "En passant",
-                TaticsThemes::Promotion => "Promotion",
-                TaticsThemes::UnderPromotion => "Under promotion",
-                TaticsThemes::Equality => "Equality",
-                TaticsThemes::Advantage => "Advantage",
-                TaticsThemes::Crushing => "Crushing",
-
-                TaticsThemes::OneMove => "One move",
-                TaticsThemes::Short => "Short",
-                TaticsThemes::Long => "Long",
-                TaticsThemes::VeryLong => "Very long",
-
-                TaticsThemes::Master => "From games of titled players",
-                TaticsThemes::MasterVsMaster => "From games between titled players",
-                TaticsThemes::SuperGM => "From games of super GMs",
-
-            }
-        )
     }
 }
 
@@ -319,9 +313,9 @@ pub enum OpeningSide {
     Any, White, Black
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SearchTab {
-    pub theme: TaticsThemes,
+    pub theme: PickListWrapper<TaticsThemes>,
     pub opening: Option<Openings>,
     pub opening_side: Option<OpeningSide>,
     slider_min_rating_value: i32,
@@ -330,12 +324,13 @@ pub struct SearchTab {
     pub piece_to_promote_to: Piece,
 
     pub show_searching_msg: bool,
+    pub lang: lang::Language,
 }
 
 impl SearchTab {
     pub fn new() -> Self {
         SearchTab {
-            theme : config::SETTINGS.last_theme,
+            theme : PickListWrapper::new_theme(config::SETTINGS.lang, config::SETTINGS.last_theme),
             opening: config::SETTINGS.last_opening,
             opening_side: config::SETTINGS.last_opening_side,
             slider_min_rating_value: config::SETTINGS.last_min_rating,
@@ -343,6 +338,7 @@ impl SearchTab {
             piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
             show_searching_msg: false,
+            lang: config::SETTINGS.lang,
         }
     }
 
@@ -370,13 +366,13 @@ impl SearchTab {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
                     self.slider_max_rating_value,
-                    self.theme, self.opening, self.opening_side);
+                    self.theme.item, self.opening, self.opening_side);
 
                 let config = load_config();                    
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
-                           self.theme, self.opening, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                           self.theme.item, self.opening, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
             }
         }
     }
@@ -493,7 +489,7 @@ impl Tab for SearchTab {
     type Message = Message;
 
     fn title(&self) -> String {
-        String::from("Search")
+        lang::tr(&self.lang, "search")
     }
 
     fn tab_label(&self) -> TabLabel {
@@ -501,10 +497,9 @@ impl Tab for SearchTab {
     }
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
-
         let mut search_col = col![
             row![
-                Text::new("Min. Rating: "),
+                Text::new(lang::tr(&self.lang, "min_rating")),
                 Slider::new(
                     0..=3000,
                     self.slider_min_rating_value,
@@ -513,7 +508,7 @@ impl Tab for SearchTab {
                 Text::new(self.slider_min_rating_value.to_string())
             ].width(Length::Fill),
             row![
-                Text::new("Max. Rating: "),
+                Text::new(lang::tr(&self.lang, "max_rating")),
                 Slider::new(
                     0..=3000,
                     self.slider_max_rating_value,
@@ -521,13 +516,13 @@ impl Tab for SearchTab {
                 ),
                 Text::new(self.slider_max_rating_value.to_string())
                 ].width(Length::Fill),
-            Text::new("Tactics theme:"),
+            Text::new(lang::tr(&self.lang, "theme_label")),
             PickList::new(
-                &TaticsThemes::ALL[..],
-                Some(self.theme),
+                PickListWrapper::get_themes(self.lang.clone()),
+                Some(self.theme.clone()),
                 SearchMesssage::SelectTheme
             ),
-            Text::new("In the opening:"),
+            Text::new(lang::tr(&self.lang, "in_opening")),
             PickList::new(
                 &Openings::ALL[..],
                 self.opening,
@@ -538,11 +533,11 @@ impl Tab for SearchTab {
         if let Some(op) = self.opening {
             if op != Openings::Any {
                 let row_color = row![
-                    Radio::new(OpeningSide::Any, "Any", self.opening_side, SearchMesssage::SelectOpeningSide),
-                    Radio::new(OpeningSide::White, "White", self.opening_side, SearchMesssage::SelectOpeningSide),
-                    Radio::new(OpeningSide::Black, "Black", self.opening_side, SearchMesssage::SelectOpeningSide)
+                    Radio::new(OpeningSide::Any, lang::tr(&self.lang, "any"), self.opening_side, SearchMesssage::SelectOpeningSide),
+                    Radio::new(OpeningSide::White, lang::tr(&self.lang, "white"), self.opening_side, SearchMesssage::SelectOpeningSide),
+                    Radio::new(OpeningSide::Black, lang::tr(&self.lang, "black"), self.opening_side, SearchMesssage::SelectOpeningSide)
                 ].spacing(5).align_items(Alignment::Center);
-                search_col = search_col.push(Text::new("Side: ")).push(row_color);
+                search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
             }
         }
 
@@ -588,11 +583,11 @@ impl Tab for SearchTab {
 
         search_col = search_col.push(Space::new(Length::Fill, 10));
         if self.show_searching_msg {
-            search_col = search_col.push(Text::new("Searching, please wait..."));
+            search_col = search_col.push(Text::new(lang::tr(&self.lang, "searching")));
         }
         search_col = search_col
-            .push(Button::new(Text::new("Search")).padding(5).on_press(SearchMesssage::ClickSearch))
-            .push(Text::new("Promotion piece:"))
+            .push(Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch))
+            .push(Text::new(lang::tr(&self.lang, "promotion_piece")))
             .push(row_promotion);
 
         let scroll = Scrollable::new(search_col);

@@ -1,4 +1,4 @@
-use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide};
+use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide, lang};
 
 lazy_static!{
     pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
@@ -23,6 +23,7 @@ pub struct OfflinePuzzlesConfig {
     pub auto_load_next: bool,
     pub flip_board: bool,
     pub board_theme: styles::Theme,
+    pub lang: lang::Language,
     pub last_min_rating: i32,
     pub last_max_rating: i32,
     pub last_theme: TaticsThemes,
@@ -44,6 +45,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             auto_load_next: true,
             flip_board: false,
             board_theme: styles::Theme::default(),
+            lang: lang::Language::English,
             last_min_rating: 0,
             last_max_rating: 1000,
             last_theme: TaticsThemes::All,

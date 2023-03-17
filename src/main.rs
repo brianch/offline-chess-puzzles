@@ -34,6 +34,7 @@ mod puzzles;
 use puzzles::{PuzzleMessage, PuzzleTab, GameStatus};
 
 mod eval;
+mod lang;
 
 extern crate serde;
 #[macro_use]
@@ -227,6 +228,7 @@ struct OfflinePuzzles {
     puzzle_tab: PuzzleTab,
     game_mode: config::GameMode,
     sound_playback: Option<SoundPlayback>,
+    lang: lang::Language,
 }
 
 impl Default for OfflinePuzzles {
@@ -250,7 +252,7 @@ impl Default for OfflinePuzzles {
             engine_sender: None,
             engine_move: String::new(),
 
-            puzzle_status: String::from("Use the search."),
+            puzzle_status: String::from(lang::tr(&config::SETTINGS.lang, "use_search")),
             search_tab: SearchTab::new(),
             settings_tab: SettingsTab::new(),
             puzzle_tab: PuzzleTab::new(),
@@ -258,6 +260,7 @@ impl Default for OfflinePuzzles {
 
             game_mode: config::GameMode::Puzzle,
             sound_playback: SoundPlayback::init_sound(),
+            lang: config::SETTINGS.lang,
         }
     }
 }
@@ -502,15 +505,15 @@ impl Application for OfflinePuzzles {
                                     self.analysis_history = vec![self.board];
 
                                     if self.board.side_to_move() == Color::White {
-                                        self.puzzle_status = String::from("White to move!");
+                                        self.puzzle_status = lang::tr(&self.lang, "white_to_move");
                                     } else {
-                                        self.puzzle_status = String::from("Black to move!");
+                                        self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                                     }
                                     self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                                     self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                                 } else {
                                     self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
-                                    self.puzzle_status = String::from("Well done!");
+                                    self.puzzle_status = lang::tr(&self.lang, "correct_puzzle");
                                 }
                             } else {
                                 if self.settings_tab.saved_configs.auto_load_next {
@@ -525,7 +528,7 @@ impl Application for OfflinePuzzles {
                                 }
                                 self.last_move_from = None;
                                 self.last_move_to = None;
-                                self.puzzle_status = String::from("All puzzles done for this search!");
+                                self.puzzle_status = lang::tr(&self.lang, "all_puzzles_done");
                             }
                         } else {
                             if self.settings_tab.saved_configs.play_sound {
@@ -544,14 +547,14 @@ impl Application for OfflinePuzzles {
                             self.analysis_history.push(self.board);
 
                             self.puzzle_tab.current_puzzle_move += 1;
-                            self.puzzle_status = String::from("Correct! What now?");
+                            self.puzzle_status = lang::tr(&self.lang, "correct_move");
                         }
                     } else {
                         #[allow(clippy::collapsible_else_if)]
                         if self.board.side_to_move() == Color::White {
-                            self.puzzle_status = String::from("Ops! Wrong move... White to play.");
+                            self.puzzle_status = lang::tr(&self.lang, "wrong_move_white_play");
                         } else {
-                            self.puzzle_status = String::from("Ops! Wrong move... Black to play.");
+                            self.puzzle_status = lang::tr(&self.lang, "wrong_move_black_play");
                         }
                     }
                 }
@@ -608,9 +611,9 @@ impl Application for OfflinePuzzles {
                 self.analysis_history = vec![self.board];
 
                 if self.board.side_to_move() == Color::White {
-                    self.puzzle_status = String::from("White to move!");
+                    self.puzzle_status = lang::tr(&self.lang, "white_to_move");
                 } else {
-                    self.puzzle_status = String::from("Black to move!");
+                    self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                 }
                 self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
@@ -648,9 +651,9 @@ impl Application for OfflinePuzzles {
                 self.analysis_history = vec![self.board];
 
                 if self.board.side_to_move() == Color::White {
-                    self.puzzle_status = String::from("White to move!");
+                    self.puzzle_status = lang::tr(&self.lang, "white_to_move");
                 } else {
-                    self.puzzle_status = String::from("Black to move!");
+                    self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                 }
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                 self.puzzle_tab.game_status = GameStatus::Playing;
@@ -687,9 +690,9 @@ impl Application for OfflinePuzzles {
                         self.analysis_history = vec![self.board];
 
                         if self.board.side_to_move() == Color::White {
-                            self.puzzle_status = String::from("White to move!");
+                            self.puzzle_status = lang::tr(&self.lang, "white_to_move");
                         } else {
-                            self.puzzle_status = String::from("Black to move!");
+                            self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                         }
                         self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                         self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
@@ -700,21 +703,25 @@ impl Application for OfflinePuzzles {
                         self.last_move_from = None;
                         self.last_move_to = None;
                         self.puzzle_tab.game_status = GameStatus::NoPuzzles;
-                        self.puzzle_status = String::from("Sorry, no puzzle found");
+                        self.puzzle_status = lang::tr(&self.lang, "no_puzzle_found");
                     }
                 } else {
                     self.board = Board::default();
                     self.last_move_from = None;
                     self.last_move_to = None;
                     self.puzzle_tab.game_status = GameStatus::NoPuzzles;
-                    self.puzzle_status = String::from("Sorry, no puzzle found");
+                    self.puzzle_status = lang::tr(&self.lang, "no_puzzle_found");
                 }
                 Command::none()
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
-                    self.settings_tab.saved_configs = settings;
                     self.search_tab.piece_theme_promotion = self.settings_tab.saved_configs.piece_theme;
                     self.engine.engine_path = self.settings_tab.engine_path.clone();
+                    self.lang = settings.lang;
+                    self.search_tab.lang = self.lang;
+                    self.search_tab.theme.lang = self.lang;
+                    self.puzzle_tab.lang = self.lang;
+                    self.settings_tab.saved_configs = settings;
                 }
                 Command::none()
             }
@@ -786,7 +793,7 @@ impl Application for OfflinePuzzles {
                             } else if eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
                                 let tokens: Vec<&str> = eval_str.split_whitespace().collect();
                                 let distance_to_mate = (tokens[2].parse::<f32>().unwrap() * -1.).to_string();
-                                self.engine_eval = String::from("Mate in ") + &distance_to_mate;
+                                self.engine_eval = lang::tr(&self.lang, "mate_in") + &distance_to_mate;
                             } else {
                                 self.engine_eval = eval_str;
                             }
@@ -846,6 +853,7 @@ impl Application for OfflinePuzzles {
                 self.search_tab.view(),
                 self.settings_tab.view(),
                 self.puzzle_tab.view(),
+                &self.lang,
                 size,
             )});
         Container::new(resp)
@@ -887,6 +895,7 @@ fn gen_view<'a>(
     search_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
     settings_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
     puzzle_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
+    lang: &lang::Language,
     size: Size
 ) -> Element<'a, Message, iced::Renderer<styles::Theme>> {
 
@@ -987,41 +996,41 @@ fn gen_view<'a>(
     }
 
     let game_mode_row = row![
-        Text::new("Mode:"),
-        Radio::new(config::GameMode::Puzzle, "Puzzle", Some(game_mode), Message::SelectMode),
-        Radio::new(config::GameMode::Analysis, "Analysis", Some(game_mode), Message::SelectMode)
+        Text::new(lang::tr(lang, "mode")),
+        Radio::new(config::GameMode::Puzzle, lang::tr(lang, "mode_puzzle"), Some(game_mode), Message::SelectMode),
+        Radio::new(config::GameMode::Analysis, lang::tr(lang, "mode_analysis"), Some(game_mode), Message::SelectMode)
     ].spacing(10).padding(10).align_items(Alignment::Center);
 
     let mut navigation_row = Row::new().padding(3).spacing(50);
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
-            navigation_row = navigation_row.push(Button::new(Text::new("Takeback move")).on_press(Message::GoBackMove));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))).on_press(Message::GoBackMove));
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new("Takeback move")));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))));
         }
         if engine_started {
-            navigation_row = navigation_row.push(Button::new(Text::new("Stop Engine")).on_press(Message::StartEngine));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "stop_engine"))).on_press(Message::StartEngine));
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new("Start Engine")).on_press(Message::StartEngine));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "start_engine"))).on_press(Message::StartEngine));
         }
     } else {
         if has_more_puzzles {
-            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")).on_press(Message::ShowNextPuzzle))
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))).on_press(Message::ShowNextPuzzle))
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new("Next puzzle")));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))));
         }
         if game_status == GameStatus::NoPuzzles {
             navigation_row = navigation_row
-                .push(Button::new(Text::new("Redo Puzzle")))
-                .push(Button::new(Text::new("Hint")));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else if game_status == GameStatus::PuzzleEnded {
             navigation_row = navigation_row
-                .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new("Hint")));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else {
             navigation_row = navigation_row
-                .push(Button::new(Text::new("Redo Puzzle")).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new("Hint")).on_press(Message::ShowHint));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))).on_press(Message::ShowHint));
         }
     }
 
@@ -1029,8 +1038,8 @@ fn gen_view<'a>(
     if !engine_eval.is_empty() {
         board_col = board_col.push(
             row![
-                Text::new(String::from("Eval: ") + &engine_eval),
-                Text::new(String::from("Best move: ") + &engine_move)
+                Text::new(String::from(lang::tr(lang, "eval")) + &engine_eval),
+                Text::new(String::from(lang::tr(lang, "best_move")) + &engine_move)
             ].padding(5).spacing(15)
         );
     }

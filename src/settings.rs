@@ -4,7 +4,7 @@ use iced::{alignment, Command, Alignment, Length};
 
 use iced_aw::TabLabel;
 
-use crate::{Message, Tab, config, styles};
+use crate::{Message, Tab, config, styles, lang, search_tab::PickListWrapper};
 
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {
@@ -13,19 +13,20 @@ pub enum SettingsMessage {
     CheckFlipBoard(bool),
     SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::Theme),
+    SelectLanguage(PickListWrapper<lang::Language>),
     ChangePuzzleDbLocation(String),
     ChangeSearchResultLimit(String),
     ChangeEnginePath(String),
     ChangePressed
 }
 
-#[derive(Debug, Clone)]
 pub struct SettingsTab {
     pub engine_path: String,
     pub window_width: u32,
     pub window_height: u32,
     piece_theme: styles::PieceTheme,
     pub board_theme: styles::Theme,
+    pub lang: PickListWrapper<lang::Language>,
     theme: styles::Theme,
     play_sound: bool,
     auto_load_next: bool,
@@ -46,6 +47,7 @@ impl SettingsTab {
             window_height: config::SETTINGS.window_width,
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
+            lang: PickListWrapper::new_lang(config::SETTINGS.lang, config::SETTINGS.lang),
             theme: styles::Theme::Blue,
             play_sound: config::SETTINGS.play_sound,
             auto_load_next: config::SETTINGS.auto_load_next,
@@ -61,11 +63,16 @@ impl SettingsTab {
         match message {
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+            }
+            SettingsMessage::SelectLanguage(value) => {
+                self.lang = value;
+                self.lang.lang = self.lang.item;
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -73,7 +80,7 @@ impl SettingsTab {
             }
             SettingsMessage::ChangeEnginePath(value) => {
                 self.engine_path = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::ChangeSearchResultLimit(value) => {
                 if value.is_empty() {
@@ -86,15 +93,15 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::CheckAutoLoad(value) => {
                 self.auto_load_next = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::CheckFlipBoard(value) => {
                 self.flip_board = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone()), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::ChangePressed => {
                 let engine_path = if self.engine_path.is_empty() {
@@ -114,6 +121,7 @@ impl SettingsTab {
                     auto_load_next: self.auto_load_next,
                     flip_board: self.flip_board,
                     board_theme: self.board_theme,
+                    lang: self.lang.lang,
                     last_min_rating: self.saved_configs.last_min_rating,
                     last_max_rating: self.saved_configs.last_max_rating,
                     last_theme: self.saved_configs.last_theme,
@@ -124,11 +132,11 @@ impl SettingsTab {
                 match file {
                     Ok(file) => {
                         if serde_json::to_writer_pretty(file, &config).is_ok() {                
-                            self.settings_status = String::from("Settings saved!");
+                            self.settings_status = lang::tr(&self.lang.lang, "settings_saved");
                         } else {
-                            self.settings_status = String::from("Error saving config file.");
+                            self.settings_status = lang::tr(&self.lang.lang, "error_saving");
                         }
-                    } Err(_) => self.settings_status = String::from("Error reading config file.")
+                    } Err(_) => self.settings_status = lang::tr(&self.lang.lang, "error_reading_config")
                 }
                 Command::none()
             }
@@ -149,7 +157,7 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme, engine: String) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme, engine: String, lang: lang::Language) -> Option<config::OfflinePuzzlesConfig> {
         let engine = if engine.is_empty() {
             None
         } else {
@@ -158,6 +166,7 @@ impl SettingsTab {
         let mut config = config::load_config();
         config.board_theme = theme;
         config.piece_theme = pieces;
+        config.lang = lang;
         config.play_sound = play_sound;
         config.auto_load_next = auto_load;
         config.flip_board = flip;
@@ -170,7 +179,7 @@ impl Tab for SettingsTab {
     type Message = Message;
 
     fn title(&self) -> String {
-        String::from("Settings")
+        lang::tr(&self.lang.lang, "settings")
     }
 
     fn tab_label(&self) -> TabLabel {
@@ -180,7 +189,7 @@ impl Tab for SettingsTab {
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let col_settings = column![
             row![
-                Text::new("Piece Theme:"),
+                Text::new(lang::tr(&self.lang.lang, "piece_theme")),
                 PickList::new(
                     &styles::PieceTheme::ALL[..],
                     Some(self.piece_theme),
@@ -188,7 +197,7 @@ impl Tab for SettingsTab {
                 )
             ].spacing(5).align_items(Alignment::Center),
             row![
-                Text::new("Board Theme:"),
+                Text::new(lang::tr(&self.lang.lang, "board_theme")),
                 PickList::new(
                     &styles::Theme::ALL[..],
                     Some(self.board_theme),
@@ -196,7 +205,15 @@ impl Tab for SettingsTab {
                 )
             ].spacing(5).align_items(Alignment::Center),
             row![
-                Text::new("Play sound on moves:"),
+                Text::new(lang::tr(&self.lang.lang, "language")),
+                PickList::new(
+                    PickListWrapper::get_langs(self.lang.lang.clone()),
+                    Some(self.lang.clone()),
+                    SettingsMessage::SelectLanguage
+                )
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new(lang::tr(&self.lang.lang, "play_sound")),
                 Checkbox::new(
                     "",
                     self.play_sound,
@@ -204,7 +221,7 @@ impl Tab for SettingsTab {
                 ).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
-                Text::new("Auto load next puzzle:"),
+                Text::new(lang::tr(&self.lang.lang, "auto_load")),
                 Checkbox::new(
                     "",
                     self.auto_load_next,
@@ -212,7 +229,7 @@ impl Tab for SettingsTab {
                 ).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
-                Text::new("Flip board:"),
+                Text::new(lang::tr(&self.lang.lang, "flip_board")),
                 Checkbox::new(
                     "",
                     self.flip_board,
@@ -220,21 +237,21 @@ impl Tab for SettingsTab {
                 ).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![   
-                Text::new("Get the first"),
+                Text::new(lang::tr(&self.lang.lang, "get_first_puzzles1")),
                 TextInput::new(
                     &self.search_results_limit_value,
                     &self.search_results_limit_value,
                     SettingsMessage::ChangeSearchResultLimit,
                 ).width(80).padding(10).size(20),
-                Text::new(" puzzles")
+                Text::new(lang::tr(&self.lang.lang, "get_first_puzzles2"))
             ].spacing(5).align_items(Alignment::Center),
-            Text::new("Engine path (with .exe name):"),
+            Text::new(lang::tr(&self.lang.lang, "engine_path")),
             TextInput::new(
                 &self.engine_path,
                 &self.engine_path,
                 SettingsMessage::ChangeEnginePath,
             ).width(200).padding(10).size(20),
-            Button::new(Text::new("Save Changes")).padding(5).on_press(SettingsMessage::ChangePressed),
+            Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed),
             Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
 
         ].spacing(10).align_items(Alignment::Center);
