@@ -10,7 +10,7 @@ static BUNDLE_ENUS: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent:
     let file = std::fs::File::open("./translations/en-US/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
-    reader.read_to_string(&mut source);
+    reader.read_to_string(&mut source).expect("Failed to read en-US translation file");
     let res = FluentResource::try_new(source).expect("Could not parse the FTL file.");
     let mut bundle = FluentBundle::new_concurrent(vec![langid!("en-US")]);
     bundle.add_resource(res).expect("Failed to add FTL resources to the bundle.");
@@ -21,7 +21,7 @@ static BUNDLE_PTBR: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent:
     let file = std::fs::File::open("./translations/pt-BR/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
-    reader.read_to_string(&mut source);
+    reader.read_to_string(&mut source).expect("Failed to read pt-BR translation file");
     let res = FluentResource::try_new(source).expect("Could not parse the FTL file.");
     let mut bundle = FluentBundle::new_concurrent(vec![langid!("pt-BR")]);
     bundle.add_resource(res).expect("Failed to add FTL resources to the bundle.");
