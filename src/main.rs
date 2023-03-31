@@ -720,6 +720,7 @@ impl Application for OfflinePuzzles {
                     self.lang = settings.lang;
                     self.search_tab.lang = self.lang;
                     self.search_tab.theme.lang = self.lang;
+                    self.search_tab.opening.lang = self.lang;
                     self.puzzle_tab.lang = self.lang;
                     self.settings_tab.saved_configs = settings;
                 }

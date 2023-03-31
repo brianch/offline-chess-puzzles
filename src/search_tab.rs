@@ -13,7 +13,7 @@ pub enum SearchMesssage {
     SliderMinRatingChanged(i32),
     SliderMaxRatingChanged(i32),
     SelectTheme(PickListWrapper<TaticsThemes>),
-    SelectOpening(Openings),
+    SelectOpening(PickListWrapper<Openings>),
     SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
@@ -54,6 +54,25 @@ impl PickListWrapper<TaticsThemes> {
 
     pub fn new_theme(lang: lang::Language, theme: TaticsThemes) -> Self {
         Self { lang, item: theme}
+    }
+}
+
+impl PickListWrapper<Openings> {
+    pub fn get_openings(lang: lang::Language) -> Vec<PickListWrapper<Openings>> {
+        let mut openings_wrapper = Vec::new();
+        for opening in Openings::ALL {
+            openings_wrapper.push(
+                PickListWrapper::<Openings> {
+                    lang: lang,
+                    item: opening,
+                }
+            );
+        }
+        openings_wrapper
+    }
+
+    pub fn new_opening(lang: lang::Language, opening: Openings) -> Self {
+        Self { lang, item: opening}
     }
 }
 
@@ -271,40 +290,17 @@ impl Openings {
             Openings::Reti => "Reti_Opening"
         }
     }
+    pub fn get_tr_key(&self) -> &str {
+        match self {
+            Openings::Any => "any_opening",
+            _ => self.get_field_name(),
+        }
+    }
 }
 
-impl std::fmt::Display for Openings {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Openings::Any => "Any",
-                Openings::Sicilian => "Sicilian Defense", Openings::French => "French Defense",
-                Openings::QueensPawnGame => "Queen's Pawn Game", Openings::ItalianGame => "Italian Game",
-                Openings::CaroKann => "Caro-Kann Defense", Openings::QueensGambitDeclined => "Queen's Gambit Declined",
-                Openings::Scandinavian => "Scandinavian Defense", Openings::RuyLopez => "Ruy Lopez",
-                Openings::English => "English Opening", Openings::IndianDefense => "Indian Defense",
-                Openings::ScotchGame => "Scotch Game", Openings::PhilidorDefense => "Philidor Defense",
-                Openings::RussianGame => "Russian Game", Openings::ModernDefense => "Modern Defense",
-                Openings::FourKnightsGame => "Four Knights Game", Openings::KingsGambitAccepted => "King's Gambit Accepted",
-                Openings::SlavDefense => "Slav Defense", Openings::PircDefense => "Pirc Defense",
-                Openings::ZukertortOpening => "Zukertort Opening", Openings::BishopsOpening => "Bishops Opening",
-                Openings::KingsPawnGame => "King's Pawn Game", Openings::ViennaGame => "Vienna Game",
-                Openings::KingsIndianDefense => "King's Indian Defense", Openings::QueensGambitAccepted => "Queen's Gambit Accepted",
-                Openings::Benoni => "Benoni Defense", Openings::AlekhineDefense => "Alekhine Defense",
-                Openings::NimzowitschDefense => "Nimzowitsch Defense", Openings::HorwitzDefense => "Horwitz Defense",
-                Openings::NimzoLarsenAttack => "Nimzo-Larsen Attack", Openings::KingsGambitDeclined => "King's Gambit Declined",
-                Openings::NimzoIndianDefense => "Nimzo-Indian Defense", Openings::Bird => "Bird Opening",
-                Openings::Dutch => "Dutch Defense", Openings::SemiSlav => "Semi-Slav Defense",
-                Openings::GiuocoPiano => "Giuoco Piano", Openings::Grunfeld => "Grunfeld Defense",
-                Openings::ThreeKnightsOpening => "Three Knights Opening", Openings::Ponziani => "Ponziani Opening",
-                Openings::KingsIndianAttack => "King's Indian Attack", Openings::BlackmarDiemerGambit => "Blackmar-Diemer Gambit",
-                Openings::Trompowsky => "Trompowsky Attack", Openings::KingsGambit => "King's Gambit",
-                Openings::RapportJobavaSystem => "Rapport-Jobava System", Openings::Catalan => "Catalan Opening",
-                Openings::Reti => "Réti Opening"
-                }
-        )
+impl DisplayTranslated for Openings {
+    fn to_str_tr(&self) -> &str {
+        self.get_tr_key()
     }
 }
 
@@ -316,7 +312,7 @@ pub enum OpeningSide {
 #[derive(Debug)]
 pub struct SearchTab {
     pub theme: PickListWrapper<TaticsThemes>,
-    pub opening: Option<Openings>,
+    pub opening: PickListWrapper<Openings>,
     pub opening_side: Option<OpeningSide>,
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,    
@@ -331,7 +327,7 @@ impl SearchTab {
     pub fn new() -> Self {
         SearchTab {
             theme : PickListWrapper::new_theme(config::SETTINGS.lang, config::SETTINGS.last_theme),
-            opening: config::SETTINGS.last_opening,
+            opening: PickListWrapper::new_opening(config::SETTINGS.lang, config::SETTINGS.last_opening),
             opening_side: config::SETTINGS.last_opening_side,
             slider_min_rating_value: config::SETTINGS.last_min_rating,
             slider_max_rating_value: config::SETTINGS.last_max_rating,
@@ -354,7 +350,7 @@ impl SearchTab {
                 self.theme = new_theme;
                 Command::none()   
             } SearchMesssage::SelectOpening(new_opening) => {
-                self.opening = Some(new_opening);
+                self.opening = new_opening;
                 Command::none()
             } SearchMesssage::SelectOpeningSide(new_opening_side) => {
                 self.opening_side = Some(new_opening_side);
@@ -366,18 +362,18 @@ impl SearchTab {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
                     self.slider_max_rating_value,
-                    self.theme.item, self.opening, self.opening_side);
+                    self.theme.item, self.opening.item, self.opening_side);
 
                 let config = load_config();                    
                 Command::perform(
                     SearchTab::search(self.slider_min_rating_value,
                            self.slider_max_rating_value,
-                           self.theme.item, self.opening, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                           self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
             }
         }
     }
 
-    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>) {
+    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>) {
         let file = std::fs::File::open("settings.json");        
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
@@ -398,7 +394,7 @@ impl SearchTab {
         }
     }
     
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Option<Openings>, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
     
         let reader = csv::ReaderBuilder::new()
@@ -410,12 +406,7 @@ impl SearchTab {
             puzzles.clear();
             //self.current_puzzle_move = 1;
             //self.current_puzzle = 0;
-            let op = match opening {
-                None => Openings::Any,
-                Some(x) => x
-            };
-
-            if op != Openings::Any {
+            if opening != Openings::Any {
                 let side = match op_side {
                     None => OpeningSide::Any,
                     Some(x) => x
@@ -424,7 +415,7 @@ impl SearchTab {
                     OpeningSide::Any => {                        
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == op.get_field_name() &&
+                                if record.opening == opening.get_field_name() &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
@@ -437,7 +428,7 @@ impl SearchTab {
                     } OpeningSide::Black => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == op.get_field_name() &&
+                                if record.opening == opening.get_field_name() &&
                                         !record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -451,7 +442,7 @@ impl SearchTab {
                     } OpeningSide::White => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == op.get_field_name() &&
+                                if record.opening == opening.get_field_name() &&
                                         record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -524,21 +515,19 @@ impl Tab for SearchTab {
             ),
             Text::new(lang::tr(&self.lang, "in_opening")),
             PickList::new(
-                &Openings::ALL[..],
-                self.opening,
+                PickListWrapper::get_openings(self.lang.clone()),
+                Some(self.opening.clone()),
                 SearchMesssage::SelectOpening
             )
         ].spacing(10).align_items(Alignment::Center);
 
-        if let Some(op) = self.opening {
-            if op != Openings::Any {
-                let row_color = row![
-                    Radio::new(OpeningSide::Any, lang::tr(&self.lang, "any"), self.opening_side, SearchMesssage::SelectOpeningSide),
-                    Radio::new(OpeningSide::White, lang::tr(&self.lang, "white"), self.opening_side, SearchMesssage::SelectOpeningSide),
-                    Radio::new(OpeningSide::Black, lang::tr(&self.lang, "black"), self.opening_side, SearchMesssage::SelectOpeningSide)
-                ].spacing(5).align_items(Alignment::Center);
-                search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
-            }
+        if self.opening.item != Openings::Any {
+            let row_color = row![
+                Radio::new(OpeningSide::Any, lang::tr(&self.lang, "any"), self.opening_side, SearchMesssage::SelectOpeningSide),
+                Radio::new(OpeningSide::White, lang::tr(&self.lang, "white"), self.opening_side, SearchMesssage::SelectOpeningSide),
+                Radio::new(OpeningSide::Black, lang::tr(&self.lang, "black"), self.opening_side, SearchMesssage::SelectOpeningSide)
+            ].spacing(5).align_items(Alignment::Center);
+            search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
         }
 
         // Promotion piece selector

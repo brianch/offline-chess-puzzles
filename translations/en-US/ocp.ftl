@@ -66,6 +66,8 @@ themes = Themes:
 url = Game url:{" "}
 no_puzzle = No puzzle loaded
 
+#-----------------------------------------------
+#THEMES
 themes_all = All
 opening = Opening
 middlegame = Middlegame
@@ -133,3 +135,52 @@ veryLong = Very long
 master = From games of titled players
 masterVsMaster = From games between titled players
 superGM = From games of super GMs
+
+#--------------------------------------
+#OPENINGS
+any_opening = Any
+Sicilian_Defense = Sicilian Defense
+French_Defense = French Defense
+Queens_Pawn_Game = Queen's Pawn Game
+Italian_Game = Italian Game
+Caro-Kann_Defense = Caro-Kann Defense
+Queens_Gambit_Declined = Queen's Gambit Declined
+Scandinavian_Defense = Scandinavian Defense
+Ruy_Lopez = Ruy Lopez
+English_Opening = English Opening
+Indian_Defense = Indian Defense
+Scotch_Game = Scotch Game
+Philidor_Defense = Philidor Defense
+Russian_Game = Russian Game
+Modern_Defense = Modern Defense
+Four_Knights_Game = Four Knights Game
+Kings_Gambit_Accepted = King's Gambit Accepted
+Slav_Defense = Slav Defense
+Pirc_Defense = Pirc Defense
+Zukertort_Opening = Zukertort Opening
+Bishops_Opening = Bishops Opening
+Kings_Pawn_Game = King's Pawn Game
+Vienna_Game = Vienna Game
+Kings_Indian_Defense = King's Indian Defense
+Queens_Gambit_Accepted = Queen's Gambit Accepted
+Benoni_Defense = Benoni Defense
+Alekhine_Defense = Alekhine Defense
+Nimzowitsch_Defense = Nimzowitsch Defense
+Horwitz_Defense = Horwitz Defense
+Nimzo-Larsen_Attack = Nimzo-Larsen Attack
+Kings_Gambit_Declined = King's Gambit Declined
+Nimzo-Indian_Defense = Nimzo-Indian Defense
+Bird_Opening = Bird Opening
+Dutch_Defense = Dutch Defense
+Semi-Slav_Defense = Semi-Slav Defense
+Giuoco_Piano = Giuoco Piano
+Grunfeld_Defense = Grunfeld Defense
+Three_Knights_Opening = Three Knights Opening
+Ponziani_Opening = Ponziani Opening
+Kings_Indian_Attack = King's Indian Attack
+Blackmar-Diemer_Gambit = Blackmar-Diemer Gambit
+Trompowsky_Attack = Trompowsky Attack
+Kings_Gambit = King's Gambit
+Rapport-Jobava_System = Rapport-Jobava System
+Catalan_Opening = Catalan Opening
+Reti_Opening = Réti Opening

@@ -27,7 +27,7 @@ pub struct OfflinePuzzlesConfig {
     pub last_min_rating: i32,
     pub last_max_rating: i32,
     pub last_theme: TaticsThemes,
-    pub last_opening: Option<Openings>,
+    pub last_opening: Openings,
     pub last_opening_side: Option<OpeningSide>,
 }
 
@@ -49,7 +49,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             last_min_rating: 0,
             last_max_rating: 1000,
             last_theme: TaticsThemes::All,
-            last_opening: Some(Openings::Any),
+            last_opening: Openings::Any,
             last_opening_side: Some(OpeningSide::Any),
         }
     }
