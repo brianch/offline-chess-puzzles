@@ -1,8 +1,9 @@
 use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide, lang};
+use once_cell::sync::Lazy;
 
-lazy_static!{
-    pub static ref SETTINGS: OfflinePuzzlesConfig = load_config();
-}
+pub static SETTINGS: Lazy<OfflinePuzzlesConfig> = Lazy::new(|| {
+    load_config()
+});
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {

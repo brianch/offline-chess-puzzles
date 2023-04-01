@@ -39,8 +39,6 @@ mod lang;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
 
 const HEADER_SIZE: u16 = 32;
 const TAB_PADDING: u16 = 16;

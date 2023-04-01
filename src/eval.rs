@@ -1,5 +1,5 @@
 use iced::{Subscription, subscription};
-use lazy_static::__Deref;
+use std::ops::Deref;
 use std::process::Stdio;
 use tokio::sync::mpsc::{self, Receiver};
 use tokio::process::{Command, Child};

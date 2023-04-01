@@ -16,7 +16,6 @@ csv = "1.1.6"
 serde = "1.0.152"
 serde_derive = "1.0.152"
 serde_json = "1.0.93"
-lazy_static = "1.4.0"
 tokio = { version = "1.25.0", features = ["process", "io-std", "io-util", "sync"] }
 rodio = { version = "0.17.1", default-features = false, features = ["vorbis"] }
 fluent-bundle = "0.15.2"
