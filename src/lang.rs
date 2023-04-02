@@ -28,10 +28,22 @@ static BUNDLE_PTBR: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent:
     bundle
 });
 
+static BUNDLE_ES: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
+    let file = std::fs::File::open("./translations/es/ocp.ftl").unwrap();
+    let mut reader = std::io::BufReader::new(file);
+    let mut source = String::new();
+    reader.read_to_string(&mut source).expect("Failed to read ES translation file");
+    let res = FluentResource::try_new(source).expect("Could not parse the FTL file.");
+    let mut bundle = FluentBundle::new_concurrent(vec![langid!("es")]);
+    bundle.add_resource(res).expect("Failed to add FTL resources to the bundle.");
+    bundle
+});
+
 pub fn tr(lang: &Language, key: &str) -> String {
     let bundle = match lang {
         Language::Portuguese => &BUNDLE_PTBR,
         Language::English => &BUNDLE_ENUS,
+        Language::Spanish => &BUNDLE_ES,
     };
     let msg = bundle.get_message(key).expect("Missing translation key.");
     let mut errors = vec![];
@@ -41,12 +53,12 @@ pub fn tr(lang: &Language, key: &str) -> String {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
-    English, Portuguese
+    English, Portuguese, Spanish
 }
 
 impl Language {
-    pub const ALL: [Language; 2] = [
-        Language::English, Language::Portuguese
+    pub const ALL: [Language; 3] = [
+        Language::English, Language::Portuguese, Language::Spanish
     ];
 }
 
@@ -55,6 +67,7 @@ impl DisplayTranslated for Language {
         match self {
             Language::English => "english",
             Language::Portuguese => "portuguese",
+            Language::Spanish => "spanish",
         }
     }
 }

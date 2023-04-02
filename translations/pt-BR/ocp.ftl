@@ -1,4 +1,5 @@
 #main interface
+#============================================================
 search = Busca
 settings = Configurações
 current_puzzle = Problema Atual
@@ -25,6 +26,7 @@ all_puzzles_done = Todos os problemas dessa busca já resolvidos!
 no_puzzle_found = Desculpe, nenhum problema encontrado.
 
 #Search Tab
+#============================================================
 min_rating = Rating Min.:{" "}
 max_rating = Rating Máx.:{" "}
 theme_label = Tema Tático:
@@ -38,11 +40,13 @@ btn_search = Buscar
 promotion_piece = Peça para promoção:
 
 #Settings
+#============================================================
 piece_theme = Tema de peças:
 board_theme = Tema do tabuleiro:
 language = Idioma:
 english = Inglês
 portuguese = Português
+spanish = Espanhol
 play_sound = Som nos lances:
 auto_load = Carregar próx. problema automaticamente:
 flip_board = Girar tabuleiro:
@@ -55,6 +59,7 @@ error_saving = Erro ao salvar configuração.
 error_reading_config = Erro ao ler arquivo de configuração.
 
 #Puzzles
+#============================================================
 puzzle_link = Link do problema:{" "}
 copy = Copiar
 fen = FEN:
@@ -134,8 +139,8 @@ master = De jogos de titulados
 masterVsMaster = De jogos entre titulados
 superGM = De jogos de Super GMs
 
-#--------------------------------------
 #OPENINGS
+#============================================================
 any_opening = Qualquer uma
 Sicilian_Defense = Defesa Siciliana
 French_Defense = Defesa Francesa

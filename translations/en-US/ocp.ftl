@@ -1,4 +1,5 @@
 #main interface
+#============================================================
 search = Search
 settings = Settings
 current_puzzle = Current Puzzle
@@ -38,11 +39,13 @@ btn_search = Search
 promotion_piece = Promotion piece:
 
 #Settings
+#============================================================
 piece_theme = Piece Theme:
 board_theme = Board Theme:
 language = Language:
 english = English
 portuguese = Portuguese
+spanish = Spanish
 play_sound = Play sound on moves:
 auto_load = Auto load next puzzle:
 flip_board = Flip board:
@@ -55,6 +58,7 @@ error_saving = Error saving config file.
 error_reading_config = Error reading config file.
 
 #Puzzles
+#============================================================
 puzzle_link = Puzzle link:{" "}
 copy = Copy
 fen = FEN:
@@ -66,8 +70,8 @@ themes = Themes:
 url = Game url:{" "}
 no_puzzle = No puzzle loaded
 
-#-----------------------------------------------
 #THEMES
+#============================================================
 themes_all = All
 opening = Opening
 middlegame = Middlegame
@@ -136,8 +140,8 @@ master = From games of titled players
 masterVsMaster = From games between titled players
 superGM = From games of super GMs
 
-#--------------------------------------
 #OPENINGS
+#============================================================
 any_opening = Any
 Sicilian_Defense = Sicilian Defense
 French_Defense = French Defense
