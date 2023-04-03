@@ -900,98 +900,97 @@ fn gen_view<'a>(
 
     let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
     let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
-    let mut i = 0;
 
     let is_white = (current_puzzle_side == Color::White) ^ flip_board;
 
-    for _ in 0..64 {
+    //Reserve more space below the board if we'll show the engine eval
+    let board_height = if engine_eval.is_empty() {
+        ((size.height - 110.) / 8.) as u16
+    } else {
+        ((size.height - 140.) / 8.) as u16
+    };
 
-        let rol: i32 = if is_white { 7 - i / 8 } else { i / 8 };
-        let col: i32 = if is_white { i % 8 } else { 7 - (i % 8) };
+    //let interval: Box<dyn Iterator<Item = i32>> = if is_white { Box::new((0..8).rev()) } else { Box::new(0..8) };
+    let ranks = if is_white {
+        (0..8).rev().collect::<Vec<i32>>()
+    } else {
+        (0..8).collect::<Vec<i32>>()
+    };
+    for rank in ranks {
+        for file in 0..8 {
+            let pos = PositionGUI::new(rank, file);
 
-        let pos = PositionGUI::new(rol, col);
+            let (piece, color) =
+                match game_mode {
+                    config::GameMode::Analysis => {
+                        (analysis.piece_on(pos.posgui_to_square()),
+                        analysis.color_on(pos.posgui_to_square()))
+                    } config::GameMode::Puzzle => {
+                        (board.piece_on(pos.posgui_to_square()),
+                        board.color_on(pos.posgui_to_square()))
+                    }
+                };
 
-        let (piece, color) =
-            match game_mode {
-                config::GameMode::Analysis => {
-                    (analysis.piece_on(pos.posgui_to_square()),
-                    analysis.color_on(pos.posgui_to_square()))
-                } config::GameMode::Puzzle => {
-                    (board.piece_on(pos.posgui_to_square()),
-                    board.color_on(pos.posgui_to_square()))
+            let mut text = "";
+            if let Some(piece) = piece {
+                if color.unwrap() == Color::White {
+                    text = match piece {
+                        Piece::Pawn => "/wP.svg",
+                        Piece::Rook => "/wR.svg",
+                        Piece::Knight => "/wN.svg",
+                        Piece::Bishop => "/wB.svg",
+                        Piece::Queen => "/wQ.svg",
+                        Piece::King => "/wK.svg"
+                    };
+                } else {
+                    text = match piece {
+                        Piece::Pawn => "/bP.svg",
+                        Piece::Rook => "/bR.svg",
+                        Piece::Knight => "/bN.svg",
+                        Piece::Bishop => "/bB.svg",
+                        Piece::Queen => "/bQ.svg",
+                        Piece::King => "/bK.svg"
+                    };
+                }
+            }
+
+            let selected =
+                if game_mode == config::GameMode::Puzzle {
+                    from_square == Some(pos)    ||
+                    last_move_from == Some(pos) ||
+                    last_move_to == Some(pos)   ||
+                    hint_square == Some(pos)
+                } else {
+                    from_square == Some(pos)
+                };
+
+            let square_style :styles::ButtonStyle = if (rank + file) % 2 == 0 {
+                if selected {
+                    styles::ButtonStyle::SelectedLightSquare
+                } else {
+                    styles::ButtonStyle::LightSquare
+                }
+            } else {
+                #[allow(clippy::collapsible_else_if)]
+                if selected {
+                    styles::ButtonStyle::SelectedDarkSquare
+                } else {
+                    styles::ButtonStyle::DarkSquare
                 }
             };
 
-        let mut text = "";
-        if let Some(piece) = piece {
-            if color.unwrap() == Color::White {
-                text = match piece {
-                    Piece::Pawn => "/wP.svg",
-                    Piece::Rook => "/wR.svg",
-                    Piece::Knight => "/wN.svg",
-                    Piece::Bishop => "/wB.svg",
-                    Piece::Queen => "/wQ.svg",
-                    Piece::King => "/wK.svg"
-                };
-            } else {
-                text = match piece {
-                    Piece::Pawn => "/bP.svg",
-                    Piece::Rook => "/bR.svg",
-                    Piece::Knight => "/bN.svg",
-                    Piece::Bishop => "/bB.svg",
-                    Piece::Queen => "/bQ.svg",
-                    Piece::King => "/bK.svg"
-                };
-            }
+            board_row = board_row.push(Button::new(
+                    Svg::from_path(
+                        String::from("pieces/") + &piece_theme.to_string() + text)
+                )
+                .width(board_height)
+                .height(board_height)
+                .on_press(Message::SelectSquare(pos))
+                .style(square_style)
+            );
         }
-
-        let selected =
-            if game_mode == config::GameMode::Puzzle {
-                from_square == Some(pos)    ||
-                last_move_from == Some(pos) ||
-                last_move_to == Some(pos)   ||
-                hint_square == Some(pos)
-            } else {
-                from_square == Some(pos)
-            };
-
-        let square_style :styles::ButtonStyle = if (pos.get_row() * 9 + pos.get_col()) % 2 == 1 {
-            if selected {
-                styles::ButtonStyle::SelectedLightSquare
-            } else {   
-                styles::ButtonStyle::LightSquare
-            }
-        } else {
-            #[allow(clippy::collapsible_else_if)]
-            if selected {
-                styles::ButtonStyle::SelectedDarkSquare
-            } else {
-                styles::ButtonStyle::DarkSquare
-            }
-        };
-
-        //Reserve more space below the board if we'll show the engine eval
-        let board_height = if engine_eval.is_empty() {
-            ((size.height - 110.) / 8.) as u16
-        } else {
-            ((size.height - 140.) / 8.) as u16
-        };
-
-        board_row = board_row.push(Button::new(
-                Svg::from_path(
-                    String::from("pieces/") + &piece_theme.to_string() + text)
-            )
-            .width(board_height)
-            .height(board_height)
-            .on_press(Message::SelectSquare(pos))
-            .style(square_style)
-        );
-
-        i += 1;
-        if i % 8 == 0 {
-            board_col = board_col.push(board_row);
-            board_row = Row::new().spacing(0).align_items(Alignment::Center);
-        }
+        board_col = board_col.push(board_row);
+        board_row = Row::new().spacing(0).align_items(Alignment::Center);
     }
 
     let game_mode_row = row![
