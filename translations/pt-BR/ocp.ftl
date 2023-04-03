@@ -50,6 +50,7 @@ spanish = Espanhol
 play_sound = Som nos lances:
 auto_load = Carregar próx. problema automaticamente:
 flip_board = Girar tabuleiro:
+show_coords = Coordenadas do tabuleiro
 get_first_puzzles1 = Obter os primeiros
 get_first_puzzles2 =  {" "}problemas
 engine_path = Caminho para a engine (com o .exe):

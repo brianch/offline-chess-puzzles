@@ -828,6 +828,7 @@ impl Application for OfflinePuzzles {
                 self.game_mode,
                 self.puzzle_tab.current_puzzle_side,
                 self.settings_tab.flip_board,
+                self.settings_tab.show_coordinates,
                 &self.board,
                 &self.analysis.current_position(),
                 self.from_square,
@@ -871,6 +872,7 @@ fn gen_view<'a>(
     game_mode: config::GameMode,
     current_puzzle_side: Color,
     flip_board: bool,
+    show_coordinates: bool,
     board: &Board,
     analysis: &Board,
     from_square: Option<PositionGUI>,
@@ -905,9 +907,17 @@ fn gen_view<'a>(
 
     //Reserve more space below the board if we'll show the engine eval
     let board_height = if engine_eval.is_empty() {
-        ((size.height - 110.) / 8.) as u16
+        if show_coordinates {
+            ((size.height - 120.) / 8.) as u16
+        } else {
+            ((size.height - 110.) / 8.) as u16
+        }
     } else {
-        ((size.height - 140.) / 8.) as u16
+        if show_coordinates {
+            ((size.height - 150.) / 8.) as u16
+        } else {
+            ((size.height - 140.) / 8.) as u16
+        }
     };
 
     //let interval: Box<dyn Iterator<Item = i32>> = if is_white { Box::new((0..8).rev()) } else { Box::new(0..8) };
@@ -989,8 +999,43 @@ fn gen_view<'a>(
                 .style(square_style)
             );
         }
+        if show_coordinates {
+            board_row = board_row.push(
+                Container::new(
+                    Text::new((rank + 1).to_string()).size(15)
+                ).align_y(iced::alignment::Vertical::Bottom)
+                .align_x(iced::alignment::Horizontal::Right)
+                .padding(3)
+                .height(board_height)
+            );
+        }
         board_col = board_col.push(board_row);
         board_row = Row::new().spacing(0).align_items(Alignment::Center);
+    }
+    if show_coordinates {
+        if is_white {
+            board_col = board_col.push(row![
+                Text::new("a").size(15).width(board_height),
+                Text::new("b").size(15).width(board_height),
+                Text::new("c").size(15).width(board_height),
+                Text::new("d").size(15).width(board_height),
+                Text::new("e").size(15).width(board_height),
+                Text::new("f").size(15).width(board_height),
+                Text::new("g").size(15).width(board_height),
+                Text::new("h").size(15).width(board_height),
+            ]);
+        } else {
+            board_col = board_col.push(row![
+                Text::new("h").size(15).width(board_height),
+                Text::new("g").size(15).width(board_height),
+                Text::new("f").size(15).width(board_height),
+                Text::new("e").size(15).width(board_height),
+                Text::new("d").size(15).width(board_height),
+                Text::new("c").size(15).width(board_height),
+                Text::new("b").size(15).width(board_height),
+                Text::new("a").size(15).width(board_height),
+            ]);
+        }
     }
 
     let game_mode_row = row![

@@ -9,6 +9,7 @@
   "play_sound": true,
   "auto_load_next": true,
   "flip_board": false,
+  "show_coordinates": false,
   "board_theme": "Blue",
   "lang": "English",
   "last_min_rating": 0,

@@ -11,6 +11,7 @@ pub enum SettingsMessage {
     CheckPlaySound(bool),
     CheckAutoLoad(bool),
     CheckFlipBoard(bool),
+    CheckShowCoords(bool),
     SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::Theme),
     SelectLanguage(PickListWrapper<lang::Language>),
@@ -31,6 +32,7 @@ pub struct SettingsTab {
     play_sound: bool,
     auto_load_next: bool,
     pub flip_board: bool,
+    pub show_coordinates: bool,
 
     puzzle_db_location_value: String,
     search_results_limit_value: String,
@@ -52,6 +54,7 @@ impl SettingsTab {
             play_sound: config::SETTINGS.play_sound,
             auto_load_next: config::SETTINGS.auto_load_next,
             flip_board: config::SETTINGS.flip_board,
+            show_coordinates: config::SETTINGS.show_coordinates,
             puzzle_db_location_value: String::from(&config::SETTINGS.puzzle_db_location),
             search_results_limit_value: config::SETTINGS.search_results_limit.to_string(),
             settings_status: String::new(),
@@ -63,16 +66,16 @@ impl SettingsTab {
         match message {
             SettingsMessage::SelectPieceTheme(value) => {
                 self.piece_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::SelectBoardTheme(value) => {
                 self.board_theme = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::SelectLanguage(value) => {
                 self.lang = value;
                 self.lang.lang = self.lang.item;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::ChangePuzzleDbLocation(value) => {
                 self.puzzle_db_location_value = value;
@@ -80,7 +83,7 @@ impl SettingsTab {
             }
             SettingsMessage::ChangeEnginePath(value) => {
                 self.engine_path = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::ChangeSearchResultLimit(value) => {
                 if value.is_empty() {
@@ -93,15 +96,19 @@ impl SettingsTab {
             }
             SettingsMessage::CheckPlaySound(value) => {
                 self.play_sound = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::CheckAutoLoad(value) => {
                 self.auto_load_next = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
             }
             SettingsMessage::CheckFlipBoard(value) => {
                 self.flip_board = value;
-                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+                Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+            }
+            SettingsMessage::CheckShowCoords(value) => {
+                self.show_coordinates = value;
+                Command::none()
             }
             SettingsMessage::ChangePressed => {
                 let engine_path = if self.engine_path.is_empty() {
@@ -120,6 +127,7 @@ impl SettingsTab {
                     play_sound: self.play_sound,
                     auto_load_next: self.auto_load_next,
                     flip_board: self.flip_board,
+                    show_coordinates: self.show_coordinates,
                     board_theme: self.board_theme,
                     lang: self.lang.lang,
                     last_min_rating: self.saved_configs.last_min_rating,
@@ -157,7 +165,7 @@ impl SettingsTab {
         }
     }
 
-    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, pieces: styles::PieceTheme, theme: styles::Theme, engine: String, lang: lang::Language) -> Option<config::OfflinePuzzlesConfig> {
+    pub async fn send_changes(play_sound: bool, auto_load: bool, flip: bool, coords: bool, pieces: styles::PieceTheme, theme: styles::Theme, engine: String, lang: lang::Language) -> Option<config::OfflinePuzzlesConfig> {
         let engine = if engine.is_empty() {
             None
         } else {
@@ -170,6 +178,7 @@ impl SettingsTab {
         config.play_sound = play_sound;
         config.auto_load_next = auto_load;
         config.flip_board = flip;
+        config.show_coordinates = coords;
         config.engine_path = engine;
         Some(config)
     }
@@ -236,7 +245,15 @@ impl Tab for SettingsTab {
                     SettingsMessage::CheckFlipBoard,
                 ).size(20),
             ].spacing(5).align_items(Alignment::Center),
-            row![   
+            row![
+                Text::new(lang::tr(&self.lang.lang, "show_coords")),
+                Checkbox::new(
+                    "",
+                    self.show_coordinates,
+                    SettingsMessage::CheckShowCoords,
+                ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles1")),
                 TextInput::new(
                     &self.search_results_limit_value,

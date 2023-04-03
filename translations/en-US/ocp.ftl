@@ -49,6 +49,7 @@ spanish = Spanish
 play_sound = Play sound on moves:
 auto_load = Auto load next puzzle:
 flip_board = Flip board:
+show_coords = Show coordinates
 get_first_puzzles1 = Get the first
 get_first_puzzles2 =  {" "}puzzles
 engine_path = Engine path (with .exe name):

@@ -50,6 +50,7 @@ spanish = Español
 play_sound = Sonido en los movimientos:
 auto_load = Cargar automaticamente el próx. ejercício:
 flip_board = Girar el tablero:
+show_coords = Coordenadas del tablero
 get_first_puzzles1 = Obtener los primeros
 get_first_puzzles2 =  {" "}ejercícios
 engine_path = Camino del motor de ajedrez (con el nombre del .exe):
