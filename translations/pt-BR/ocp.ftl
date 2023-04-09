@@ -45,6 +45,7 @@ piece_theme = Tema de peças:
 board_theme = Tema do tabuleiro:
 language = Idioma:
 english = Inglês
+french = Francês
 portuguese = Português
 spanish = Espanhol
 play_sound = Som nos lances:

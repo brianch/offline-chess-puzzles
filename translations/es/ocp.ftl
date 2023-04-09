@@ -45,6 +45,7 @@ piece_theme = Tema de piezas:
 board_theme = Tema del Tablero:
 language = Idioma:
 english = Inglés
+french = Francés
 portuguese = Portugués
 spanish = Español
 play_sound = Sonido en los movimientos:
