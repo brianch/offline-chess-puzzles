@@ -815,7 +815,7 @@ impl Application for OfflinePuzzles {
                 iced_native::subscription::events().map(Message::EventOccurred)
             } _ => {
                 Subscription::batch(vec![
-                    self.engine.run(),
+                    Engine::run_engine(self.engine.clone()),
                     iced_native::subscription::events().map(Message::EventOccurred)
                 ])
             }
@@ -1040,8 +1040,8 @@ fn gen_view<'a>(
 
     let game_mode_row = row![
         Text::new(lang::tr(lang, "mode")),
-        Radio::new(config::GameMode::Puzzle, lang::tr(lang, "mode_puzzle"), Some(game_mode), Message::SelectMode),
-        Radio::new(config::GameMode::Analysis, lang::tr(lang, "mode_analysis"), Some(game_mode), Message::SelectMode)
+        Radio::new(lang::tr(lang, "mode_puzzle"), config::GameMode::Puzzle, Some(game_mode), Message::SelectMode),
+        Radio::new(lang::tr(lang, "mode_analysis"), config::GameMode::Analysis, Some(game_mode), Message::SelectMode)
     ].spacing(10).padding(10).align_items(Alignment::Center);
 
     let mut navigation_row = Row::new().padding(3).spacing(50);

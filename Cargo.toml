@@ -5,18 +5,18 @@ authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-iced = {version = "0.8.0", features = ["glow","svg", "tokio"] }
-iced_aw = {version = "0.4", default-features = false, features = ["tabs"] }
-iced_lazy = "0.5.0"
-iced_native = "0.9.1"
+iced = {version = "0.9.0", features = ["glow","svg", "tokio"] }
+iced_aw = {version = "0.5", default-features = false, features = ["tabs"] }
+iced_lazy = "0.6.1"
+iced_native = "0.10.1"
 
-rand = "0.8"
+rand = "0.8.5"
 chess = "3.2.0"
-csv = "1.1.6"
-serde = "1.0.152"
-serde_derive = "1.0.152"
-serde_json = "1.0.93"
-tokio = { version = "1.25.0", features = ["process", "io-std", "io-util", "sync"] }
+csv = "1.2.1"
+serde = "1.0.160"
+serde_derive = "1.0.160"
+serde_json = "1.0.96"
+tokio = { version = "1.27.0", features = ["process", "io-std", "io-util", "sync"] }
 rodio = { version = "0.17.1", default-features = false, features = ["vorbis"] }
 fluent-bundle = "0.15.2"
 intl-memoizer = "0.5.1"

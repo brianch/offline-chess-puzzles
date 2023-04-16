@@ -258,16 +258,14 @@ impl Tab for SettingsTab {
                 TextInput::new(
                     &self.search_results_limit_value,
                     &self.search_results_limit_value,
-                    SettingsMessage::ChangeSearchResultLimit,
-                ).width(80).padding(10).size(20),
+                ).on_input(SettingsMessage::ChangeSearchResultLimit).width(80).padding(10).size(20),
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles2"))
             ].spacing(5).align_items(Alignment::Center),
             Text::new(lang::tr(&self.lang.lang, "engine_path")),
             TextInput::new(
                 &self.engine_path,
                 &self.engine_path,
-                SettingsMessage::ChangeEnginePath,
-            ).width(200).padding(10).size(20),
+            ).on_input(SettingsMessage::ChangeEnginePath).width(200).padding(10).size(20),
             Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed),
             Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
 

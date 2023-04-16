@@ -228,7 +228,8 @@ impl text_input::StyleSheet for Theme {
             background: iced::Background::Color(self.palette().light_square),
             border_radius: 1.,
             border_width: 1.,
-            border_color: self.palette().dark_square
+            border_color: self.palette().dark_square,
+            icon_color: self.palette().simple_text,
         }
     }
 
@@ -237,7 +238,8 @@ impl text_input::StyleSheet for Theme {
             background: iced::Background::Color(self.palette().light_square),
             border_radius: 1.,
             border_width: 1.,
-            border_color: self.palette().dark_square
+            border_color: self.palette().dark_square,
+            icon_color: self.palette().simple_text,
         }
     }
 
@@ -251,6 +253,20 @@ impl text_input::StyleSheet for Theme {
 
     fn selection_color(&self, _style: &Self::Style) -> Color {
         Color::WHITE
+    }
+
+    fn disabled(&self, _style: &Self::Style) -> text_input::Appearance {
+        text_input::Appearance {
+            background: iced::Background::Color(self.palette().light_square),
+            border_radius: 1.,
+            border_width: 1.,
+            border_color: self.palette().dark_square,
+            icon_color: self.palette().simple_text,
+        }
+    }
+
+    fn disabled_color(&self, _style: &Self::Style) -> Color {
+        self.palette().dark_square
     }
 }
 
@@ -308,7 +324,7 @@ impl scrollable::StyleSheet for Theme {
         }
     }
 
-    fn hovered(&self, _style: &Self::Style) -> scrollable::Scrollbar {
+    fn hovered(&self, _style: &Self::Style, _is_mouse_over_scrollbar: bool) -> scrollable::Scrollbar {
         scrollable::Scrollbar {
             background: Some(iced::Background::Color(self.palette().light_square)),
             border_radius: 1.,
@@ -402,7 +418,12 @@ impl slider::StyleSheet for Theme {
 
     fn active(&self, _style: &Self::Style) -> slider::Appearance {
         slider::Appearance {
-            rail_colors: (Color::BLACK, Color::BLACK),
+            rail: slider::Rail {
+                colors: (
+                    Color::BLACK, Color::BLACK,
+                ),
+                width: 2.0,
+            },
             handle: Handle {
                 shape: HandleShape::Rectangle { width: 7, border_radius: 1. },
                 color: self.palette().light_square,
@@ -414,7 +435,12 @@ impl slider::StyleSheet for Theme {
 
     fn hovered(&self, _style: &Self::Style) -> slider::Appearance {
         slider::Appearance {
-            rail_colors: (Color::BLACK, Color::BLACK),
+            rail: slider::Rail {
+                colors: (
+                    Color::BLACK, Color::BLACK,
+                ),
+                width: 2.0,
+            },
             handle: Handle {
                 shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
                 color: self.palette().dark_square,
@@ -426,7 +452,12 @@ impl slider::StyleSheet for Theme {
 
     fn dragging(&self, _style: &Self::Style) -> slider::Appearance {
         slider::Appearance {
-            rail_colors: (Color::BLACK, Color::BLACK),
+            rail: slider::Rail {
+                colors: (
+                    Color::BLACK, Color::BLACK,
+                ),
+                width: 2.0,
+            },
             handle: Handle {
                 shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
                 color: self.palette().dark_square,

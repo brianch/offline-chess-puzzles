@@ -89,7 +89,7 @@ impl Tab for PuzzleTab {
                 row![
                     TextInput::new("",
                         &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
-                    PuzzleMessage::ChangeTextInputs),
+                    ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
                 ],
                 Text::new(lang::tr(&self.lang, "fen")),
@@ -97,8 +97,7 @@ impl Tab for PuzzleTab {
                     TextInput::new(
                         &self.current_puzzle_fen,
                         &self.current_puzzle_fen,
-                        PuzzleMessage::ChangeTextInputs,
-                    ),
+                    ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.current_puzzle_fen.clone())),
                 ],
                 Text::new(String::from(lang::tr(&self.lang, "rating")) + &self.puzzles[self.current_puzzle].rating.to_string()),
@@ -112,8 +111,7 @@ impl Tab for PuzzleTab {
                     TextInput::new(
                         &self.puzzles[self.current_puzzle].game_url,
                         &self.puzzles[self.current_puzzle].game_url,
-                        PuzzleMessage::ChangeTextInputs,
-                    ),
+                    ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
                 ],
             ].spacing(10).align_items(Alignment::Center))

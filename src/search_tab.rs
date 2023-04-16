@@ -523,9 +523,9 @@ impl Tab for SearchTab {
 
         if self.opening.item != Openings::Any {
             let row_color = row![
-                Radio::new(OpeningSide::Any, lang::tr(&self.lang, "any"), self.opening_side, SearchMesssage::SelectOpeningSide),
-                Radio::new(OpeningSide::White, lang::tr(&self.lang, "white"), self.opening_side, SearchMesssage::SelectOpeningSide),
-                Radio::new(OpeningSide::Black, lang::tr(&self.lang, "black"), self.opening_side, SearchMesssage::SelectOpeningSide)
+                Radio::new(lang::tr(&self.lang, "any"), OpeningSide::Any, self.opening_side, SearchMesssage::SelectOpeningSide),
+                Radio::new(lang::tr(&self.lang, "white"), OpeningSide::White, self.opening_side, SearchMesssage::SelectOpeningSide),
+                Radio::new(lang::tr(&self.lang, "black"), OpeningSide::Black, self.opening_side, SearchMesssage::SelectOpeningSide)
             ].spacing(5).align_items(Alignment::Center);
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
         }
