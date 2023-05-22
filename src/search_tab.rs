@@ -415,7 +415,7 @@ impl SearchTab {
                     OpeningSide::Any => {                        
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == opening.get_field_name() &&
+                                if record.opening.contains(opening.get_field_name()) &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
@@ -428,7 +428,7 @@ impl SearchTab {
                     } OpeningSide::Black => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == opening.get_field_name() &&
+                                if record.opening.contains(opening.get_field_name()) &&
                                         !record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -442,7 +442,7 @@ impl SearchTab {
                     } OpeningSide::White => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {                                
-                                if record.opening == opening.get_field_name() &&
+                                if record.opening.contains(opening.get_field_name()) &&
                                         record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {

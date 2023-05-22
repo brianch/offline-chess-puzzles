@@ -94,10 +94,7 @@ pub struct Puzzle {
     pub themes: String,
     #[serde(rename = "GameUrl")]
     pub game_url: String,
-    #[serde(rename = "OpeningFamily")]
+    #[serde(rename = "OpeningTags")]
     #[serde(default)]
     pub opening: String,
-    #[serde(rename = "OpeningVariation")]
-    #[serde(default)]
-    pub variation: String
 }
