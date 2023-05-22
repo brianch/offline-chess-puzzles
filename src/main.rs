@@ -920,15 +920,18 @@ fn gen_view<'a>(
         }
     };
 
-    //let interval: Box<dyn Iterator<Item = i32>> = if is_white { Box::new((0..8).rev()) } else { Box::new(0..8) };
-    let ranks = if is_white {
-        (0..8).rev().collect::<Vec<i32>>()
+    let ranks;
+    let files;
+    if is_white {
+        ranks = (0..8).rev().collect::<Vec<i32>>();
+        files = (0..8).collect::<Vec<i32>>();
     } else {
-        (0..8).collect::<Vec<i32>>()
+        ranks = (0..8).collect::<Vec<i32>>();
+        files = (0..8).rev().collect::<Vec<i32>>();
     };
     for rank in ranks {
-        for file in 0..8 {
-            let pos = PositionGUI::new(rank, file);
+        for file in &files {
+            let pos = PositionGUI::new(rank, *file);
 
             let (piece, color) =
                 match game_mode {
@@ -974,7 +977,7 @@ fn gen_view<'a>(
                     from_square == Some(pos)
                 };
 
-            let square_style :styles::ButtonStyle = if (rank + file) % 2 == 0 {
+            let square_style :styles::ButtonStyle = if (rank + file) % 2 != 0 {
                 if selected {
                     styles::ButtonStyle::SelectedLightSquare
                 } else {
