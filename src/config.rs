@@ -1,6 +1,8 @@
 use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide, lang};
 use once_cell::sync::Lazy;
 
+use diesel::prelude::*;
+
 pub static SETTINGS: Lazy<OfflinePuzzlesConfig> = Lazy::new(|| {
     load_config()
 });
@@ -74,7 +76,7 @@ pub fn load_config() -> OfflinePuzzlesConfig {
     config
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Queryable)]
 pub struct Puzzle {
     #[serde(rename = "PuzzleId")]
     pub puzzle_id: String,

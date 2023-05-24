@@ -36,6 +36,12 @@ use puzzles::{PuzzleMessage, PuzzleTab, GameStatus};
 mod eval;
 mod lang;
 
+pub mod models;
+pub mod schema;
+mod db;
+
+#[macro_use]
+extern crate diesel;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -160,6 +166,7 @@ pub enum Message {
     EngineStopped(bool),
     UpdateEval((Option<String>, Option<String>)),
     EngineReady(mpsc::Sender<String>),
+    FavoritePuzzle,
 }
 
 struct SoundPlayback {
@@ -301,7 +308,7 @@ fn coord_to_san(board: Board, coords: String) -> Option<String> {
             san = Some(String::from("0-0-0"));
         } else {
             let mut san_str = String::new();
-            let is_en_passant = piece == Piece::Pawn && 
+            let is_en_passant = piece == Piece::Pawn &&
                 board.piece_on(dest_square).is_none() &&
                 dest_square.get_file() != orig_square.get_file();
             let is_normal_capture = board.piece_on(dest_square).is_some();
@@ -477,7 +484,7 @@ impl Application for OfflinePuzzles {
                             if self.settings_tab.saved_configs.play_sound {
                                 if let Some(audio) = &self.sound_playback {
                                     audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
-                                }    
+                                }
                             }
                             if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
                                 if self.settings_tab.saved_configs.auto_load_next {
@@ -532,7 +539,7 @@ impl Application for OfflinePuzzles {
                             if self.settings_tab.saved_configs.play_sound {
                                 if let Some(audio) = &self.sound_playback {
                                     audio.play_audio(SoundPlayback::TWO_PIECE_SOUND);
-                                }    
+                                }
                             }
                             movement = ChessMove::new(
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
@@ -733,14 +740,14 @@ impl Application for OfflinePuzzles {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
                             SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
-                            window::close()        
+                            window::close()
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
                             }
                             Command::none()
                         }
-                    }                        
+                    }
                 } else if let Event::Window(window::Event::Resized { width, height }) = event {
                     self.settings_tab.window_width = width;
                     self.settings_tab.window_height = height;
@@ -783,12 +790,12 @@ impl Application for OfflinePuzzles {
                     EngineStatus::TurnedOff => {
                         Command::none()
                     } _ => {
-                        let (eval, best_move) = eval;                
+                        let (eval, best_move) = eval;
                         if let Some(eval_str) = eval {
                             //Keep the values relative to white, like it's usually done in GUIs
                             if !eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
                                 let eval = (eval_str.parse::<f32>().unwrap() * -1.).to_string();
-                                self.engine_eval = eval.to_string().clone();    
+                                self.engine_eval = eval.to_string().clone();
                             } else if eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
                                 let tokens: Vec<&str> = eval_str.split_whitespace().collect();
                                 let distance_to_mate = (tokens[2].parse::<f32>().unwrap() * -1.).to_string();
@@ -805,6 +812,9 @@ impl Application for OfflinePuzzles {
                         Command::none()
                     }
                 }
+            } (_, Message::FavoritePuzzle) => {
+                db::add_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
+                Command::none()
             }
         }
     }
@@ -1068,14 +1078,17 @@ fn gen_view<'a>(
         if game_status == GameStatus::NoPuzzles {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))))
+                .push(Button::new(Text::new("Fav")))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else if game_status == GameStatus::PuzzleEnded {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new("Fav")).on_press(Message::FavoritePuzzle))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
+                .push(Button::new(Text::new("Fav")).on_press(Message::FavoritePuzzle))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))).on_press(Message::ShowHint));
         }
     }
@@ -1094,7 +1107,7 @@ fn gen_view<'a>(
             .push(search_tab_label, search_tab)
             .push(settings_tab_label, settings_tab)
             .push(puzzle_tab_label, puzzle_tab)
-            .tab_bar_position(iced_aw::TabBarPosition::Top);    
+            .tab_bar_position(iced_aw::TabBarPosition::Top);
 
     row![board_col,tabs].spacing(30).align_items(Alignment::Start).into()
 }

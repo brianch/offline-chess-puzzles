@@ -6,7 +6,7 @@ use std::io::BufReader;
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::config::load_config;
-use crate::{Tab, Message, config, styles, lang};
+use crate::{Tab, Message, config, styles, lang, db};
 
 #[derive(Debug, Clone)]
 pub enum SearchMesssage {
@@ -17,6 +17,7 @@ pub enum SearchMesssage {
     SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
+    SelectBase(SearchBase),
 }
 
 #[derive(Debug, Clone)]
@@ -146,7 +147,7 @@ impl TaticsThemes {
             _ => self.get_tag_name(),
         }
     }
-    
+
     pub fn get_tag_name(&self) -> &str {
         match self {
             TaticsThemes::All => "",
@@ -159,7 +160,7 @@ impl TaticsThemes {
             TaticsThemes::KnightEndgame => "knightEndgame",
             TaticsThemes::QueenEndgame => "queenEndgame",
             TaticsThemes::QueenRookEndgame => "queenRookEndgame",
-    
+
             TaticsThemes::AdvancedPawn => "advancedPawn",
             TaticsThemes::AtackingF2F7 => "attackingF2F7",
             TaticsThemes::CapturingDefender => "capturingDefender",
@@ -184,7 +185,7 @@ impl TaticsThemes {
             TaticsThemes::QuietMove => "quietMove",
             TaticsThemes::XRayAttack =>"xRayAttack",
             TaticsThemes::Zugzwang => "zugzwang",
-    
+
             TaticsThemes::Mate => "mate",
             TaticsThemes::MateIn1 => "mateIn1",
             TaticsThemes::MateIn2 => "mateIn2",
@@ -309,18 +310,24 @@ pub enum OpeningSide {
     Any, White, Black
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum SearchBase {
+    Lichess, Favorites
+}
+
 #[derive(Debug)]
 pub struct SearchTab {
     pub theme: PickListWrapper<TaticsThemes>,
     pub opening: PickListWrapper<Openings>,
     pub opening_side: Option<OpeningSide>,
     slider_min_rating_value: i32,
-    slider_max_rating_value: i32,    
+    slider_max_rating_value: i32,
     pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
 
     pub show_searching_msg: bool,
     pub lang: lang::Language,
+    base: Option<SearchBase>,
 }
 
 impl SearchTab {
@@ -335,6 +342,7 @@ impl SearchTab {
             piece_to_promote_to: Piece::Queen,
             show_searching_msg: false,
             lang: config::SETTINGS.lang,
+            base: Some(SearchBase::Lichess),
         }
     }
 
@@ -348,7 +356,7 @@ impl SearchTab {
                 Command::none()
             } SearchMesssage::SelectTheme(new_theme) => {
                 self.theme = new_theme;
-                Command::none()   
+                Command::none()
             } SearchMesssage::SelectOpening(new_opening) => {
                 self.opening = new_opening;
                 Command::none()
@@ -364,17 +372,27 @@ impl SearchTab {
                     self.slider_max_rating_value,
                     self.theme.item, self.opening.item, self.opening_side);
 
-                let config = load_config();                    
-                Command::perform(
-                    SearchTab::search(self.slider_min_rating_value,
-                           self.slider_max_rating_value,
-                           self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                let config = load_config();
+                if self.base == Some(SearchBase::Favorites) {
+                    Command::perform(
+                        SearchTab::search_favs(self.slider_min_rating_value,
+                            self.slider_max_rating_value,
+                            self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                } else {
+                    Command::perform(
+                        SearchTab::search(self.slider_min_rating_value,
+                            self.slider_max_rating_value,
+                            self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                }
+            } SearchMesssage::SelectBase(base) => {
+                self.base = Some(base);
+                Command::none()
             }
         }
     }
 
     pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>) {
-        let file = std::fs::File::open("settings.json");        
+        let file = std::fs::File::open("settings.json");
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
             if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
@@ -383,7 +401,7 @@ impl SearchTab {
                 config.last_theme = theme;
                 config.last_opening = opening;
                 config.last_opening_side = op_side;
-                        
+
                 let file = std::fs::File::create("settings.json");
                 if let Ok(file) = file {
                     if serde_json::to_writer_pretty(file, &config).is_err() {
@@ -393,15 +411,19 @@ impl SearchTab {
             }
         }
     }
-    
+
+    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+        db::get_favorites(min_rating, max_rating, theme, opening, op_side, result_limit)
+    }
+
     pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
-    
+
         let reader = csv::ReaderBuilder::new()
         .has_headers(false)
         .flexible(true)
         .from_path(&config::SETTINGS.puzzle_db_location);
-    
+
         if let Ok(mut reader) = reader {
             puzzles.clear();
             //self.current_puzzle_move = 1;
@@ -412,9 +434,9 @@ impl SearchTab {
                     Some(x) => x
                 };
                 match side {
-                    OpeningSide::Any => {                        
+                    OpeningSide::Any => {
                         for result in reader.deserialize::<config::Puzzle>() {
-                            if let Ok(record) = result {                                
+                            if let Ok(record) = result {
                                 if record.opening.contains(opening.get_field_name()) &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -427,7 +449,7 @@ impl SearchTab {
                         }
                     } OpeningSide::Black => {
                         for result in reader.deserialize::<config::Puzzle>() {
-                            if let Ok(record) = result {                                
+                            if let Ok(record) = result {
                                 if record.opening.contains(opening.get_field_name()) &&
                                         !record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
@@ -441,7 +463,7 @@ impl SearchTab {
                         }
                     } OpeningSide::White => {
                         for result in reader.deserialize::<config::Puzzle>() {
-                            if let Ok(record) = result {                                
+                            if let Ok(record) = result {
                                 if record.opening.contains(opening.get_field_name()) &&
                                         record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
@@ -457,7 +479,7 @@ impl SearchTab {
                 }
             } else {
                 for result in reader.deserialize::<config::Puzzle>() {
-                    if let Ok(record) = result {                                
+                    if let Ok(record) = result {
                         if record.rating >= min_rating && record.rating <= max_rating &&
                                 record.themes.contains(theme.get_tag_name()) {
                             puzzles.push(record);
@@ -469,7 +491,7 @@ impl SearchTab {
                 }
             }
         }
-        
+
         Some(puzzles)
     }
 
@@ -489,6 +511,12 @@ impl Tab for SearchTab {
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
         let mut search_col = col![
+            Container::new(
+                row![
+                    Radio::new("Lichess DB", SearchBase::Lichess, self.base, SearchMesssage::SelectBase),
+                    Radio::new("My Favorites", SearchBase::Favorites, self.base, SearchMesssage::SelectBase),
+                ].spacing(10)
+            ).align_x(alignment::Horizontal::Center).width(Length::Fill),
             row![
                 Text::new(lang::tr(&self.lang, "min_rating")),
                 Slider::new(
@@ -556,7 +584,7 @@ impl Tab for SearchTab {
             let square_style =
                 if self.piece_to_promote_to == piece {
                     styles::ButtonStyle::DarkSquare
-                } else {   
+                } else {
                     styles::ButtonStyle::LightSquare
                 };
             row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
@@ -567,7 +595,7 @@ impl Tab for SearchTab {
                 .height(60)
                 .on_press(SearchMesssage::SelectPiecePromotion(piece))
                 .style(square_style)
-            ));            
+            ));
         }
 
         search_col = search_col.push(Space::new(Length::Fill, 10));
@@ -583,7 +611,7 @@ impl Tab for SearchTab {
         let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(scroll)
             .align_x(alignment::Horizontal::Center).height(Length::Fill)
             .into();
-        
+
         content.map(Message::Search)
     }
 }
