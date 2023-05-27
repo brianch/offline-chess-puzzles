@@ -514,6 +514,7 @@ impl Application for OfflinePuzzles {
                                     } else {
                                         self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                                     }
+
                                     self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                                     self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                                 } else {
@@ -620,6 +621,7 @@ impl Application for OfflinePuzzles {
                 } else {
                     self.puzzle_status = lang::tr(&self.lang, "black_to_move");
                 }
+
                 self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
                 self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
                 self.puzzle_tab.game_status = GameStatus::Playing;
@@ -813,7 +815,7 @@ impl Application for OfflinePuzzles {
                     }
                 }
             } (_, Message::FavoritePuzzle) => {
-                db::add_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
+                db::toggle_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
                 Command::none()
             }
         }
@@ -833,6 +835,12 @@ impl Application for OfflinePuzzles {
     }
 
     fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+        let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
+        let is_fav = if self.puzzle_tab.puzzles.is_empty() {
+            false
+        } else {
+            db::is_favorite(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].puzzle_id)
+        };
         let resp = responsive(move |size| {
             gen_view(
                 self.game_mode,
@@ -847,8 +855,8 @@ impl Application for OfflinePuzzles {
                 self.hint_square,
                 self.settings_tab.saved_configs.piece_theme,
                 &self.puzzle_status,
-                //has_more_puzzles:
-                !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1,
+                is_fav,
+                has_more_puzzles,
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
                 self.puzzle_tab.game_status,
@@ -891,6 +899,7 @@ fn gen_view<'a>(
     hint_square: Option<PositionGUI>,
     piece_theme: styles::PieceTheme,
     puzzle_status: &'a str,
+    is_fav: bool,
     has_more_puzzles: bool,
     analysis_history_len: usize,
     current_puzzle_move: usize,
@@ -1057,6 +1066,11 @@ fn gen_view<'a>(
         Radio::new(lang::tr(lang, "mode_analysis"), config::GameMode::Analysis, Some(game_mode), Message::SelectMode)
     ].spacing(10).padding(10).align_items(Alignment::Center);
 
+    let fav_label = if is_fav {
+        lang::tr(lang, "unfav")
+    } else {
+        lang::tr(lang, "fav")
+    };
     let mut navigation_row = Row::new().padding(3).spacing(50);
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
@@ -1078,17 +1092,17 @@ fn gen_view<'a>(
         if game_status == GameStatus::NoPuzzles {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))))
-                .push(Button::new(Text::new("Fav")))
+                .push(Button::new(Text::new(fav_label)))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else if game_status == GameStatus::PuzzleEnded {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new("Fav")).on_press(Message::FavoritePuzzle))
+                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))));
         } else {
             navigation_row = navigation_row
                 .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new("Fav")).on_press(Message::FavoritePuzzle))
+                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle))
                 .push(Button::new(Text::new(lang::tr(lang, "hint"))).on_press(Message::ShowHint));
         }
     }

@@ -23,12 +23,23 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, open
     let results;
     let theme_filter = String::from("%") + theme.get_tag_name() + "%";
     let limit = result_limit as i64;
-    if let Some(side) = op_side {
+    if opening == Openings::Any {
+        results = favs
+            .filter(rating.between(min_rating, max_rating))
+            .filter(themes.like(theme_filter))
+            .limit(limit)
+            .load::<Puzzle>(&mut conn);
+    } else {
+        let opening_filter = opening_tags.like(String::from("%") + opening.get_field_name() + "%");
+        let side = match op_side {
+            None => OpeningSide::Any,
+            Some(x) => x
+        };
         if side == OpeningSide::White {
             results = favs
                 .filter(rating.between(min_rating, max_rating))
                 .filter(themes.like(theme_filter))
-                .filter(opening_tags.like(opening.get_field_name()))
+                .filter(opening_filter)
                 .filter(game_url.like("%black%"))
                 .limit(limit)
                 .load::<Puzzle>(&mut conn);
@@ -36,7 +47,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, open
             results = favs
                 .filter(rating.between(min_rating, max_rating))
                 .filter(themes.like(theme_filter))
-                .filter(opening_tags.like(opening.get_field_name()))
+                .filter(opening_filter)
                 .filter(game_url.not_like("%black%"))
                 .limit(limit)
                 .load::<Puzzle>(&mut conn);
@@ -44,52 +55,53 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, open
             results = favs
                 .filter(rating.between(min_rating, max_rating))
                 .filter(themes.like(theme_filter))
-                .filter(opening_tags.like(String::from("%") + opening.get_field_name() + "%"))
+                .filter(opening_filter)
                 .limit(limit)
                 .load::<Puzzle>(&mut conn);
         }
-    } else {
-        results = favs
-            .filter(rating.between(min_rating, max_rating))
-            .filter(themes.like(theme.get_tag_name()))
-            .filter(opening_tags.like(opening.get_field_name()))
-            .limit(limit)
-            .load::<Puzzle>(&mut conn);
     }
     results.ok()
 }
 
-pub fn is_favorite(id: String) -> bool {
+pub fn is_favorite(id: &str) -> bool {
     let mut conn = establish_connection();
     let results = favs
         .filter(puzzle_id.eq(id))
-        .limit(1)
-        .execute(&mut conn);
-    if let Ok(result) = results {
-        if result == 1 {
-            return true;
-        }
+        .first::<Puzzle>(&mut conn);
+    if results.is_ok() {
+        return true;
     }
     return false;
 }
 
-pub fn add_favorite(puzzle: Puzzle) {
+pub fn toggle_favorite(puzzle: Puzzle) {
     let mut conn = establish_connection();
-    let new_fav = NewFavorite {
-        puzzle_id: &puzzle.puzzle_id,
-        fen: &puzzle.fen,
-        moves: &puzzle.moves,
-        rating: puzzle.rating,
-        rd: puzzle.rating_deviation,
-        popularity: puzzle.popularity,
-        nb_plays: puzzle.nb_plays,
-        themes: &puzzle.themes,
-        game_url: &puzzle.game_url,
-        opening_tags: &puzzle.opening,
-    };
+    let is_fav = favs
+        .filter(puzzle_id.eq(&puzzle.puzzle_id))
+        .first::<Puzzle>(&mut conn).is_ok();
 
-    diesel::insert_into(favs::table)
-        .values(&new_fav)
-        .execute(&mut conn)
-        .expect("Error saving new favorite");
+    if is_fav {
+        diesel::delete(favs::table)
+            .filter(puzzle_id.eq(&puzzle.puzzle_id))
+            .execute(&mut conn)
+            .expect("Error removing favorite");
+    } else {
+        let new_fav = NewFavorite {
+            puzzle_id: &puzzle.puzzle_id,
+            fen: &puzzle.fen,
+            moves: &puzzle.moves,
+            rating: puzzle.rating,
+            rd: puzzle.rating_deviation,
+            popularity: puzzle.popularity,
+            nb_plays: puzzle.nb_plays,
+            themes: &puzzle.themes,
+            game_url: &puzzle.game_url,
+            opening_tags: &puzzle.opening,
+        };
+
+        diesel::insert_into(favs::table)
+            .values(&new_fav)
+            .execute(&mut conn)
+            .expect("Error saving new favorite");
+    }
 }
