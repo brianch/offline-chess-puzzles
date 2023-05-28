@@ -77,6 +77,7 @@ pub fn load_config() -> OfflinePuzzlesConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Queryable)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Puzzle {
     #[serde(rename = "PuzzleId")]
     pub puzzle_id: String,
