@@ -25,4 +25,4 @@ unic-langid = { version = "0.9.1", features = ["macros"] }
 diesel = { version = "2.0.0", features = ["sqlite"] }
 dotenvy = "0.15"
 [target.'cfg(windows)'.dependencies]
-rusqlite = { version = "0.29.0", features = ["bundled"] }
+libsqlite3-sys = { version = "0.26.0", features = ["bundled"] }
