@@ -46,6 +46,7 @@ jobs:
 
     name: Build Windows 64-bit
     steps:
+      - run: choco install sqlite
       - uses: actions/checkout@v3
       - run: |
           rustup set auto-self-update disable
@@ -79,6 +80,7 @@ jobs:
 
     name: Build Windows 32-bit
     steps:
+      - run: choco install sqlite
       - uses: actions/checkout@v3
       - run: |
           rustup set auto-self-update disable
