@@ -46,8 +46,6 @@ jobs:
 
     name: Build Windows 64-bit
     steps:
-      - run: choco install sqlite
-      - run: mklink sqlite3.dll C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.dll
       - uses: actions/checkout@v3
       - run: |
           rustup set auto-self-update disable
@@ -70,7 +68,6 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
-          cp C://ProgramData/chocolatey/lib/SQLite/tools/sqlite3.dll zip/offline-chess-puzzles/
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release
@@ -82,8 +79,6 @@ jobs:
 
     name: Build Windows 32-bit
     steps:
-      - run: choco install sqlite
-      - run: mklink sqlite3.dll C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.dll
       - uses: actions/checkout@v3
       - run: |
           rustup set auto-self-update disable
@@ -106,7 +101,6 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/i686-pc-windows-msvc/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
-          cp C://ProgramData/chocolatey/lib/SQLite/tools/sqlite3.dll zip/offline-chess-puzzles/
       - uses: actions/upload-artifact@v3
         with:
           name: windows-release-i686
