@@ -30,6 +30,9 @@ jobs:
           mkdir zip/offline-chess-puzzles
           cp -R pieces zip/offline-chess-puzzles/
           cp -R puzzles zip/offline-chess-puzzles/
+          cp -R translations zip/offline-chess-puzzles/
+          cp .env zip/offline-chess-puzzles/
+          cp ocp.db zip/offline-chess-puzzles/
           cp *.ogg zip/offline-chess-puzzles/
           cp settings.json zip/offline-chess-puzzles/
           cp LICENSE zip/offline-chess-puzzles/
@@ -63,6 +66,9 @@ jobs:
           mkdir zip/offline-chess-puzzles
           cp -R pieces zip/offline-chess-puzzles/
           cp -R puzzles zip/offline-chess-puzzles/
+          cp -R translations zip/offline-chess-puzzles/
+          cp .env zip/offline-chess-puzzles/
+          cp ocp.db zip/offline-chess-puzzles/
           cp *.ogg zip/offline-chess-puzzles/
           cp settings.json zip/offline-chess-puzzles/
           cp LICENSE zip/offline-chess-puzzles/
@@ -96,6 +102,9 @@ jobs:
           mkdir zip/offline-chess-puzzles
           cp -R pieces zip/offline-chess-puzzles/
           cp -R puzzles zip/offline-chess-puzzles/
+          cp -R translations zip/offline-chess-puzzles/
+          cp .env zip/offline-chess-puzzles/
+          cp ocp.db zip/offline-chess-puzzles/
           cp *.ogg zip/offline-chess-puzzles/
           cp settings.json zip/offline-chess-puzzles/
           cp LICENSE zip/offline-chess-puzzles/
