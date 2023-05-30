@@ -1,11 +1,11 @@
 # offline-chess-puzzles
 [![Build](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml/badge.svg)](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml)
 
-Very simple tool to view and solve puzzles from the lichess puzzle database.
+A simple tool to view and solve puzzles from the lichess puzzle database.
 
-<img src="https://user-images.githubusercontent.com/5335499/223898478-8b108594-67aa-4ad0-abd4-eb017db9bb9c.gif" width="400"/>
+<img src="https://github.com/brianch/offline-chess-puzzles/assets/5335499/4aff9fa1-28e1-413b-88eb-fad0fcd95389" width="400"/>
 
-<br>I need to thank lichess for creating the [puzzle database](https://database.lichess.org/#puzzles) and the project [chess-engine](https://github.com/adam-mcdaniel/chess-engine/) which I used as a starting point for the GUI here.
+<br>I need to give a big thank you to lichess for creating the [puzzle database](https://database.lichess.org/#puzzles), the project [chess-engine](https://github.com/adam-mcdaniel/chess-engine/) which I used as a starting point for the GUI here, and the awesome [Iced GUI library](https://github.com/iced-rs/iced) in which the interface is made.
 
 ## Usage:
 Download the app in the [releases page](https://github.com/brianch/offline-chess-puzzles/releases) here.
@@ -34,6 +34,8 @@ I can't promise anything though, since this is just a hobby project (and the goa
 - Analysis board (with basic engine support)
 - Hint (see which piece to move)
 - Settings are remembered and loaded when you open the app again
+- Navigate to the previous/next puzzles
+- Favorite puzzles and search those favorites
 
 ## License:
 - The code is distributed under the MIT License. See `LICENSE` for more information.<br/>
