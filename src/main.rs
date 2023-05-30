@@ -157,6 +157,7 @@ pub enum Message {
     TabSelected(usize),
     ShowHint,
     ShowNextPuzzle,
+    ShowPreviousPuzzle,
     GoBackMove,
     RedoPuzzle,
     LoadPuzzle(Option<Vec<config::Puzzle>>),
@@ -627,6 +628,38 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.game_status = GameStatus::Playing;
                 self.game_mode = config::GameMode::Puzzle;
                 Command::none()
+            } (_, Message::ShowPreviousPuzzle) => {
+                if self.puzzle_tab.current_puzzle > 0 && self.game_mode == config::GameMode::Puzzle {
+                    self.puzzle_tab.current_puzzle -= 1;
+                    self.puzzle_tab.current_puzzle_move = 1;
+
+                    let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+                    // The opponent's last move (before the puzzle starts)
+                    // is in the "moves" field of the cvs, so we need to apply it.
+                    self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+                    let movement = ChessMove::new(
+                        Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                        Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
+
+                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
+                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+
+                    self.board = self.board.make_move_new(movement);
+                    self.analysis_history = vec![self.board];
+
+                    if self.board.side_to_move() == Color::White {
+                        self.puzzle_status = lang::tr(&self.lang, "white_to_move");
+                    } else {
+                        self.puzzle_status = lang::tr(&self.lang, "black_to_move");
+                    }
+
+                    self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
+                    self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                    self.puzzle_tab.game_status = GameStatus::Playing;
+                }
+                Command::none()
             } (_, Message::GoBackMove) => {
                 if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
                     self.analysis_history.pop();
@@ -835,6 +868,7 @@ impl Application for OfflinePuzzles {
     }
 
     fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+        let has_previous = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle > 0;
         let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
         let is_fav = if self.puzzle_tab.puzzles.is_empty() {
             false
@@ -857,6 +891,7 @@ impl Application for OfflinePuzzles {
                 &self.puzzle_status,
                 is_fav,
                 has_more_puzzles,
+                has_previous,
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
                 self.puzzle_tab.game_status,
@@ -901,6 +936,7 @@ fn gen_view<'a>(
     puzzle_status: &'a str,
     is_fav: bool,
     has_more_puzzles: bool,
+    has_previous: bool,
     analysis_history_len: usize,
     current_puzzle_move: usize,
     game_status: GameStatus,
@@ -1084,6 +1120,11 @@ fn gen_view<'a>(
             navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "start_engine"))).on_press(Message::StartEngine));
         }
     } else {
+        if has_previous {
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))).on_press(Message::ShowPreviousPuzzle))
+        } else {
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))));
+        }
         if has_more_puzzles {
             navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))).on_press(Message::ShowNextPuzzle))
         } else {
