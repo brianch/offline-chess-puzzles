@@ -40,8 +40,8 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
         Self {
             engine_path: None,
             engine_limit: String::from("depth 40"),
-            window_width: 930,
-            window_height: 600,
+            window_width: 1010,
+            window_height: 680,
             puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
             piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
