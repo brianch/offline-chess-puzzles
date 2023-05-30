@@ -1071,7 +1071,7 @@ fn gen_view<'a>(
     } else {
         lang::tr(lang, "fav")
     };
-    let mut navigation_row = Row::new().padding(3).spacing(50);
+    let mut navigation_row = Row::new().padding(3).spacing(10);
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
             navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))).on_press(Message::GoBackMove));
