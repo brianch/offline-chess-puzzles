@@ -6,12 +6,11 @@ use std::path::Path;
 use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio};
+use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio, responsive};
 use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
 use iced::window;
-use iced_lazy::responsive;
-use iced_native::{Event};
+use iced::Event;
 
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
@@ -147,6 +146,13 @@ impl PositionGUI {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum TabId {
+    Search,
+    Settings,
+    CurrentPuzzle,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     SelectSquare(PositionGUI),
@@ -154,7 +160,7 @@ pub enum Message {
     Settings(SettingsMessage),
     PuzzleInfo(PuzzleMessage),
     SelectMode(config::GameMode),
-    TabSelected(usize),
+    TabSelected(TabId),
     ShowHint,
     ShowNextPuzzle,
     ShowPreviousPuzzle,
@@ -162,7 +168,7 @@ pub enum Message {
     RedoPuzzle,
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
-    EventOccurred(iced_native::Event),
+    EventOccurred(iced::Event),
     StartEngine,
     EngineStopped(bool),
     UpdateEval((Option<String>, Option<String>)),
@@ -228,7 +234,7 @@ struct OfflinePuzzles {
     engine_sender: Option<Sender<String>>,
     engine_move: String,
 
-    active_tab: usize,
+    active_tab: TabId,
     search_tab: SearchTab,
     settings_tab: SettingsTab,
     puzzle_tab: PuzzleTab,
@@ -262,7 +268,7 @@ impl Default for OfflinePuzzles {
             search_tab: SearchTab::new(),
             settings_tab: SettingsTab::new(),
             puzzle_tab: PuzzleTab::new(),
-            active_tab: 0,
+            active_tab: TabId::Search,
 
             game_mode: config::GameMode::Puzzle,
             sound_playback: SoundPlayback::init_sound(),
@@ -857,11 +863,11 @@ impl Application for OfflinePuzzles {
     fn subscription(&self) -> Subscription<Message> {
         match self.engine_state {
             EngineStatus::TurnedOff => {
-                iced_native::subscription::events().map(Message::EventOccurred)
+                iced::subscription::events().map(Message::EventOccurred)
             } _ => {
                 Subscription::batch(vec![
                     Engine::run_engine(self.engine.clone()),
-                    iced_native::subscription::events().map(Message::EventOccurred)
+                    iced::subscription::events().map(Message::EventOccurred)
                 ])
             }
         }
@@ -895,7 +901,7 @@ impl Application for OfflinePuzzles {
                 self.analysis_history.len(),
                 self.puzzle_tab.current_puzzle_move,
                 self.puzzle_tab.game_status,
-                self.active_tab,
+                &self.active_tab,
                 &self.engine_eval,
                 &self.engine_move,
 
@@ -940,7 +946,7 @@ fn gen_view<'a>(
     analysis_history_len: usize,
     current_puzzle_move: usize,
     game_status: GameStatus,
-    active_tab: usize,
+    active_tab: &TabId,
     engine_eval: &str,
     engine_move: &str,
 
@@ -1158,11 +1164,12 @@ fn gen_view<'a>(
         );
     }
 
-    let tabs = Tabs::new(active_tab, Message::TabSelected)
-            .push(search_tab_label, search_tab)
-            .push(settings_tab_label, settings_tab)
-            .push(puzzle_tab_label, puzzle_tab)
-            .tab_bar_position(iced_aw::TabBarPosition::Top);
+    let tabs = Tabs::new(Message::TabSelected)
+            .push(TabId::Search, search_tab_label, search_tab)
+            .push(TabId::Settings, settings_tab_label, settings_tab)
+            .push(TabId::CurrentPuzzle ,puzzle_tab_label, puzzle_tab)
+            .tab_bar_position(iced_aw::TabBarPosition::Top)
+            .set_active_tab(active_tab);
 
     row![board_col,tabs].spacing(30).align_items(Alignment::Start).into()
 }

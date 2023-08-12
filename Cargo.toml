@@ -5,10 +5,8 @@ authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-iced = {version = "0.9.0", features = ["glow","svg", "tokio"] }
-iced_aw = {version = "0.5", default-features = false, features = ["tabs"] }
-iced_lazy = "0.6.1"
-iced_native = "0.10.1"
+iced = {version = "0.10.0", features = ["svg", "tokio", "lazy"] }
+iced_aw = {version = "0.6.0", default-features = false, features = ["tabs"] }
 
 rand = "0.8.5"
 chess = "3.2.0"

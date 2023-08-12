@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{self, Receiver};
 use tokio::process::{Command, Child};
 use tokio::io::{BufReader, AsyncWriteExt, AsyncBufReadExt};
 
-use iced_native::futures::sink::SinkExt;
+use iced::futures::SinkExt;
 
 use tokio::time::timeout;
 use std::time::Duration;

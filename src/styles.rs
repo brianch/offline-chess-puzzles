@@ -3,7 +3,6 @@ use iced::widget::slider::{Handle, HandleShape};
 use iced::{application, Color};
 use iced::theme::{Container, Radio, Svg, TextInput, Scrollable, PickList, Checkbox, Slider, Menu};
 use iced::overlay::menu;
-use iced_aw::tabs;
 use iced_aw::style::tab_bar;
 use iced_aw::style::TabBarStyles;
 
@@ -160,7 +159,7 @@ impl button::StyleSheet for Theme {
                     ..Default::default()
                 }
             }
-            ButtonStyle::DarkSquare => {                
+            ButtonStyle::DarkSquare => {
                 button::Appearance {
                     background: Some(iced::Background::Color(palette.dark_square)),
                     ..Default::default()
@@ -213,7 +212,7 @@ impl container::StyleSheet for Theme {
         container::Appearance {
                 text_color: Some(self.palette().simple_text),
                 background: Some(iced::Background::Color(Color::TRANSPARENT)),
-                border_radius: 2.0,
+                border_radius: 2.0.into(),
                 border_width: 0.0,
                 border_color: Color::WHITE,
         }
@@ -226,7 +225,7 @@ impl text_input::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style) -> text_input::Appearance {
         text_input::Appearance {
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             icon_color: self.palette().simple_text,
@@ -236,7 +235,7 @@ impl text_input::StyleSheet for Theme {
     fn focused(&self, _style: &Self::Style) -> text_input::Appearance {
         text_input::Appearance {
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             icon_color: self.palette().simple_text,
@@ -258,7 +257,7 @@ impl text_input::StyleSheet for Theme {
     fn disabled(&self, _style: &Self::Style) -> text_input::Appearance {
         text_input::Appearance {
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             icon_color: self.palette().simple_text,
@@ -280,7 +279,7 @@ impl svg::StyleSheet for Theme {
     }
 }
 
-impl tabs::StyleSheet for Theme {
+impl tab_bar::StyleSheet for Theme {
     type Style = TabBarStyles;
 
     fn active(&self, _style: Self::Style, is_active: bool) -> tab_bar::Appearance {
@@ -311,13 +310,13 @@ impl scrollable::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
         scrollable::Scrollbar {
             background: Some(iced::Background::Color(self.palette().light_square)),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: self.palette().light_square,
             scroller: scrollable::Scroller
                 {
                     color: self.palette().dark_square,
-                    border_radius: 0.,
+                    border_radius: 0.0.into(),
                     border_width: 1.,
                     border_color: self.palette().light_square,
                 }
@@ -327,13 +326,13 @@ impl scrollable::StyleSheet for Theme {
     fn hovered(&self, _style: &Self::Style, _is_mouse_over_scrollbar: bool) -> scrollable::Scrollbar {
         scrollable::Scrollbar {
             background: Some(iced::Background::Color(self.palette().light_square)),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             scroller: scrollable::Scroller
                 {
                     color: self.palette().dark_square,
-                    border_radius: 1.,
+                    border_radius: 1.0.into(),
                     border_width: 1.,
                     border_color: Color::BLACK,
                 }
@@ -347,7 +346,7 @@ impl checkbox::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style, _is_checked: bool) -> checkbox::Appearance {
         checkbox::Appearance {
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: Color::BLACK,
             icon_color: self.palette().tab_label,
@@ -358,14 +357,14 @@ impl checkbox::StyleSheet for Theme {
     fn hovered(&self, _style: &Self::Style, _is_checked: bool) -> checkbox::Appearance {
         checkbox::Appearance {
             background: iced::Background::Color(self.palette().dark_square),
-            border_radius: 1.,
+            border_radius: 1.0.into(),
             border_width: 1.,
             border_color: Color::BLACK,
             icon_color: self.palette().label_selected,
             text_color: Some(self.palette().label_selected),
         }
     }
-    
+
 }
 
 impl pick_list::StyleSheet for Theme {
@@ -376,7 +375,7 @@ impl pick_list::StyleSheet for Theme {
             text_color: self.palette().tab_label,
             placeholder_color: self.palette().tab_label,
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 0.5,
+            border_radius: 0.5.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             handle_color: self.palette().dark_square
@@ -389,7 +388,7 @@ impl pick_list::StyleSheet for Theme {
             text_color: self.palette().label_selected,
             placeholder_color: self.palette().label_selected,
             background: iced::Background::Color(self.palette().dark_square),
-            border_radius: 0.5,
+            border_radius: 0.5.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             handle_color: self.palette().dark_square
@@ -404,7 +403,7 @@ impl menu::StyleSheet for Theme {
         menu::Appearance {
             text_color: self.palette().tab_label,
             background: iced::Background::Color(self.palette().light_square),
-            border_radius: 0.3,
+            border_radius: 0.3.into(),
             border_width: 1.,
             border_color: self.palette().dark_square,
             selected_text_color: self.palette().label_selected,
@@ -423,9 +422,10 @@ impl slider::StyleSheet for Theme {
                     Color::BLACK, Color::BLACK,
                 ),
                 width: 2.0,
+                border_radius: 2.0.into(),
             },
             handle: Handle {
-                shape: HandleShape::Rectangle { width: 7, border_radius: 1. },
+                shape: HandleShape::Rectangle { width: 7, border_radius: 1.0.into() },
                 color: self.palette().light_square,
                 border_width: 2.,
                 border_color: self.palette().dark_square
@@ -440,9 +440,10 @@ impl slider::StyleSheet for Theme {
                     Color::BLACK, Color::BLACK,
                 ),
                 width: 2.0,
+                border_radius: 2.0.into(),
             },
             handle: Handle {
-                shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
+                shape: HandleShape::Rectangle { width: 10, border_radius: 1.0.into() },
                 color: self.palette().dark_square,
                 border_width: 2.,
                 border_color: self.palette().light_square
@@ -457,9 +458,10 @@ impl slider::StyleSheet for Theme {
                     Color::BLACK, Color::BLACK,
                 ),
                 width: 2.0,
+                border_radius: 2.0.into(),
             },
             handle: Handle {
-                shape: HandleShape::Rectangle { width: 10, border_radius: 1. },
+                shape: HandleShape::Rectangle { width: 10, border_radius: 1.0.into() },
                 color: self.palette().dark_square,
                 border_width: 2.,
                 border_color: self.palette().light_square
