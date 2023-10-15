@@ -282,7 +282,7 @@ impl svg::StyleSheet for Theme {
 impl tab_bar::StyleSheet for Theme {
     type Style = TabBarStyles;
 
-    fn active(&self, _style: Self::Style, is_active: bool) -> tab_bar::Appearance {
+    fn active(&self, _style: &Self::Style, is_active: bool) -> tab_bar::Appearance {
         let bg = if is_active { self.palette().dark_square } else { self.palette().light_square };
         let label_color = if is_active { self.palette().label_selected } else { self.palette().tab_label };
         tab_bar::Appearance {
@@ -294,7 +294,7 @@ impl tab_bar::StyleSheet for Theme {
         }
     }
 
-    fn hovered(&self, _style: Self::Style, _is_active: bool) -> tab_bar::Appearance {
+    fn hovered(&self, _style: &Self::Style, _is_active: bool) -> tab_bar::Appearance {
         tab_bar::Appearance {
             tab_label_background: iced::Background::Color(self.palette().dark_square),
             text_color: self.palette().label_selected,
