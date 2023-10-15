@@ -43,6 +43,34 @@ jobs:
           name: linux-release-bin
           path: zip/
 
+  build-mac:
+
+    runs-on: macos-latest
+
+    name: Build mac
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --verbose
+      - name: Prepare directory to upload as an artifact
+        run: |
+          mkdir zip
+          mkdir zip/offline-chess-puzzles
+          cp -R pieces zip/offline-chess-puzzles/
+          cp -R puzzles zip/offline-chess-puzzles/
+          cp -R translations zip/offline-chess-puzzles/
+          cp .env zip/offline-chess-puzzles/
+          cp ocp.db zip/offline-chess-puzzles/
+          cp *.ogg zip/offline-chess-puzzles/
+          cp settings.json zip/offline-chess-puzzles/
+          cp LICENSE zip/offline-chess-puzzles/
+          cp README.md zip/offline-chess-puzzles/
+          cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: macos-release-bin
+          path: zip/
+
   build-windows-64:
 
     runs-on: windows-latest
