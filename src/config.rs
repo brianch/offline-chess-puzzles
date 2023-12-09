@@ -1,5 +1,7 @@
 use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide, lang};
 use once_cell::sync::Lazy;
+use chess::{Board, ChessMove, Piece, Square};
+use std::str::FromStr;
 
 use diesel::prelude::*;
 
@@ -74,6 +76,73 @@ pub fn load_config() -> OfflinePuzzlesConfig {
         } Err(_) => config = OfflinePuzzlesConfig::default()
     }
     config
+}
+
+pub fn coord_to_san(board: &Board, coords: String) -> Option<String> {
+    let coords = if coords.len() > 4 {
+        String::from(&coords[0..4]) + "=" + &coords[4..5].to_uppercase()
+    } else {
+        coords
+    };
+    let mut san = None;
+    let orig_square = Square::from_str(&coords[0..2]).unwrap();
+    let dest_square = Square::from_str(&coords[2..4]).unwrap();
+    let piece = board.piece_on(orig_square);
+    if let Some(piece) = piece {
+        if piece == Piece::King && (coords == "e1g1" || coords == "e8g8") {
+            san = Some(String::from("0-0"));
+        } else if piece == Piece::King && (coords == "e1c1" || coords == "e8c8") {
+            san = Some(String::from("0-0-0"));
+        } else {
+            let mut san_str = String::new();
+            let is_en_passant = piece == Piece::Pawn &&
+                board.piece_on(dest_square).is_none() &&
+                dest_square.get_file() != orig_square.get_file();
+            let is_normal_capture = board.piece_on(dest_square).is_some();
+            match piece {
+                Piece::Pawn => san_str.push_str(&coords[0..1]),
+                Piece::Bishop => san_str.push_str("B"),
+                Piece::Knight => san_str.push_str("N"),
+                Piece::Rook => san_str.push_str("R"),
+                Piece::Queen => san_str.push_str("Q"),
+                Piece::King => san_str.push_str("K"),
+            }
+            if is_en_passant {
+                san_str.push_str(&"x");
+                san_str.push_str(&coords[2..4]);
+                san_str.push_str(" e.p.");
+            } else if is_normal_capture {
+                let simple_capture = san_str.clone() + &"x" + &coords[2..];
+                let try_move = ChessMove::from_san(&board, &simple_capture);
+                if let Ok(_) = try_move {
+                    san_str.push_str(&"x");
+                    san_str.push_str(&coords[2..]);
+                } else {
+                    //the simple notation can only fail because of ambiguity, so we try to specify
+                    //either the file or the rank
+                    let capture_with_file = san_str.clone() + &coords[0..1] + &"x" + &coords[2..];
+                    let try_move_file = ChessMove::from_san(&board, &capture_with_file);
+                    if let Ok(_) = try_move_file {
+                        san_str.push_str(&coords[0..1]);
+                        san_str.push_str(&"x");
+                        san_str.push_str(&coords[2..]);
+                    } else {
+                        san_str.push_str(&coords[1..2]);
+                        san_str.push_str(&"x");
+                        san_str.push_str(&coords[2..]);
+                    }
+                }
+            } else {
+                if piece==Piece::Pawn {
+                    san_str = String::from(&coords[2..]);
+                } else {
+                    san_str.push_str(&coords[2..]);
+                }
+            }
+            san = Some(san_str);
+        }
+    }
+    san
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Queryable)]

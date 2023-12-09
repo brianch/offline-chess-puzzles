@@ -17,6 +17,7 @@ pub enum SearchMesssage {
     SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
+    ClickExport,
     SelectBase(SearchBase),
 }
 
@@ -366,6 +367,8 @@ impl SearchTab {
             } SearchMesssage::SelectPiecePromotion(piece) => {
                 self.piece_to_promote_to = piece;
                 Command::none()
+            } SearchMesssage::ClickExport => {
+                Command::perform(SearchTab::export(), Message::ExportPDF)
             } SearchMesssage::ClickSearch => {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
@@ -410,6 +413,11 @@ impl SearchTab {
                 }
             }
         }
+    }
+
+    //Temporary thing just to test it
+    pub async fn export() -> bool {
+        false
     }
 
     pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
@@ -491,7 +499,6 @@ impl SearchTab {
                 }
             }
         }
-
         Some(puzzles)
     }
 
@@ -603,7 +610,11 @@ impl Tab for SearchTab {
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "searching")));
         }
         search_col = search_col
-            .push(Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch))
+            .push(
+                row![
+                    Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch),
+                    Button::new(Text::new("Export")).padding(5).on_press(SearchMesssage::ClickExport)
+                ])
             .push(Text::new(lang::tr(&self.lang, "promotion_piece")))
             .push(row_promotion);
 
