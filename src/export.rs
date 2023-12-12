@@ -5,9 +5,9 @@ use lopdf::{Document, Object, Stream};
 use lopdf::content::{Content, Operation};
 use chess::{Board, ChessMove, Color, Piece, Square};
 
-use crate::{config, PuzzleTab};
+use crate::{config, PuzzleTab, lang};
 
-pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
+pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::Language) {
     let font_data = std::fs::read("font/Alpha.ttf").unwrap();
     // Load the font data from a file
 
@@ -20,21 +20,27 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
     let font_stream_id = doc.add_object(font_stream);
     let font_descriptor_dict = dictionary! {
         "Type" => "TrueType",
-        "FontName" => "Chess-Maya",
+        "FontName" => "Chess-Alpha",
         "FontFile2" => font_stream_id,
         "Flags" => 1,
     };
     let font_descriptor_id = doc.add_object(font_descriptor_dict);
 
+    let encoding = dictionary! {
+        "Type" => "Encoding",
+        "BaseEncoding" => "WinAnsiEncoding",
+    };
+
     // Create a font dictionary object
     let font_dict = dictionary! {
         "Type" => "Font",
         "Subtype" => "TrueType",
-        "BaseFont" => "Chess-Maya",
+        "BaseFont" => "Chess-Alpha",
         "FirstChar" => 0,
         "LastChar" => 255,
         "Widths" => vec![1000.into();256],
         "FontDescriptor" => font_descriptor_id,
+        "Encoding" => doc.add_object(encoding),
     };
 
     let font_id = doc.add_object(font_dict);
@@ -58,7 +64,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
     let resources_id = doc.add_object(dictionary! {
         // fonts are actually triplely nested dictionaries. Fun!
         "Font" => dictionary! {
-            "Chess-Maya" => font_id,
+            "Chess-Alpha" => font_id,
             "Regular" => regular_font_id,
         },
     });
@@ -82,7 +88,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
         let mut pos_y = 75;
         for i in 0..6 {
             if puzzle_index == puzzles.len() { break };
-            ops.append(&mut gen_diagram_operations(puzzle_index + 1, &puzzles[puzzle_index], pos_x, pos_y));
+            ops.append(&mut gen_diagram_operations(puzzle_index + 1, &puzzles[puzzle_index], pos_x, pos_y, lang));
             if i % 2 == 0 {
                 pos_y = 325;
             } else {
@@ -244,7 +250,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
     doc.save("example.pdf").unwrap();
 }
 
-fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, start_y:i32) -> Vec<Operation> {
+fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, start_y:i32, lang: &lang::Language) -> Vec<Operation> {
     let mut board = Board::from_str(&puzzle.fen).unwrap();
     let puzzle_moves: Vec<&str> = puzzle.moves.split_whitespace().collect();
     let movement = ChessMove::new(
@@ -252,9 +258,9 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
     let last_move = if board.side_to_move() == Color::White {
-        index.to_string() + ") Black to move. Last move: " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + &lang::tr(lang, "pdf_black_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
     } else {
-        index.to_string() + ") White to move. Last move: ... " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + &lang::tr(lang, "pdf_white_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
     };
     board = board.make_move_new(movement);
 
@@ -267,7 +273,7 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
             Operation::new("ET", vec![]),
 
             Operation::new("BT", vec![]),
-            Operation::new("Tf", vec!["Chess-Maya".into(), 25.into()]),
+            Operation::new("Tf", vec!["Chess-Alpha".into(), 25.into()]),
             Operation::new("rg", vec![0.into(),0.into(),0.into()]),
             Operation::new("Td", vec![start_y.into(), start_x.into()]),
             ];

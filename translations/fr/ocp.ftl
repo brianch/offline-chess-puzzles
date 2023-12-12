@@ -55,6 +55,7 @@ play_sound = Activer le son sur les déplacements:
 auto_load = Passer immédiatement au puzzle suivant:
 flip_board = Tourner l'échiquier:
 show_coords = Montrer les coordonnées
+pdf_number_of_pages = PDF Export no. of pages:
 get_first_puzzles1 = Accéder aux
 get_first_puzzles2 = {" "}premiers puzzles
 engine_path = Chemin d'accès du moteur (avec le nom du fichier .exe):
@@ -74,7 +75,11 @@ popularity = Popularité (de -100 à 100):{" "}
 times_played = Nombre de fois joué (sur Lichess):{" "}
 themes = Thèmes:
 url = URL de la partie:{" "}
+export_pdf_btn = Export current puzzles to PDF
 no_puzzle = Aucun puzzle n'est chargé
+
+pdf_black_to_move = ) Black to move. Last move:{" "}
+pdf_white_to_move = ) White to move. Last move: ...{" "}
 
 #THEMES
 #============================================================

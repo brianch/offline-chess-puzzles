@@ -55,6 +55,7 @@ play_sound = Sonido en los movimientos:
 auto_load = Cargar automaticamente el próx. ejercício:
 flip_board = Girar el tablero:
 show_coords = Coordenadas del tablero
+pdf_number_of_pages = N. de páginas para exportar en PDF:
 get_first_puzzles1 = Obtener los primeros
 get_first_puzzles2 =  {" "}ejercícios
 engine_path = Camino del motor de ajedrez (con el nombre del .exe):
@@ -74,8 +75,11 @@ popularity = Popularidad (-100 to 100):{" "}
 times_played = Nº de veces que fue jugado (en lichess):{" "}
 themes = Temas:
 url = URL del juego:{" "}
+export_pdf_btn = Exportar ejercícios para PDF
 no_puzzle = Ningún ejercício cargado
 
+pdf_black_to_move = ) Negras juegan. Ultimo mov.:{" "}
+pdf_white_to_move = ) Brancas juegan. Ultimo mov.: ...{" "}
 
 
 #THEMES

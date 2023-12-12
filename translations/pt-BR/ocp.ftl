@@ -55,6 +55,7 @@ play_sound = Som nos lances:
 auto_load = Carregar próx. problema automaticamente:
 flip_board = Girar tabuleiro:
 show_coords = Coordenadas do tabuleiro
+pdf_number_of_pages = N. de pags. para exportar em PDF:
 get_first_puzzles1 = Obter os primeiros
 get_first_puzzles2 =  {" "}problemas
 engine_path = Caminho para a engine (com o .exe):
@@ -74,8 +75,15 @@ popularity = Popularidade (-100 to 100):{" "}
 times_played = Nº de vezes jogado (no lichess):{" "}
 themes = Temas:
 url = Url do jogo:{" "}
+export_pdf_btn = Exportar puzzles para PDF
 no_puzzle = Nenhum puzzle carregado
 
+pdf_black_to_move = ) Pretas jogam. Ultimo lance:{" "}
+pdf_white_to_move = ) Brancas jogam. Ultimo lance: ...{" "}
+
+
+#THEMES
+#============================================================
 themes_all = Todos
 opening = Abertura
 middlegame = Meio-jogo

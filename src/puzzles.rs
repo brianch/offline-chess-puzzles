@@ -122,7 +122,7 @@ impl Tab for PuzzleTab {
                     ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
                 ],
-                Button::new("Export current puzzles to PDF").on_press(PuzzleMessage::ExportToPDF),
+                Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
             ].spacing(10).align_items(Alignment::Center))
         } else {
             Scrollable::new(col![

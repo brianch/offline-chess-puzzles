@@ -54,6 +54,7 @@ play_sound = Play sound on moves:
 auto_load = Auto load next puzzle:
 flip_board = Flip board:
 show_coords = Show coordinates
+pdf_number_of_pages = PDF Export no. of pages:
 get_first_puzzles1 = Get the first
 get_first_puzzles2 =  {" "}puzzles
 engine_path = Engine path (with .exe name):
@@ -73,7 +74,11 @@ popularity = Popularity (-100 to 100):{" "}
 times_played = Times Played (on lichess):{" "}
 themes = Themes:
 url = Game url:{" "}
+export_pdf_btn = Export current puzzles to PDF
 no_puzzle = No puzzle loaded
+
+pdf_black_to_move = ) Black to move. Last move:{" "}
+pdf_white_to_move = ) White to move. Last move: ...{" "}
 
 #THEMES
 #============================================================
