@@ -87,7 +87,7 @@ impl Tab for PuzzleTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('▾', self.title())
+        TabLabel::Text(self.title())
     }
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {

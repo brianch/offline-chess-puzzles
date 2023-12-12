@@ -1,6 +1,5 @@
 use iced::widget::{Button, Container, Checkbox, column, Column, Text, TextInput, row, PickList, Scrollable};
-use iced::{Element};
-use iced::{alignment, Command, Alignment, Length};
+use iced::{alignment, Command, Alignment, Element, Length};
 
 use iced_aw::TabLabel;
 
@@ -203,7 +202,7 @@ impl Tab for SettingsTab {
     }
 
     fn tab_label(&self) -> TabLabel {
-        TabLabel::IconText('▾', self.title())
+        TabLabel::Text(self.title())
     }
 
     fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
