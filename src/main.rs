@@ -713,7 +713,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
             } (_, Message::ExportPDF(value)) => {
-                export::to_pdf(&self.puzzle_tab.puzzles);
+                export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap());
                 Command::none()
             } (_, Message::EventOccurred(event)) => {
                 if let Event::Window(window::Event::CloseRequested) = event {

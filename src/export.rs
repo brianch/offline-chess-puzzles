@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::str::FromStr;
 use lopdf::dictionary;
 use lopdf::{Document, Object, Stream};
@@ -6,9 +7,7 @@ use chess::{Board, ChessMove, Color, Piece, Square};
 
 use crate::{config, PuzzleTab};
 
-//const PUZZLE_POS_X: [usize; 6] = []
-
-pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
+pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
     let font_data = std::fs::read("font/Alpha.ttf").unwrap();
     // Load the font data from a file
 
@@ -24,18 +23,8 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
         "FontName" => "Chess-Maya",
         "FontFile2" => font_stream_id,
         "Flags" => 1,
-        //"Ascent" => 728,
-        //"Descent" => -212,
-        //"CapHeight" => 728,
-        //"ItalicAngle" => 0,
-        //"StemV" => 90,
     };
     let font_descriptor_id = doc.add_object(font_descriptor_dict);
-
-    let encoding = dictionary! {
-        "Type" => "Encoding",
-        "BaseEncoding" => "WinAnsiEncoding",
-    };
 
     // Create a font dictionary object
     let font_dict = dictionary! {
@@ -46,8 +35,6 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
         "LastChar" => 255,
         "Widths" => vec![1000.into();256],
         "FontDescriptor" => font_descriptor_id,
-        //"Encoding" => doc.add_object(encoding),
-        //"Length1" => font_data.len() as i32
     };
 
     let font_id = doc.add_object(font_dict);
@@ -71,18 +58,25 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
     let resources_id = doc.add_object(dictionary! {
         // fonts are actually triplely nested dictionaries. Fun!
         "Font" => dictionary! {
-            // F1 is the font name used when writing text.
-            // It must be unique in the document. It does not
-            // have to be F1
             "Chess-Maya" => font_id,
             "Regular" => regular_font_id,
         },
     });
 
-    let number_of_pages: i64 = 100;//(puzzles.len() / 6).try_into().unwrap();
+    let num_of_puzzles_to_print;
+    let num_of_pages;
+    if (6 * number_of_pages) as usize > puzzles.len() {
+        num_of_puzzles_to_print = puzzles.len();
+        num_of_pages = puzzles.len() % 6;
+    } else {
+        num_of_puzzles_to_print = (6 * number_of_pages) as usize;
+        num_of_pages = number_of_pages as usize;
+    };
+
+    //let number_of_pages: i64 = 100;//(puzzles.len() / 6).try_into().unwrap();
     let mut page_ids = vec![];
     let mut puzzle_index = 0;
-    for page_counter in 0..number_of_pages {
+    for _ in 0..num_of_pages.into() {
         let mut ops: Vec<Operation> = vec![];
         let mut pos_x = 750;
         let mut pos_y = 75;
@@ -126,8 +120,89 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
             "Parent" => pages_id,
             "Contents" => content_id,
         }).into());
-
     }
+    
+    let mut ops: Vec<Operation> = vec![];
+    let mut pos_x = 800;
+    let pos_y = 75;
+    let mut num_pages_of_solution = 1;
+    for puzzle_number in 0..num_of_puzzles_to_print {
+        // need to start by making the 1st move in the list, because it's only then that
+        // the puzzle starts.
+        let mut board = Board::from_str(&puzzles[puzzle_number].fen).unwrap();
+        let mut puzzle_moves: VecDeque<&str> = puzzles[puzzle_number].moves.split_whitespace().collect();
+        let movement = ChessMove::new(
+            Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+            Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
+        board = board.make_move_new(movement);
+
+        let mut solution = (puzzle_number + 1).to_string() + ") ";
+        // Remove the opponent's first move, it's not part of the solution.
+        puzzle_moves.pop_front();
+
+        let mut half_move_number = 1;
+        let mut move_label = 1;
+        if board.side_to_move() == Color::Black {
+            solution.push_str(" 1. ... ");
+            half_move_number = 2;
+            move_label = 2;
+        }
+        for chess_move in puzzle_moves {
+            if half_move_number % 2 == 0 {
+                solution.push_str(" ");
+                solution.push_str(&config::coord_to_san(&board, String::from(chess_move)).unwrap());
+            } else {
+                solution.push_str(" ");
+                solution.push_str(&move_label.to_string());
+                solution.push_str(". ");
+                solution.push_str(&config::coord_to_san(&board, String::from(chess_move)).unwrap());
+                move_label = move_label + 1;
+            }
+            half_move_number = half_move_number + 1;
+            // Apply move, so we have the updated board to generate the SAN for the next move.
+            let movement = ChessMove::new(
+                Square::from_str(&String::from(&chess_move[..2])).unwrap(),
+                Square::from_str(&String::from(&chess_move[2..4])).unwrap(), PuzzleTab::check_promotion(chess_move));
+            board = board.make_move_new(movement);
+        }
+        ops.append(&mut vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["Regular".into(), 12.into()]),
+                Operation::new("rg", vec![0.into(),0.into(),0.into()]),
+                Operation::new("Td", vec![pos_y.into(), pos_x.into()]),
+                Operation::new("Tj", vec![Object::string_literal(solution)]),
+                Operation::new("ET", vec![]),
+        ]);
+        pos_x = pos_x - 18;
+
+        // We need a page break
+        if pos_x < 18 {
+            pos_x = 800;
+            num_pages_of_solution = num_pages_of_solution + 1;
+
+            let content = Content {
+                operations: ops,
+            };
+        
+            let content_id = doc.add_object(Stream::new(dictionary! {}, content.encode().unwrap()));
+            page_ids.push(doc.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "Contents" => content_id,
+            }).into());
+            ops = vec![];
+        }
+    }
+    let content = Content {
+        operations: ops,
+    };
+
+    let content_id = doc.add_object(Stream::new(dictionary! {}, content.encode().unwrap()));
+    page_ids.push(doc.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "Contents" => content_id,
+    }).into());
 
     // Again, pages is the root of the page tree. The ID was already created
     // at the top of the page, since we needed it to assign to the parent element of the page
@@ -139,11 +214,11 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>) {
     let pages = dictionary! {
         // Type of dictionary
         "Type" => "Pages",
+        // Page count
+        "Count" => Object::Integer(page_ids.len() as i64),
         // Vector of page IDs in document. Normally would contain more than one ID and be produced
         // using a loop of some kind
         "Kids" => page_ids,
-        // Page count
-        "Count" => Object::Integer(number_of_pages),
         // ID of resources dictionary, defined earlier
         "Resources" => resources_id,
         // a rectangle that defines the boundaries of the physical or digital media. This is the
@@ -178,10 +253,9 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
     let last_move = if board.side_to_move() == Color::White {
-        // It's the inverse of the color, because we still have to apply the last move on the board
-        index.to_string() + ") Black to move. Last move: ... " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + ") Black to move. Last move: " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
     } else {
-        index.to_string() + ") White to move. Last move: " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + ") White to move. Last move: ... " + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
     };
     board = board.make_move_new(movement);
 

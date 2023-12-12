@@ -1,5 +1,5 @@
 {
-  "engine_path": "",
+  "engine_path": null,
   "engine_limit": "depth 40",
   "window_width": 1010,
   "window_height": 680,
@@ -12,6 +12,7 @@
   "show_coordinates": false,
   "board_theme": "Blue",
   "lang": "English",
+  "export_pgs": 50,
   "last_min_rating": 0,
   "last_max_rating": 1000,
   "last_theme": "All",

@@ -613,8 +613,8 @@ impl Tab for SearchTab {
             .push(
                 row![
                     Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch),
-                    Button::new(Text::new("Export")).padding(5).on_press(SearchMesssage::ClickExport)
-                ])
+                    Button::new(Text::new("PDF Export")).padding(5).on_press(SearchMesssage::ClickExport)
+                ].spacing(30))
             .push(Text::new(lang::tr(&self.lang, "promotion_piece")))
             .push(row_promotion);
 

@@ -15,6 +15,7 @@ pub enum SettingsMessage {
     SelectPieceTheme(styles::PieceTheme),
     SelectBoardTheme(styles::Theme),
     SelectLanguage(PickListWrapper<lang::Language>),
+    ChangePDFExportPgs(String),
     ChangePuzzleDbLocation(String),
     ChangeSearchResultLimit(String),
     ChangeEnginePath(String),
@@ -28,6 +29,7 @@ pub struct SettingsTab {
     piece_theme: styles::PieceTheme,
     pub board_theme: styles::Theme,
     pub lang: PickListWrapper<lang::Language>,
+    pub export_pgs: String,
     theme: styles::Theme,
     play_sound: bool,
     auto_load_next: bool,
@@ -50,6 +52,7 @@ impl SettingsTab {
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
             lang: PickListWrapper::new_lang(config::SETTINGS.lang, config::SETTINGS.lang),
+            export_pgs: config::SETTINGS.export_pgs.to_string(),
             theme: styles::Theme::Blue,
             play_sound: config::SETTINGS.play_sound,
             auto_load_next: config::SETTINGS.auto_load_next,
@@ -110,7 +113,14 @@ impl SettingsTab {
                 self.show_coordinates = value;
                 Command::none()
             }
-            SettingsMessage::ChangePressed => {
+            SettingsMessage::ChangePDFExportPgs(value) => {
+                if let Ok(_) = value.parse::<i32>() {
+                    self.export_pgs = value;
+                } else if value == "" {
+                    self.export_pgs = String::from("0");
+                }
+                Command::none()
+            } SettingsMessage::ChangePressed => {
                 let engine_path = if self.engine_path.is_empty() {
                     None
                 } else {
@@ -130,6 +140,7 @@ impl SettingsTab {
                     show_coordinates: self.show_coordinates,
                     board_theme: self.board_theme,
                     lang: self.lang.lang,
+                    export_pgs: self.export_pgs.parse().unwrap(),
                     last_min_rating: self.saved_configs.last_min_rating,
                     last_max_rating: self.saved_configs.last_max_rating,
                     last_theme: self.saved_configs.last_theme,
@@ -252,6 +263,21 @@ impl Tab for SettingsTab {
                     self.show_coordinates,
                     SettingsMessage::CheckShowCoords,
                 ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new(lang::tr(&self.lang.lang, "show_coords")),
+                Checkbox::new(
+                    "",
+                    self.show_coordinates,
+                    SettingsMessage::CheckShowCoords,
+                ).size(20),
+            ].spacing(5).align_items(Alignment::Center),
+            row![
+                Text::new("PDF Export no. of pgs.:"),
+                TextInput::new(
+                    &self.export_pgs,
+                    &self.export_pgs,
+                ).on_input(SettingsMessage::ChangePDFExportPgs).width(60).padding(10).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles1")),
