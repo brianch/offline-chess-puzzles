@@ -43,3 +43,4 @@ I can't promise anything though, since this is just a hobby project (and the goa
 - The piece set "cburnett" is a work of Colin M.L. Burnett and used under the CC-BY-SA 3.0 unported license (more info on the license.txt file in that directory).
 - The "california" piece set is a work of Jerry S. licensed under CC BY-NC-SA 4.0 (https://sites.google.com/view/jerrychess/home)
 - The piece sets "Cardinal", "Dubrovny", "Gioco", "Icpieces", "Maestro", "Staunty" and "Tatiana" are work of "sadsnake1", licensed under CC BY-NC-SA 4.0. And obtained from the lila (lichess) repository.
+- The font "Chess Alpha" is a work of Eric Bentzen and free for personal non commercial use. Full info in the documents in the "font" directory.
