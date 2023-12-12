@@ -90,7 +90,6 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32) {
                 pos_x -= 250;
             };
             puzzle_index += 1;
-            println!("puzzle_index = {puzzle_index}");
         }
 
         // Content is a wrapper struct around an operations struct that contains a vector of operations

@@ -10,6 +10,7 @@ use crate::{Message, Tab, config, styles, lang};
 pub enum PuzzleMessage {
     ChangeTextInputs(String),
     CopyText(String),
+    ExportToPDF,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -47,8 +48,15 @@ impl PuzzleTab {
                 Command::none()
             } PuzzleMessage::CopyText(text) => {
                 iced::clipboard::write::<Message>(text)
+            } PuzzleMessage::ExportToPDF => {
+                Command::perform(PuzzleTab::export(), Message::ExportPDF)
             }
         }
+    }
+
+    // This whole function call is just an ugly hack to bubble up the event, I hope Iced's hecrj will never see this XD
+    pub async fn export() -> bool {
+        false
     }
 
     // Checks if the notation indicates a promotion and return the piece
@@ -114,6 +122,7 @@ impl Tab for PuzzleTab {
                     ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
                 ],
+                Button::new("Export current puzzles to PDF").on_press(PuzzleMessage::ExportToPDF),
             ].spacing(10).align_items(Alignment::Center))
         } else {
             Scrollable::new(col![
