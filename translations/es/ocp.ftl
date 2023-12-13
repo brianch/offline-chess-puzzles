@@ -68,6 +68,7 @@ error_reading_config = Error al leer el fichero con las preferencias.
 #============================================================
 puzzle_link = Link del ejercício:{" "}
 copy = Copiar
+open = Abrir
 fen = FEN:
 rating = Rating:{" "}
 rd = Desviación de rating:{" "}

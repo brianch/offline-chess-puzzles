@@ -68,6 +68,7 @@ error_reading_config = Erro ao ler arquivo de configuração.
 #============================================================
 puzzle_link = Link do problema:{" "}
 copy = Copiar
+open = Abrir
 fen = FEN:
 rating = Rating:{" "}
 rd = Desvio de rating:{" "}

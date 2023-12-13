@@ -68,6 +68,7 @@ error_reading_config = Erreur de lecture du fichier de configuration.
 #============================================================
 puzzle_link = Lien vers le puzzle:{" "}
 copy = Copier
+open = Ouvrir
 fen = FEN:
 rating = Classement:{" "}
 rd = Ecart-type du classement:{" "}

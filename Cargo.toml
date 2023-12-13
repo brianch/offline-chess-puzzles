@@ -23,5 +23,6 @@ unic-langid = { version = "0.9.1", features = ["macros"] }
 diesel = { version = "2.1.0", features = ["sqlite"] }
 dotenvy = "0.15"
 lopdf = "0.31.0"
+open = "5.0.1"
 [target.'cfg(windows)'.dependencies]
 libsqlite3-sys = { version = "0.26.0", features = ["bundled"] }

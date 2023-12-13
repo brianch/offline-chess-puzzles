@@ -10,6 +10,7 @@ use crate::{Message, Tab, config, styles, lang};
 pub enum PuzzleMessage {
     ChangeTextInputs(String),
     CopyText(String),
+    OpenLink(String),
     ExportToPDF,
 }
 
@@ -47,7 +48,10 @@ impl PuzzleTab {
             PuzzleMessage::ChangeTextInputs(_) => {
                 Command::none()
             } PuzzleMessage::CopyText(text) => {
-                iced::clipboard::write::<Message>(text)
+                iced::clipboard::write::<Message>(text)                
+            } PuzzleMessage::OpenLink(link) => {
+                open::that_detached(link);
+                Command::none()
             } PuzzleMessage::ExportToPDF => {
                 Command::perform(PuzzleTab::export(), Message::ExportPDF)
             }
@@ -99,6 +103,8 @@ impl Tab for PuzzleTab {
                         &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
                     ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
+                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
+
                 ],
                 Text::new(lang::tr(&self.lang, "fen")),
                 row![
@@ -121,6 +127,7 @@ impl Tab for PuzzleTab {
                         &self.puzzles[self.current_puzzle].game_url,
                     ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
+                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink(self.puzzles[self.current_puzzle].game_url.clone())),
                 ],
                 Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
             ].spacing(10).align_items(Alignment::Center))

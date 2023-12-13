@@ -67,6 +67,7 @@ error_reading_config = Error reading config file.
 #============================================================
 puzzle_link = Puzzle link:{" "}
 copy = Copy
+open = Open
 fen = FEN:
 rating = Rating:{" "}
 rd = Rating Deviation:{" "}
