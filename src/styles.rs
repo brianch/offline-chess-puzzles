@@ -71,11 +71,13 @@ pub enum Theme {
     Brown,
     Purple,
     Grey,
+    ColdGrey,
     BlueDark,
     GreenDark,
     BrownDark,
     PurpleDark,
     GreyDark,
+    ColdGreyDark,
 }
 
 impl Theme {
@@ -86,24 +88,28 @@ impl Theme {
             Self::Brown => OCPPalette::BROWN,
             Self::Purple => OCPPalette::PURPLE,
             Self::Grey => OCPPalette::GREY,
+            Self::ColdGrey => OCPPalette::COLD_GREY,
             Self::BlueDark => OCPPalette::BLUE_DARK,
             Self::GreenDark => OCPPalette::GREEN_DARK,
             Self::BrownDark => OCPPalette::BROWN_DARK,
             Self::PurpleDark => OCPPalette::PURPLE_DARK,
             Self::GreyDark => OCPPalette::GREY_DARK,
+            Self::ColdGreyDark => OCPPalette::COLD_GREY_DARK,
         }
     }
-    pub const ALL: [Theme; 10] = [
+    pub const ALL: [Theme; 12] = [
         Theme::Blue,
         Theme::Green,
         Theme::Brown,
         Theme::Purple,
         Theme::Grey,
+        Theme::ColdGrey,
         Theme::BlueDark,
         Theme::GreenDark,
         Theme::BrownDark,
         Theme::PurpleDark,
         Theme::GreyDark,
+        Theme::ColdGreyDark,
     ];
 }
 
@@ -118,11 +124,13 @@ impl std::fmt::Display for Theme {
                 Theme::Brown => "Brown",
                 Theme::Purple => "Purple",
                 Theme::Grey => "Grey",
+                Theme::ColdGrey => "Cold Grey",
                 Theme::BlueDark => "Blue - Dark Mode",
                 Theme::GreenDark => "Green - Dark Mode",
                 Theme::BrownDark => "Brown - Dark Mode",
                 Theme::PurpleDark => "Purple - Dark Mode",
                 Theme::GreyDark => "Grey - Dark Mode",
+                Theme::ColdGreyDark => "Cold Grey - Dark",
             }
         )
     }
@@ -580,6 +588,16 @@ impl OCPPalette {
         label_selected: Color::WHITE,
         tab_label: Color::BLACK,
     };
+    pub const COLD_GREY_DARK: Self = Self {
+        container_bg: rgb!(90.,90.,90.),
+        light_square: rgb!(220., 220., 220.),
+        dark_square: rgb!(140., 140., 140.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::WHITE,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
     pub const GREY_DARK: Self = Self {
         container_bg: rgb!(71.,86.,92.),
         light_square: rgb!(222., 227., 230.),
@@ -614,6 +632,16 @@ impl OCPPalette {
         container_bg: Color::WHITE,
         light_square: rgb!(233., 223., 242.),
         dark_square: rgb!(162., 136., 188.),
+        selected_light_square: rgb!(205,210,106),
+        selected_dark_square: rgb!(170,162,58),
+        simple_text: Color::BLACK,
+        label_selected: Color::WHITE,
+        tab_label: Color::BLACK,
+    };
+    pub const COLD_GREY: Self = Self {
+        container_bg: Color::WHITE,
+        light_square: rgb!(220., 220., 220.),
+        dark_square: rgb!(140., 140., 140.),
         selected_light_square: rgb!(205,210,106),
         selected_dark_square: rgb!(170,162,58),
         simple_text: Color::BLACK,
