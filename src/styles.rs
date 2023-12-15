@@ -14,6 +14,7 @@ macro_rules! rgb {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum PieceTheme {
+    FontAlpha,
     Cburnett,
     California,
     Cardinal,
@@ -27,7 +28,8 @@ pub enum PieceTheme {
 
 impl PieceTheme {
 
-    pub const ALL: [PieceTheme; 9] = [
+    pub const ALL: [PieceTheme; 10] = [
+        PieceTheme::FontAlpha,
         PieceTheme::Cburnett,
         PieceTheme::California,
         PieceTheme::Cardinal,
@@ -46,6 +48,7 @@ impl std::fmt::Display for PieceTheme {
             f,
             "{}",
             match self {
+                PieceTheme::FontAlpha => "paper - chess alpha",
                 PieceTheme::California => "california",
                 PieceTheme::Cardinal => "cardinal",
                 PieceTheme::Dubrovny => "dubrovny",
@@ -174,6 +177,23 @@ impl button::StyleSheet for Theme {
             ButtonStyle::SelectedDarkSquare => {
                 button::Appearance {
                     background: Some(iced::Background::Color(palette.selected_dark_square)),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::Paper => {
+                button::Appearance {
+                    background: Some(iced::Background::Color(rgb!(245., 245., 245.))),
+                    border_width: 0.,
+                    border_color: iced::Color::BLACK,
+                    text_color: rgb!(45., 45., 45.),
+                    ..Default::default()
+                }
+            }
+            ButtonStyle::SelectedPaper => {
+                button::Appearance {
+                    background: Some(iced::Background::Color(rgb!(180., 180., 180.))),
+                    border_width: 0.,
+                    border_color: iced::Color::BLACK,
                     ..Default::default()
                 }
             }
@@ -620,4 +640,6 @@ pub enum ButtonStyle {
     DarkSquare,
     SelectedLightSquare,
     SelectedDarkSquare,
+    Paper,
+    SelectedPaper,
 }

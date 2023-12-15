@@ -1,11 +1,12 @@
 use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
-use iced::{Element};
-use iced::{alignment, Command, Alignment, Length};
+use iced::widget::text::LineHeight;
+use iced::{alignment, Command, Element, Alignment, Length};
 use std::io::BufReader;
 
 use iced_aw::TabLabel;
 use chess::{Piece};
 use crate::config::load_config;
+use crate::styles::PieceTheme;
 use crate::{Tab, Message, config, styles, lang, db};
 
 #[derive(Debug, Clone)]
@@ -557,44 +558,82 @@ impl Tab for SearchTab {
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
         }
 
-        // Promotion piece selector
         let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
-        for i in 0..4 {
-            let piece;
-            let image;
-            match i {
-                0 => {
-                    piece = Piece::Rook;
-                    image = "/wR.svg";
-                }
-                1 => {
-                    piece = Piece::Knight;
-                    image = "/wN.svg";
-                }
-                2 => {
-                    piece = Piece::Bishop;
-                    image = "/wB.svg";
-                }
-                _ => {
-                    piece = Piece::Queen;
-                    image = "/wQ.svg";
-                }
-            };
-            let square_style =
-                if self.piece_to_promote_to == piece {
-                    styles::ButtonStyle::DarkSquare
-                } else {
-                    styles::ButtonStyle::LightSquare
+        if self.piece_theme_promotion == PieceTheme::FontAlpha {
+            // Promotion piece selector
+            for i in 0..4 {
+                let piece;
+                let mut text;
+                match i {
+                    0 => {
+                        piece = Piece::Rook;
+                        text = String::from("r");
+                    }
+                    1 => {
+                        piece = Piece::Knight;
+                        text = String::from("h");
+                    }
+                    2 => {
+                        piece = Piece::Bishop;
+                        text = String::from("b");
+                    }
+                    _ => {
+                        piece = Piece::Queen;
+                        text = String::from("q");
+                    }
                 };
-            row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
-                .push(Button::new(
-                    Svg::from_path(String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
-                )
-                .width(60)
-                .height(60)
-                .on_press(SearchMesssage::SelectPiecePromotion(piece))
-                .style(square_style)
-            ));
+                let square_style = if self.piece_to_promote_to == piece {
+                    text = text.to_uppercase();
+                };
+                row_promotion = row_promotion.push(Row::new().spacing(0).align_items(Alignment::Center)
+                    .push(Button::new(
+                        Text::new(text).font(config::CHESS_ALPHA).size(60).line_height(LineHeight::Absolute(60.into()))
+                    )
+                    .padding(0)
+                    .width(60)
+                    .height(60)
+                    .style(styles::ButtonStyle::Paper)
+                    .on_press(SearchMesssage::SelectPiecePromotion(piece))
+                ));
+            }
+        } else {
+            for i in 0..4 {
+                let piece;
+                let image;
+                match i {
+                    0 => {
+                        piece = Piece::Rook;
+                        image = "/wR.svg";
+                    }
+                    1 => {
+                        piece = Piece::Knight;
+                        image = "/wN.svg";
+                    }
+                    2 => {
+                        piece = Piece::Bishop;
+                        image = "/wB.svg";
+                    }
+                    _ => {
+                        piece = Piece::Queen;
+                        image = "/wQ.svg";
+                    }
+                };
+                let square_style =
+                    if self.piece_to_promote_to == piece {
+                        styles::ButtonStyle::DarkSquare
+                    } else {
+                        styles::ButtonStyle::LightSquare
+                    };
+                row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
+                    .push(Button::new(
+                        Svg::from_path(String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
+                    )
+                    .width(60)
+                    .height(60)
+                    .on_press(SearchMesssage::SelectPiecePromotion(piece))
+                    .style(square_style)
+                ));
+            }
         }
 
         search_col = search_col.push(Space::new(Length::Fill, 10));

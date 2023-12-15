@@ -1,6 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use eval::{Engine, EngineStatus};
+use iced::widget::text::LineHeight;
+use styles::PieceTheme;
 use std::io::BufReader;
 use std::path::Path;
 use std::fs::File as StdFile;
@@ -11,6 +13,7 @@ use iced::{Application, Element, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
 use iced::window;
 use iced::Event;
+use std::borrow::Cow;
 
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
@@ -156,6 +159,7 @@ pub enum TabId {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    ChessFontLoaded(Result<(), iced::font::Error>),
     SelectSquare(PositionGUI),
     Search(SearchMesssage),
     Settings(SettingsMessage),
@@ -330,7 +334,7 @@ impl Application for OfflinePuzzles {
     fn new(_flags: ()) -> (OfflinePuzzles, Command<Message>) {
         (
             Self::default(),
-            Command::none(),
+            iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES)).map(Message::ChessFontLoaded),
         )
     }
 
@@ -697,7 +701,7 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
-                    self.search_tab.piece_theme_promotion = self.settings_tab.saved_configs.piece_theme;
+                    self.search_tab.piece_theme_promotion = self.settings_tab.piece_theme;
                     self.engine.engine_path = self.settings_tab.engine_path.clone();
                     self.lang = settings.lang;
                     self.search_tab.lang = self.lang;
@@ -794,6 +798,8 @@ impl Application for OfflinePuzzles {
                 }
             } (_, Message::FavoritePuzzle) => {
                 db::toggle_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
+                Command::none()
+            } (_, Message::ChessFontLoaded(chessFontResult)) => {
                 Command::none()
             }
         }
@@ -900,6 +906,7 @@ fn gen_view<'a>(
     size: Size
 ) -> Element<'a, Message, iced::Renderer<styles::Theme>> {
 
+    let font = piece_theme == PieceTheme::FontAlpha;
     let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
     let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
 
@@ -944,28 +951,8 @@ fn gen_view<'a>(
                     }
                 };
 
-            let mut text = "";
-            if let Some(piece) = piece {
-                if color.unwrap() == Color::White {
-                    text = match piece {
-                        Piece::Pawn => "/wP.svg",
-                        Piece::Rook => "/wR.svg",
-                        Piece::Knight => "/wN.svg",
-                        Piece::Bishop => "/wB.svg",
-                        Piece::Queen => "/wQ.svg",
-                        Piece::King => "/wK.svg"
-                    };
-                } else {
-                    text = match piece {
-                        Piece::Pawn => "/bP.svg",
-                        Piece::Rook => "/bR.svg",
-                        Piece::Knight => "/bN.svg",
-                        Piece::Bishop => "/bB.svg",
-                        Piece::Queen => "/bQ.svg",
-                        Piece::King => "/bK.svg"
-                    };
-                }
-            }
+            let mut text;
+            let light_square = (rank + file) % 2 != 0;
 
             let selected =
                 if game_mode == config::GameMode::Puzzle {
@@ -976,32 +963,103 @@ fn gen_view<'a>(
                 } else {
                     from_square == Some(pos)
                 };
-
-            let square_style :styles::ButtonStyle = if (rank + file) % 2 != 0 {
-                if selected {
-                    styles::ButtonStyle::SelectedLightSquare
+            if font {
+                let square_style :styles::ButtonStyle = if selected {
+                    styles::ButtonStyle::SelectedPaper
                 } else {
-                    styles::ButtonStyle::LightSquare
+                    styles::ButtonStyle::Paper
+                };
+                
+                if let Some(piece) = piece {
+                    if color.unwrap() == Color::White {
+                        text = match piece {
+                            Piece::Pawn => String::from("P"),
+                            Piece::Rook => String::from("R"),
+                            Piece::Knight => String::from("H"),
+                            Piece::Bishop => String::from("B"),
+                            Piece::Queen => String::from("Q"),
+                            Piece::King => String::from("K"),
+                        };
+                    } else {
+                        text = match piece {
+                            Piece::Pawn => String::from("O"),
+                            Piece::Rook => String::from("T"),
+                            Piece::Knight => String::from("J"),
+                            Piece::Bishop => String::from("N"),
+                            Piece::Queen => String::from("W"),
+                            Piece::King => String::from("L"),
+                        };
+                    }
+                    if light_square {
+                        text = text.to_lowercase();
+                    }
+                } else {
+                    if light_square {
+                        text = String::from("0");
+                    } else {
+                        text = String::from("+");
+                    }
                 }
+                board_row =
+                    board_row.push(Button::new(
+                        Text::new(text)
+                            .font(config::CHESS_ALPHA)
+                            .size(board_height)
+                            .line_height(LineHeight::Absolute(board_height.into())
+                        ))
+                    .padding(0)
+                    .on_press(Message::SelectSquare(pos))
+                    .style(square_style)
+                );
             } else {
-                #[allow(clippy::collapsible_else_if)]
-                if selected {
-                    styles::ButtonStyle::SelectedDarkSquare
+                let square_style :styles::ButtonStyle = if light_square {
+                    if selected {
+                        styles::ButtonStyle::SelectedLightSquare
+                    } else {
+                        styles::ButtonStyle::LightSquare
+                    }
                 } else {
-                    styles::ButtonStyle::DarkSquare
+                    #[allow(clippy::collapsible_else_if)]
+                    if selected {
+                        styles::ButtonStyle::SelectedDarkSquare
+                    } else {
+                        styles::ButtonStyle::DarkSquare
+                    }
+                };
+                let mut text = "";
+                if let Some(piece) = piece {
+                    if color.unwrap() == Color::White {
+                        text = match piece {
+                            Piece::Pawn => "/wP.svg",
+                            Piece::Rook => "/wR.svg",
+                            Piece::Knight => "/wN.svg",
+                            Piece::Bishop => "/wB.svg",
+                            Piece::Queen => "/wQ.svg",
+                            Piece::King => "/wK.svg"
+                        }
+                    } else {
+                        text = match piece {
+                            Piece::Pawn => "/bP.svg",
+                            Piece::Rook => "/bR.svg",
+                            Piece::Knight => "/bN.svg",
+                            Piece::Bishop => "/bB.svg",
+                            Piece::Queen => "/bQ.svg",
+                            Piece::King => "/bK.svg"
+                        };
+                    }
                 }
-            };
+                board_row = board_row.push(Button::new(
+                        Svg::from_path(
+                            String::from("pieces/") + &piece_theme.to_string() + text)
+                    )
+                    .width(board_height)
+                    .height(board_height)
+                    .on_press(Message::SelectSquare(pos))
+                    .style(square_style)
+                );
+            }
+        } 
 
-            board_row = board_row.push(Button::new(
-                    Svg::from_path(
-                        String::from("pieces/") + &piece_theme.to_string() + text)
-                )
-                .width(board_height)
-                .height(board_height)
-                .on_press(Message::SelectSquare(pos))
-                .style(square_style)
-            );
-        }
         if show_coordinates {
             board_row = board_row.push(
                 Container::new(

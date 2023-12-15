@@ -2,12 +2,16 @@ use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::
 use once_cell::sync::Lazy;
 use chess::{Board, ChessMove, Piece, Square};
 use std::str::FromStr;
+use iced::Font;
 
 use diesel::prelude::*;
 
 pub static SETTINGS: Lazy<OfflinePuzzlesConfig> = Lazy::new(|| {
     load_config()
 });
+
+pub const CHESS_ALPHA_BYTES: &[u8] = include_bytes!("../font/Alpha.ttf");
+pub const CHESS_ALPHA: Font = iced::Font::with_name("Chess Alpha");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {

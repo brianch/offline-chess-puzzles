@@ -25,7 +25,7 @@ pub struct SettingsTab {
     pub engine_path: String,
     pub window_width: u32,
     pub window_height: u32,
-    piece_theme: styles::PieceTheme,
+    pub piece_theme: styles::PieceTheme,
     pub board_theme: styles::Theme,
     pub lang: PickListWrapper<lang::Language>,
     pub export_pgs: String,
