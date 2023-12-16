@@ -180,6 +180,7 @@ pub enum Message {
     UpdateEval((Option<String>, Option<String>)),
     EngineReady(mpsc::Sender<String>),
     FavoritePuzzle,
+    MinimizeUI,
 }
 
 struct SoundPlayback {
@@ -247,6 +248,7 @@ struct OfflinePuzzles {
     game_mode: config::GameMode,
     sound_playback: Option<SoundPlayback>,
     lang: lang::Language,
+    mini_ui: bool,
 }
 
 impl Default for OfflinePuzzles {
@@ -279,6 +281,7 @@ impl Default for OfflinePuzzles {
             game_mode: config::GameMode::Puzzle,
             sound_playback: SoundPlayback::init_sound(),
             lang: config::SETTINGS.lang,
+            mini_ui: false,
         }
     }
 }
@@ -733,8 +736,10 @@ impl Application for OfflinePuzzles {
                         }
                     }
                 } else if let Event::Window(window::Event::Resized { width, height }) = event {
-                    self.settings_tab.window_width = width;
-                    self.settings_tab.window_height = height;
+                    if !self.mini_ui {
+                        self.settings_tab.window_width = width;
+                        self.settings_tab.window_height = height;
+                    }
                     Command::none()
                 } else {
                     Command::none()
@@ -801,6 +806,21 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::ChessFontLoaded(chessFontResult)) => {
                 Command::none()
+            } (_, Message::MinimizeUI) => {
+                if self.mini_ui {
+                    self.mini_ui = false;
+                    let new_size = Size::new(self.settings_tab.window_width,self.settings_tab.window_height);
+                    iced::window::resize(new_size)
+                } else {
+                    self.mini_ui = true;
+                    let new_size =
+                        // "110" accounts for the buttons below the board, since the board
+                        // is a square, we make the width the same as the height,
+                        // with just a bit extra for the > button
+                        Size::new((self.settings_tab.window_height - 110) + 25,
+                        self.settings_tab.window_height);
+                    iced::window::resize(new_size)
+                }
             }
         }
     }
@@ -859,10 +879,9 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.view(),
                 &self.lang,
                 size,
+                self.mini_ui,
             )});
         Container::new(resp)
-            .width(Length::Fill)
-            .height(Length::Fill)
             .padding(1)
             .into()
     }
@@ -903,7 +922,8 @@ fn gen_view<'a>(
     settings_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
     puzzle_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
     lang: &lang::Language,
-    size: Size
+    size: Size,
+    mini_ui: bool,
 ) -> Element<'a, Message, iced::Renderer<styles::Theme>> {
 
     let font = piece_theme == PieceTheme::FontAlpha;
@@ -1160,15 +1180,20 @@ fn gen_view<'a>(
             ].padding(5).spacing(15)
         );
     }
+    if  mini_ui {
+        let button_mini = Button::new(Text::new(">")).on_press(Message::MinimizeUI);
+        row![board_col,button_mini].spacing(5).align_items(Alignment::Start).into()
+    } else {
+        let button_mini = Button::new(Text::new("<")).on_press(Message::MinimizeUI);
+        let tabs = Tabs::new(Message::TabSelected)
+                .push(TabId::Search, search_tab_label, search_tab)
+                .push(TabId::Settings, settings_tab_label, settings_tab)
+                .push(TabId::CurrentPuzzle ,puzzle_tab_label, puzzle_tab)
+                .tab_bar_position(iced_aw::TabBarPosition::Top)
+                .set_active_tab(active_tab);
 
-    let tabs = Tabs::new(Message::TabSelected)
-            .push(TabId::Search, search_tab_label, search_tab)
-            .push(TabId::Settings, settings_tab_label, settings_tab)
-            .push(TabId::CurrentPuzzle ,puzzle_tab_label, puzzle_tab)
-            .tab_bar_position(iced_aw::TabBarPosition::Top)
-            .set_active_tab(active_tab);
-
-    row![board_col,tabs].spacing(30).align_items(Alignment::Start).into()
+        row![board_col,button_mini,tabs].spacing(5).align_items(Alignment::Start).into()
+    }
 }
 
 trait Tab {
