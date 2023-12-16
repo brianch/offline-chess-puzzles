@@ -50,7 +50,7 @@ impl PuzzleTab {
             } PuzzleMessage::CopyText(text) => {
                 iced::clipboard::write::<Message>(text)                
             } PuzzleMessage::OpenLink(link) => {
-                open::that_detached(link);
+                let _ = open::that_detached(link);
                 Command::none()
             } PuzzleMessage::ExportToPDF => {
                 Command::perform(PuzzleTab::export(), Message::ExportPDF)

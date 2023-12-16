@@ -1,5 +1,4 @@
 use iced::{Subscription, subscription};
-use std::ops::Deref;
 use std::process::Stdio;
 use tokio::sync::mpsc::{self, Receiver};
 use tokio::process::{Command, Child};
@@ -134,7 +133,6 @@ impl Engine {
                                 let msg = receiver.try_recv();
                                 if let Ok(msg) = msg {
                                     if &msg == STOP_COMMAND || &msg == EXIT_APP_COMMAND {
-                                        drop(receiver);
                                         child.stdin.as_mut().unwrap().write_all(b"stop\n").await.expect("Error communicating with engine");
                                         child.stdin.as_mut().unwrap().write_all(b"quit\n").await.expect("Error communicating with engine");
                                         let terminate_timeout = timeout(Duration::from_millis(1000),
@@ -189,7 +187,7 @@ impl Engine {
                                                     }
                                                     for i in (index + 3)..vector.len() {
                                                         if let Some(token) = vector.get(i) {
-                                                            if String::from(token.deref()) == "pv" {
+                                                            if token == &"pv" {
                                                                 // I thought we could just unwrap, but at least Koivisto sometimes
                                                                 // returns lines with nothing in the pv
                                                                 if let Some(best) = vector.get(i+1) {

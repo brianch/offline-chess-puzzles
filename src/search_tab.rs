@@ -582,7 +582,7 @@ impl Tab for SearchTab {
                         text = String::from("q");
                     }
                 };
-                let square_style = if self.piece_to_promote_to == piece {
+                if self.piece_to_promote_to == piece {
                     text = text.to_uppercase();
                 };
                 row_promotion = row_promotion.push(Row::new().spacing(0).align_items(Alignment::Center)

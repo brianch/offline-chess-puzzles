@@ -719,7 +719,7 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
-            } (_, Message::ExportPDF(value)) => {
+            } (_, Message::ExportPDF(_)) => {
                 export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang);
                 Command::none()
             } (_, Message::EventOccurred(event)) => {
@@ -755,7 +755,6 @@ impl Application for OfflinePuzzles {
                     } _ => {
                         if let Some(sender) = &self.engine_sender {
                             sender.blocking_send(String::from(eval::STOP_COMMAND)).expect("Error stopping engine.");
-                            drop(sender);
                             self.engine_sender = None;
                         }
                     }
@@ -804,7 +803,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::FavoritePuzzle) => {
                 db::toggle_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
                 Command::none()
-            } (_, Message::ChessFontLoaded(chessFontResult)) => {
+            } (_, Message::ChessFontLoaded(_)) => {
                 Command::none()
             } (_, Message::MinimizeUI) => {
                 if self.mini_ui {
