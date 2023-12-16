@@ -4,10 +4,13 @@ use iced::{alignment, Command, Element, Alignment, Length};
 use std::io::BufReader;
 
 use iced_aw::TabLabel;
-use chess::{Piece};
+use chess::Piece;
 use crate::config::load_config;
 use crate::styles::PieceTheme;
-use crate::{Tab, Message, config, styles, lang, db};
+use crate::{Tab, Message, config, styles, lang, db, openings};
+
+use lang::{DisplayTranslated,PickListWrapper};
+use openings::Openings;
 
 #[derive(Debug, Clone)]
 pub enum SearchMesssage {
@@ -20,25 +23,6 @@ pub enum SearchMesssage {
     ClickSearch,
     SelectBase(SearchBase),
 }
-
-#[derive(Debug, Clone)]
-pub struct PickListWrapper<D: DisplayTranslated> {
-    pub lang: lang::Language,
-    pub item: D,
-}
-
-impl<D: DisplayTranslated> std::fmt::Display for PickListWrapper<D> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&lang::tr(&self.lang, self.item.to_str_tr()))
-    }
-}
-
-impl<D: DisplayTranslated + std::cmp::PartialEq> PartialEq for PickListWrapper<D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.item == other.item
-    }
-}
-impl<D: DisplayTranslated + std::cmp::PartialEq> Eq for PickListWrapper<D> {}
 
 impl PickListWrapper<TaticsThemes> {
     pub fn get_themes(lang: lang::Language) -> Vec<PickListWrapper<TaticsThemes>> {
@@ -76,26 +60,6 @@ impl PickListWrapper<Openings> {
     pub fn new_opening(lang: lang::Language, opening: Openings) -> Self {
         Self { lang, item: opening}
     }
-}
-
-impl PickListWrapper<lang::Language> {
-    pub fn get_langs(lang: lang::Language) -> Vec<PickListWrapper<lang::Language>> {
-        let mut themes_wrapper = Vec::new();
-        for item in lang::Language::ALL {
-            themes_wrapper.push(
-                PickListWrapper::<lang::Language> { lang, item }
-            );
-        }
-        themes_wrapper
-    }
-
-    pub fn new_lang(lang: lang::Language, item: lang::Language) -> Self {
-        Self { lang, item }
-    }
-}
-
-pub trait DisplayTranslated {
-    fn to_str_tr(&self) -> &str;
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
@@ -232,77 +196,6 @@ impl DisplayTranslated for TaticsThemes {
 impl Default for TaticsThemes {
     fn default() -> TaticsThemes {
         TaticsThemes::Mate
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
-pub enum Openings {
-    Any, AlekhineDefense, Benoni, Bird, BishopsOpening, BlackmarDiemerGambit, CaroKann, Catalan,
-    Dutch, English, FourKnightsGame, French, GiuocoPiano, Grunfeld, HorwitzDefense, IndianDefense,
-    ItalianGame, KingsGambit, KingsGambitAccepted, KingsGambitDeclined, KingsIndianAttack,
-    KingsIndianDefense, KingsPawnGame, ModernDefense, NimzoIndianDefense, NimzoLarsenAttack,
-    NimzowitschDefense, PhilidorDefense, PircDefense, Ponziani, QueensGambitAccepted,
-    QueensGambitDeclined, QueensPawnGame, RapportJobavaSystem, Reti, RussianGame, RuyLopez,
-    Scandinavian, ScotchGame, SemiSlav,Sicilian, SlavDefense, ThreeKnightsOpening, Trompowsky,
-    ViennaGame, ZukertortOpening
-}
-
-impl Openings {
-    const ALL: [Openings; 46] = [
-        Openings::Any, Openings::AlekhineDefense, Openings::Benoni, Openings::Bird,
-        Openings::BishopsOpening, Openings::BlackmarDiemerGambit, Openings::CaroKann,
-        Openings::Catalan, Openings::Dutch, Openings::English, Openings::FourKnightsGame,
-        Openings::French, Openings::GiuocoPiano, Openings::Grunfeld, Openings::HorwitzDefense,
-        Openings::IndianDefense, Openings::ItalianGame, Openings::KingsGambit,
-        Openings::KingsGambitAccepted, Openings::KingsGambitDeclined, Openings::KingsIndianAttack,
-        Openings::KingsIndianDefense, Openings::KingsPawnGame, Openings::ModernDefense,
-        Openings::NimzoIndianDefense, Openings::NimzoLarsenAttack, Openings::NimzowitschDefense,
-        Openings::PhilidorDefense, Openings::PircDefense, Openings::Ponziani,
-        Openings::QueensGambitAccepted, Openings::QueensGambitDeclined, Openings::QueensPawnGame,
-        Openings::RapportJobavaSystem, Openings::Reti, Openings::RussianGame, Openings::RuyLopez,
-        Openings::Scandinavian, Openings::ScotchGame, Openings::SemiSlav, Openings::Sicilian,
-        Openings::SlavDefense, Openings::ThreeKnightsOpening, Openings::Trompowsky,
-        Openings::ViennaGame, Openings::ZukertortOpening];
-
-    pub fn get_field_name(&self) -> &str {
-        match self {
-            Openings::Any => "",
-            Openings::Sicilian => "Sicilian_Defense", Openings::French => "French_Defense",
-            Openings::QueensPawnGame => "Queens_Pawn_Game", Openings::ItalianGame => "Italian_Game",
-            Openings::CaroKann => "Caro-Kann_Defense", Openings::QueensGambitDeclined => "Queens_Gambit_Declined",
-            Openings::Scandinavian => "Scandinavian_Defense", Openings::RuyLopez => "Ruy_Lopez",
-            Openings::English => "English_Opening", Openings::IndianDefense => "Indian_Defense",
-            Openings::ScotchGame => "Scotch_Game", Openings::PhilidorDefense => "Philidor_Defense",
-            Openings::RussianGame => "Russian_Game", Openings::ModernDefense => "Modern_Defense",
-            Openings::FourKnightsGame => "Four_Knights_Game", Openings::KingsGambitAccepted => "Kings_Gambit_Accepted",
-            Openings::SlavDefense => "Slav_Defense", Openings::PircDefense => "Pirc_Defense",
-            Openings::ZukertortOpening => "Zukertort_Opening", Openings::BishopsOpening => "Bishops_Opening",
-            Openings::KingsPawnGame => "Kings_Pawn_Game", Openings::ViennaGame => "Vienna_Game",
-            Openings::KingsIndianDefense => "Kings_Indian_Defense", Openings::QueensGambitAccepted => "Queens_Gambit_Accepted",
-            Openings::Benoni => "Benoni_Defense", Openings::AlekhineDefense => "Alekhine_Defense",
-            Openings::NimzowitschDefense => "Nimzowitsch_Defense", Openings::HorwitzDefense => "Horwitz_Defense",
-            Openings::NimzoLarsenAttack => "Nimzo-Larsen_Attack", Openings::KingsGambitDeclined => "Kings_Gambit_Declined",
-            Openings::NimzoIndianDefense => "Nimzo-Indian_Defense", Openings::Bird => "Bird_Opening",
-            Openings::Dutch => "Dutch_Defense", Openings::SemiSlav => "Semi-Slav_Defense",
-            Openings::GiuocoPiano => "Giuoco_Piano", Openings::Grunfeld => "Grunfeld_Defense",
-            Openings::ThreeKnightsOpening => "Three_Knights_Opening", Openings::Ponziani => "Ponziani_Opening",
-            Openings::KingsIndianAttack => "Kings_Indian_Attack", Openings::BlackmarDiemerGambit => "Blackmar-Diemer_Gambit",
-            Openings::Trompowsky => "Trompowsky_Attack", Openings::KingsGambit => "Kings_Gambit",
-            Openings::RapportJobavaSystem => "Rapport-Jobava_System", Openings::Catalan => "Catalan_Opening",
-            Openings::Reti => "Reti_Opening"
-        }
-    }
-    pub fn get_tr_key(&self) -> &str {
-        match self {
-            Openings::Any => "any_opening",
-            _ => self.get_field_name(),
-        }
-    }
-}
-
-impl DisplayTranslated for Openings {
-    fn to_str_tr(&self) -> &str {
-        self.get_tr_key()
     }
 }
 

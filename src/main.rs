@@ -38,6 +38,7 @@ use puzzles::{PuzzleMessage, PuzzleTab, GameStatus};
 mod eval;
 mod export;
 mod lang;
+mod openings;
 
 pub mod models;
 pub mod schema;

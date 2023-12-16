@@ -8,7 +8,8 @@ use crate::schema::favs;
 use crate::schema::favs::dsl::*;
 use crate::config::Puzzle;
 
-use crate::search_tab::{TaticsThemes, Openings, OpeningSide};
+use crate::search_tab::{TaticsThemes, OpeningSide};
+use crate::openings::Openings;
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();

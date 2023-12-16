@@ -3,7 +3,7 @@ use iced::{alignment, Command, Alignment, Element, Length};
 
 use iced_aw::TabLabel;
 
-use crate::{Message, Tab, config, styles, lang, search_tab::PickListWrapper};
+use crate::{Message, Tab, config, styles, lang, lang::PickListWrapper};
 
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {

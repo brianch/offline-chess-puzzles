@@ -4,8 +4,6 @@ use unic_langid::langid;
 use std::io::Read;
 use once_cell::sync::Lazy;
 
-use crate::search_tab::DisplayTranslated;
-
 static BUNDLE_ENUS: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
     let file = std::fs::File::open("./translations/en-US/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
@@ -83,4 +81,44 @@ impl DisplayTranslated for Language {
             Language::French => "french",
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct PickListWrapper<D: DisplayTranslated> {
+    pub lang: Language,
+    pub item: D,
+}
+
+impl<D: DisplayTranslated> std::fmt::Display for PickListWrapper<D> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&tr(&self.lang, self.item.to_str_tr()))
+    }
+}
+
+impl<D: DisplayTranslated + std::cmp::PartialEq> PartialEq for PickListWrapper<D> {
+    fn eq(&self, other: &Self) -> bool {
+        self.item == other.item
+    }
+}
+
+impl<D: DisplayTranslated + std::cmp::PartialEq> Eq for PickListWrapper<D> {}
+
+impl PickListWrapper<Language> {
+    pub fn get_langs(lang: Language) -> Vec<PickListWrapper<Language>> {
+        let mut themes_wrapper = Vec::new();
+        for item in Language::ALL {
+            themes_wrapper.push(
+                PickListWrapper::<Language> { lang, item }
+            );
+        }
+        themes_wrapper
+    }
+
+    pub fn new_lang(lang: Language, item: Language) -> Self {
+        Self { lang, item }
+    }
+}
+
+pub trait DisplayTranslated {
+    fn to_str_tr(&self) -> &str;
 }

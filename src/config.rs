@@ -1,4 +1,4 @@
-use crate::{styles, search_tab::TaticsThemes, search_tab::Openings, search_tab::OpeningSide, lang};
+use crate::{styles, search_tab::TaticsThemes, search_tab::OpeningSide, lang, openings::Openings};
 use once_cell::sync::Lazy;
 use chess::{Board, ChessMove, Piece, Square};
 use std::str::FromStr;
