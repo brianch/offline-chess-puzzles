@@ -264,14 +264,6 @@ impl Tab for SettingsTab {
                 ).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
-                Text::new(lang::tr(&self.lang.lang, "show_coords")),
-                Checkbox::new(
-                    "",
-                    self.show_coordinates,
-                    SettingsMessage::CheckShowCoords,
-                ).size(20),
-            ].spacing(5).align_items(Alignment::Center),
-            row![
                 Text::new(lang::tr(&self.lang.lang, "pdf_number_of_pages")),
                 TextInput::new(
                     &self.export_pgs,
