@@ -31,6 +31,8 @@ all_puzzles_done = Tous les puzzles ont été réalisés pour cette recherche !
 no_puzzle_found = Désolé, aucun puzzle n'a été trouvé.
 
 #Search Tab
+lichess_db = Lichess DB
+my_favories = My Favorites
 min_rating = Classement minimal:{" "}
 max_rating = Classement maximal:{" "}
 theme_label = Thème tactique:

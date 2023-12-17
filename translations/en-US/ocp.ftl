@@ -29,6 +29,8 @@ all_puzzles_done = All puzzles done for this search!
 no_puzzle_found = Sorry, no puzzle found.
 
 #Search Tab
+lichess_db = Lichess DB
+my_favories = My Favorites
 min_rating = Min. Rating:{" "}
 max_rating = Max. Rating:{" "}
 theme_label = Tactics theme:

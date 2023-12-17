@@ -402,8 +402,8 @@ impl Tab for SearchTab {
         let mut search_col = col![
             Container::new(
                 row![
-                    Radio::new("Lichess DB", SearchBase::Lichess, self.base, SearchMesssage::SelectBase),
-                    Radio::new("My Favorites", SearchBase::Favorites, self.base, SearchMesssage::SelectBase),
+                    Radio::new(lang::tr(&self.lang, "lichess_db"), SearchBase::Lichess, self.base, SearchMesssage::SelectBase),
+                    Radio::new(lang::tr(&self.lang, "my_favories"), SearchBase::Favorites, self.base, SearchMesssage::SelectBase),
                 ].spacing(10)
             ).align_x(alignment::Horizontal::Center).width(Length::Fill),
             row![

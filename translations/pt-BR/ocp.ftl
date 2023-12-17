@@ -29,6 +29,8 @@ all_puzzles_done = Todos os problemas dessa busca já resolvidos!
 no_puzzle_found = Desculpe, nenhum problema encontrado.
 
 #Search Tab
+lichess_db = Banco de Dados do Lichess
+my_favories = Meus Favoritos
 min_rating = Rating Min.:{" "}
 max_rating = Rating Máx.:{" "}
 theme_label = Tema Tático:
