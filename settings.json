@@ -17,5 +17,10 @@
   "last_max_rating": 1000,
   "last_theme": "All",
   "last_opening": "Any",
+  "last_variation": {
+    "name": "Any_Variation",
+    "family": "Any"
+  },
   "last_opening_side": "Any"
 }
+

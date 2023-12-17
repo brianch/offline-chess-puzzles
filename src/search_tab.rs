@@ -10,7 +10,7 @@ use crate::styles::PieceTheme;
 use crate::{Tab, Message, config, styles, lang, db, openings};
 
 use lang::{DisplayTranslated,PickListWrapper};
-use openings::Openings;
+use openings::{Openings, Variation};
 
 #[derive(Debug, Clone)]
 pub enum SearchMesssage {
@@ -18,6 +18,7 @@ pub enum SearchMesssage {
     SliderMaxRatingChanged(i32),
     SelectTheme(PickListWrapper<TaticsThemes>),
     SelectOpening(PickListWrapper<Openings>),
+    SelectVariation(PickListWrapper<Variation>),
     SelectOpeningSide(OpeningSide),
     SelectPiecePromotion(Piece),
     ClickSearch,
@@ -40,25 +41,6 @@ impl PickListWrapper<TaticsThemes> {
 
     pub fn new_theme(lang: lang::Language, theme: TaticsThemes) -> Self {
         Self { lang, item: theme}
-    }
-}
-
-impl PickListWrapper<Openings> {
-    pub fn get_openings(lang: lang::Language) -> Vec<PickListWrapper<Openings>> {
-        let mut openings_wrapper = Vec::new();
-        for opening in Openings::ALL {
-            openings_wrapper.push(
-                PickListWrapper::<Openings> {
-                    lang: lang,
-                    item: opening,
-                }
-            );
-        }
-        openings_wrapper
-    }
-
-    pub fn new_opening(lang: lang::Language, opening: Openings) -> Self {
-        Self { lang, item: opening}
     }
 }
 
@@ -213,6 +195,7 @@ pub enum SearchBase {
 pub struct SearchTab {
     pub theme: PickListWrapper<TaticsThemes>,
     pub opening: PickListWrapper<Openings>,
+    pub variation: PickListWrapper<Variation>,
     pub opening_side: Option<OpeningSide>,
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,
@@ -229,6 +212,7 @@ impl SearchTab {
         SearchTab {
             theme : PickListWrapper::new_theme(config::SETTINGS.lang, config::SETTINGS.last_theme),
             opening: PickListWrapper::new_opening(config::SETTINGS.lang, config::SETTINGS.last_opening),
+            variation: PickListWrapper::new_variation(config::SETTINGS.lang, config::SETTINGS.last_variation.clone()),
             opening_side: config::SETTINGS.last_opening_side,
             slider_min_rating_value: config::SETTINGS.last_min_rating,
             slider_max_rating_value: config::SETTINGS.last_max_rating,
@@ -253,6 +237,10 @@ impl SearchTab {
                 Command::none()
             } SearchMesssage::SelectOpening(new_opening) => {
                 self.opening = new_opening;
+                self.variation.item = Variation::ANY;
+                Command::none()
+            } SearchMesssage::SelectVariation(new_variation) => {
+                self.variation = new_variation;
                 Command::none()
             } SearchMesssage::SelectOpeningSide(new_opening_side) => {
                 self.opening_side = Some(new_opening_side);
@@ -263,20 +251,22 @@ impl SearchTab {
             } SearchMesssage::ClickSearch => {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
-                    self.slider_max_rating_value,
-                    self.theme.item, self.opening.item, self.opening_side);
+                    self.slider_max_rating_value, self.theme.item,
+                    self.opening.item, self.variation.item.clone(), self.opening_side);
 
                 let config = load_config();
                 if self.base == Some(SearchBase::Favorites) {
                     Command::perform(
                         SearchTab::search_favs(self.slider_min_rating_value,
                             self.slider_max_rating_value,
-                            self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                            self.theme.item, self.opening.item, self.variation.item.clone(),
+                            self.opening_side, config.search_results_limit), Message::LoadPuzzle)
                 } else {
                     Command::perform(
                         SearchTab::search(self.slider_min_rating_value,
                             self.slider_max_rating_value,
-                            self.theme.item, self.opening.item, self.opening_side, config.search_results_limit), Message::LoadPuzzle)
+                            self.theme.item, self.opening.item, self.variation.item.clone(),
+                            self.opening_side, config.search_results_limit), Message::LoadPuzzle)
                 }
             } SearchMesssage::SelectBase(base) => {
                 self.base = Some(base);
@@ -285,7 +275,7 @@ impl SearchTab {
         }
     }
 
-    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>) {
+    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
         let file = std::fs::File::open("settings.json");
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
@@ -294,6 +284,7 @@ impl SearchTab {
                 config.last_max_rating = max_rating;
                 config.last_theme = theme;
                 config.last_opening = opening;
+                config.last_variation = variation;
                 config.last_opening_side = op_side;
 
                 let file = std::fs::File::create("settings.json");
@@ -306,11 +297,11 @@ impl SearchTab {
         }
     }
 
-    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
-        db::get_favorites(min_rating, max_rating, theme, opening, op_side, result_limit)
+    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation:Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+        db::get_favorites(min_rating, max_rating, theme, opening, variation, op_side, result_limit)
     }
 
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
 
         let reader = csv::ReaderBuilder::new()
@@ -323,6 +314,11 @@ impl SearchTab {
             //self.current_puzzle_move = 1;
             //self.current_puzzle = 0;
             if opening != Openings::Any {
+                let opening_tag: &str = if variation.name != Variation::ANY_STR {
+                    &variation.name
+                } else {
+                    opening.get_field_name()
+                };
                 let side = match op_side {
                     None => OpeningSide::Any,
                     Some(x) => x
@@ -331,7 +327,7 @@ impl SearchTab {
                     OpeningSide::Any => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {
-                                if record.opening.contains(opening.get_field_name()) &&
+                                if record.opening.contains(opening_tag) &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
@@ -344,7 +340,7 @@ impl SearchTab {
                     } OpeningSide::Black => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {
-                                if record.opening.contains(opening.get_field_name()) &&
+                                if record.opening.contains(opening_tag) &&
                                         !record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -358,7 +354,7 @@ impl SearchTab {
                     } OpeningSide::White => {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result {
-                                if record.opening.contains(opening.get_field_name()) &&
+                                if record.opening.contains(opening_tag) &&
                                         record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
                                         record.themes.contains(theme.get_tag_name()) {
@@ -439,6 +435,12 @@ impl Tab for SearchTab {
                 PickListWrapper::get_openings(self.lang.clone()),
                 Some(self.opening.clone()),
                 SearchMesssage::SelectOpening
+            ),
+            Text::new("Variation"),
+            PickList::new(
+                PickListWrapper::get_variations(self.lang.clone(), Some(&self.opening.item)),
+                Some(self.variation.clone()),
+                SearchMesssage::SelectVariation
             )
         ].spacing(10).align_items(Alignment::Center);
 

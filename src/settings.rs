@@ -144,12 +144,13 @@ impl SettingsTab {
                     last_max_rating: self.saved_configs.last_max_rating,
                     last_theme: self.saved_configs.last_theme,
                     last_opening: self.saved_configs.last_opening,
+                    last_variation: self.saved_configs.last_variation.clone(),
                     last_opening_side: self.saved_configs.last_opening_side,
                 };
                 let file = std::fs::File::create("settings.json");
                 match file {
                     Ok(file) => {
-                        if serde_json::to_writer_pretty(file, &config).is_ok() {                
+                        if serde_json::to_writer_pretty(file, &config).is_ok() {
                             self.settings_status = lang::tr(&self.lang.lang, "settings_saved");
                         } else {
                             self.settings_status = lang::tr(&self.lang.lang, "error_saving");

@@ -9,7 +9,7 @@ use crate::schema::favs::dsl::*;
 use crate::config::Puzzle;
 
 use crate::search_tab::{TaticsThemes, OpeningSide};
-use crate::openings::Openings;
+use crate::openings::{Openings, Variation};
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -19,7 +19,7 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
+pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
     let mut conn = establish_connection();
     let results;
     let theme_filter = String::from("%") + theme.get_tag_name() + "%";
@@ -31,7 +31,12 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, open
             .limit(limit)
             .load::<Puzzle>(&mut conn);
     } else {
-        let opening_filter = opening_tags.like(String::from("%") + opening.get_field_name() + "%");
+        let opening_tag: &str = if variation.name != Variation::ANY_STR {
+            &variation.name
+        } else {
+            opening.get_field_name()
+        };
+        let opening_filter = opening_tags.like(String::from("%") + &opening_tag + "%");
         let side = match op_side {
             None => OpeningSide::Any,
             Some(x) => x

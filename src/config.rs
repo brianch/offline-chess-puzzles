@@ -1,4 +1,4 @@
-use crate::{styles, search_tab::TaticsThemes, search_tab::OpeningSide, lang, openings::Openings};
+use crate::{styles, search_tab::TaticsThemes, search_tab::OpeningSide, lang, openings::{Openings, Variation}};
 use once_cell::sync::Lazy;
 use chess::{Board, ChessMove, Piece, Square};
 use std::str::FromStr;
@@ -39,6 +39,7 @@ pub struct OfflinePuzzlesConfig {
     pub last_max_rating: i32,
     pub last_theme: TaticsThemes,
     pub last_opening: Openings,
+    pub last_variation: Variation,
     pub last_opening_side: Option<OpeningSide>,
 }
 
@@ -63,6 +64,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             last_max_rating: 1000,
             last_theme: TaticsThemes::All,
             last_opening: Openings::Any,
+            last_variation: Variation::ANY,
             last_opening_side: Some(OpeningSide::Any),
         }
     }

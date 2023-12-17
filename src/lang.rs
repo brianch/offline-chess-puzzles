@@ -55,7 +55,7 @@ pub fn tr(lang: &Language, key: &str) -> String {
         Language::Spanish => &BUNDLE_ES,
         Language::French => &BUNDLE_FR,
     };
-    let msg = bundle.get_message(key).expect("Missing translation key.");
+    let msg = bundle.get_message(key).expect(&("Missing translation key ".to_owned() + key));
     let mut errors = vec![];
     let pattern = msg.value().expect("Missing Value.");
     bundle.format_pattern(&pattern, None, &mut errors).to_string()
@@ -89,6 +89,10 @@ pub struct PickListWrapper<D: DisplayTranslated> {
     pub item: D,
 }
 
+pub trait DisplayTranslated {
+    fn to_str_tr(&self) -> &str;
+}
+
 impl<D: DisplayTranslated> std::fmt::Display for PickListWrapper<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&tr(&self.lang, self.item.to_str_tr()))
@@ -117,8 +121,4 @@ impl PickListWrapper<Language> {
     pub fn new_lang(lang: Language, item: Language) -> Self {
         Self { lang, item }
     }
-}
-
-pub trait DisplayTranslated {
-    fn to_str_tr(&self) -> &str;
 }
