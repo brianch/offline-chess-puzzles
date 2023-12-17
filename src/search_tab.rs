@@ -436,7 +436,7 @@ impl Tab for SearchTab {
                 Some(self.opening.clone()),
                 SearchMesssage::SelectOpening
             ),
-            Text::new("Variation"),
+            Text::new(lang::tr(&self.lang, "in_the_variation")),
             PickList::new(
                 PickListWrapper::get_variations(self.lang.clone(), Some(&self.opening.item)),
                 Some(self.variation.clone()),

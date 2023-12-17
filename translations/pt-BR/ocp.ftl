@@ -33,6 +33,7 @@ min_rating = Rating Min.:{" "}
 max_rating = Rating Máx.:{" "}
 theme_label = Tema Tático:
 in_opening = Na Abertura:
+in_the_variation = Variante:
 side = Lado:
 any = Ambos
 white = Brancas
@@ -53,7 +54,7 @@ spanish = Espanhol
 play_sound = Som nos lances:
 auto_load = Carregar próx. problema automaticamente:
 flip_board = Girar tabuleiro:
-show_coords = Coordenadas do tabuleiro
+show_coords = Coordenadas do tabuleiro:
 pdf_number_of_pages = N. de pags. para exportar em PDF:
 get_first_puzzles1 = Obter os primeiros
 get_first_puzzles2 =  {" "}problemas
@@ -191,7 +192,7 @@ Semi-Slav_Defense = Defesa Semi-Eslava
 Owen_Defense = Owen_Defense
 Vant_Kruijs_Opening = Vant_Kruijs_Opening
 Center_Game = Center_Game
-Hungarian_Opening = Hungarian Opening 
+Hungarian_Opening = Hungarian Opening
 Three_Knights_Opening = Três Cavalos
 Ponziani_Opening = Abertura Ponziani
 Englund_Gambit = Englund Gambit
@@ -212,7 +213,7 @@ Queens_Indian_Defense = Queen's Indian Defense
 London_System = London System
 
 
-Any_Variation = Any
+Any_Variation = Todas
 
 Sicilian_Defense_Bowdler_Attack = Bowdler Attack
 Sicilian_Defense_Old_Sicilian = Old Sicilian

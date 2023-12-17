@@ -33,6 +33,7 @@ min_rating = Rating Min.:{" "}
 max_rating = Rating Max.:{" "}
 theme_label = Tema táctico:
 in_opening = En la apertura:
+in_the_variation = Variante:
 side = Lado:
 any = Ambos
 white = Blancas
@@ -53,7 +54,7 @@ spanish = Español
 play_sound = Sonido en los movimientos:
 auto_load = Cargar automaticamente el próx. ejercício:
 flip_board = Girar el tablero:
-show_coords = Coordenadas del tablero
+show_coords = Coordenadas del tablero:
 pdf_number_of_pages = N. de páginas para exportar en PDF:
 get_first_puzzles1 = Obtener los primeros
 get_first_puzzles2 =  {" "}ejercícios
@@ -153,7 +154,7 @@ superGM = De partidas de super GMs
 
 #OPENINGS
 #============================================================
-any_opening = Any
+any_opening = Todas
 Sicilian_Defense = Sicilian Defense
 French_Defense = French Defense
 Queens_Pawn_Game = Queen's Pawn Game
@@ -212,7 +213,7 @@ Queens_Indian_Defense = Queen's Indian Defense
 London_System = London System
 
 
-Any_Variation = Any
+Any_Variation = Todas
 
 Sicilian_Defense_Bowdler_Attack = Bowdler Attack
 Sicilian_Defense_Old_Sicilian = Old Sicilian
