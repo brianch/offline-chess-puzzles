@@ -954,8 +954,8 @@ fn gen_view<'a>(
                         styles::ButtonStyle::DarkSquare
                     }
                 };
-                let mut text = "";
                 if let Some(piece) = piece {
+                    let text;
                     if color.unwrap() == Color::White {
                         text = match piece {
                             Piece::Pawn => "/wP.svg",
@@ -975,16 +975,22 @@ fn gen_view<'a>(
                             Piece::King => "/bK.svg"
                         };
                     }
+                    board_row = board_row.push(
+                        Button::new(
+                            Svg::from_path(String::from("pieces/") + &piece_theme.to_string() + text)
+                        ).width(board_height)
+                        .height(board_height)
+                        .on_press(Message::SelectSquare(pos))
+                        .style(square_style)
+                    );
+                } else {
+                    board_row = board_row.push(Button::new(Text::new(""))
+                        .width(board_height)
+                        .height(board_height)
+                        .on_press(Message::SelectSquare(pos))
+                        .style(square_style)
+                    );
                 }
-                board_row = board_row.push(Button::new(
-                        Svg::from_path(
-                            String::from("pieces/") + &piece_theme.to_string() + text)
-                    )
-                    .width(board_height)
-                    .height(board_height)
-                    .on_press(Message::SelectSquare(pos))
-                    .style(square_style)
-                );
             }
         }
 
