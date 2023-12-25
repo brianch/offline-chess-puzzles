@@ -59,98 +59,6 @@ pub struct PositionGUI {
     col: i32,
 }
 
-impl PositionGUI {
-
-    #[inline]
-    pub const fn new(row: i32, col: i32) -> Self {
-        Self { row, col }
-    }
-
-    /// Get the row number of the position.
-    /// This can be any of 0, 1, 2, 3, 4, 5, 6, or 7.
-    #[inline]
-    pub fn get_row(&self) -> i32 {
-        self.row
-    }
-
-    #[inline]
-    pub fn get_col(&self) -> i32 {
-        self.col
-    }
-
-    pub fn posgui_to_notation(&self) -> String {
-        let file = match self.col {
-            0 => "a",
-            1 => "b",
-            2 => "c",
-            3 => "d",
-            4 => "e",
-            5 => "f",
-            6 => "g",
-            _ => "h",
-        };
-        let rank = match self.row {
-            0 => "1",
-            1 => "2",
-            2 => "3",
-            3 => "4",
-            4 => "5",
-            5 => "6",
-            6 => "7",
-            _ => "8",
-        };
-        file.to_owned() + rank
-    }
-
-    pub fn posgui_to_square(&self) -> Square {
-        let file = match self.col {
-            0 => File::A,
-            1 => File::B,
-            2 => File::C,
-            3 => File::D,
-            4 => File::E,
-            5 => File::F,
-            6 => File::G,
-            _ => File::H,
-        };
-        let rank = match self.row {
-            0 => Rank::First,
-            1 => Rank::Second,
-            2 => Rank::Third,
-            3 => Rank::Fourth,
-            4 => Rank::Fifth,
-            5 => Rank::Sixth,
-            6 => Rank::Seventh,
-            _ => Rank::Eighth,
-        };
-        Square::make_square(rank, file)
-    }
-
-    pub fn chesssquare_to_posgui(square: &Square) -> PositionGUI {
-        let col = match square.get_file() {
-            File::A => 0,
-            File::B => 1,
-            File::C => 2,
-            File::D => 3,
-            File::E => 4,
-            File::F => 5,
-            File::G => 6,
-            File::H => 7,
-        };
-        let row = match square.get_rank() {
-            Rank::First => 0,
-            Rank::Second => 1,
-            Rank::Third => 2,
-            Rank::Fourth => 3,
-            Rank::Fifth => 4,
-            Rank::Sixth => 5,
-            Rank::Seventh => 6,
-            Rank::Eighth => 7,
-        };
-        PositionGUI::new(row,col)
-    }
-}
-
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum TabId {
     Search,
@@ -161,7 +69,7 @@ pub enum TabId {
 #[derive(Debug, Clone)]
 pub enum Message {
     ChessFontLoaded(Result<(), iced::font::Error>),
-    SelectSquare(PositionGUI),
+    SelectSquare(Square),
     Search(SearchMesssage),
     Settings(SettingsMessage),
     PuzzleInfo(PuzzleMessage),
@@ -227,11 +135,11 @@ impl SoundPlayback {
 
 //#[derive(Clone)]
 struct OfflinePuzzles {
-    from_square: Option<PositionGUI>,
+    from_square: Option<Square>,
     board: Board,
-    last_move_from: Option<PositionGUI>,
-    last_move_to: Option<PositionGUI>,
-    hint_square: Option<PositionGUI>,
+    last_move_from: Option<Square>,
+    last_move_to: Option<Square>,
+    hint_square: Option<Square>,
     puzzle_status: String,
 
     analysis: Game,
@@ -308,16 +216,16 @@ fn san_correct_ep(fen: String) -> String {
     tokens_vec.join(" ")
 }
 
-fn get_notation_string(board: Board, promo_piece: Piece, from: PositionGUI, to: PositionGUI) -> String {
+fn get_notation_string(board: Board, promo_piece: Piece, from: Square, to: Square) -> String {
 
-    let mut move_made_notation = from.posgui_to_notation() + &to.posgui_to_notation();
-    let piece = board.piece_on(from.posgui_to_square());
-    let color = board.color_on(from.posgui_to_square());
+    let mut move_made_notation = from.to_string() + &to.to_string();
+    let piece = board.piece_on(from);
+    let color = board.color_on(from);
 
     // Check for promotion and adjust the notation accordingly
     if let (Some(piece), Some(color)) = (piece, color) {
-        if piece == Piece::Pawn && ((color == Color::White && to.get_row() == 7) ||
-                                   (color == Color::Black && to.get_row() == 0)) {
+        if piece == Piece::Pawn && ((color == Color::White && to.get_rank() == Rank::Eighth) ||
+                                   (color == Color::Black && to.get_rank() == Rank::First)) {
             match promo_piece {
                 Piece::Rook => move_made_notation += "r",
                 Piece::Knight => move_made_notation += "n",
@@ -356,8 +264,8 @@ impl Application for OfflinePuzzles {
                     };
                 let color =
                     match self.game_mode {
-                        config::GameMode::Analysis => { self.analysis.current_position().color_on(pos.posgui_to_square()) }
-                        config::GameMode::Puzzle => { self.board.color_on(pos.posgui_to_square()) }
+                        config::GameMode::Analysis => { self.analysis.current_position().color_on(pos) }
+                        config::GameMode::Puzzle => { self.board.color_on(pos) }
                     };
 
                 if (self.puzzle_tab.is_playing() || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
@@ -373,8 +281,8 @@ impl Application for OfflinePuzzles {
                     };
                 let color =
                     match self.game_mode {
-                        config::GameMode::Analysis => { self.analysis.current_position().color_on(to.posgui_to_square()) }
-                        config::GameMode::Puzzle => { self.board.color_on(to.posgui_to_square()) }
+                        config::GameMode::Analysis => { self.analysis.current_position().color_on(to) }
+                        config::GameMode::Puzzle => { self.board.color_on(to) }
                     };
                 // If the user clicked on another piece of his own side,
                 // just replace the previous selection and exit
@@ -453,8 +361,8 @@ impl Application for OfflinePuzzles {
                                         Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                                         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                                    self.last_move_from = Some(movement.get_source());
+                                    self.last_move_to = Some(movement.get_dest());
 
                                     self.board = self.board.make_move_new(movement);
                                     self.analysis_history = vec![self.board];
@@ -496,8 +404,8 @@ impl Application for OfflinePuzzles {
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
                                 Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
 
-                            self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                            self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                            self.last_move_from = Some(movement.get_source());
+                            self.last_move_to = Some(movement.get_dest());
 
                             self.board = self.board.make_move_new(movement);
                             self.analysis_history.push(self.board);
@@ -539,7 +447,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::ShowHint) => {
                 let moves = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
                 if !moves.is_empty() && moves.len() > self.puzzle_tab.current_puzzle_move {
-                    self.hint_square = Some(PositionGUI::chesssquare_to_posgui(&Square::from_str(&moves[self.puzzle_tab.current_puzzle_move][..2]).unwrap()));
+                    self.hint_square = Some(Square::from_str(&moves[self.puzzle_tab.current_puzzle_move][..2]).unwrap());
                 } else {
                     self.hint_square = None;
                 }
@@ -561,8 +469,8 @@ impl Application for OfflinePuzzles {
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                     Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                self.last_move_from = Some(movement.get_source());
+                self.last_move_to = Some(movement.get_dest());
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
@@ -593,8 +501,8 @@ impl Application for OfflinePuzzles {
                         Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                    self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                    self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                    self.last_move_from = Some(movement.get_source());
+                    self.last_move_to = Some(movement.get_dest());
 
                     self.board = self.board.make_move_new(movement);
                     self.analysis_history = vec![self.board];
@@ -634,8 +542,8 @@ impl Application for OfflinePuzzles {
                     Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
                     Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                self.last_move_from = Some(movement.get_source());
+                self.last_move_to = Some(movement.get_dest());
 
                 self.board = self.board.make_move_new(movement);
                 self.analysis_history = vec![self.board];
@@ -673,8 +581,8 @@ impl Application for OfflinePuzzles {
                                 Square::from_str(&puzzle_moves[0][..2]).unwrap(),
                                 Square::from_str(&puzzle_moves[0][2..4]).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-                        self.last_move_from = Some(PositionGUI::chesssquare_to_posgui(&movement.get_source()));
-                        self.last_move_to = Some(PositionGUI::chesssquare_to_posgui(&movement.get_dest()));
+                        self.last_move_from = Some(movement.get_source());
+                        self.last_move_to = Some(movement.get_dest());
 
                         self.board = self.board.make_move_new(movement);
                         self.analysis_history = vec![self.board];
@@ -898,10 +806,10 @@ fn gen_view<'a>(
     show_coordinates: bool,
     board: &Board,
     analysis: &Board,
-    from_square: Option<PositionGUI>,
-    last_move_from: Option<PositionGUI>,
-    last_move_to: Option<PositionGUI>,
-    hint_square: Option<PositionGUI>,
+    from_square: Option<Square>,
+    last_move_from: Option<Square>,
+    last_move_to: Option<Square>,
+    hint_square: Option<Square>,
     piece_theme: styles::PieceTheme,
     puzzle_status: &'a str,
     is_fav: bool,
@@ -958,16 +866,16 @@ fn gen_view<'a>(
     };
     for rank in ranks {
         for file in &files {
-            let pos = PositionGUI::new(rank, *file);
+            let pos = Square::make_square(Rank::from_index(rank as usize), File::from_index(*file as usize));
 
             let (piece, color) =
                 match game_mode {
                     config::GameMode::Analysis => {
-                        (analysis.piece_on(pos.posgui_to_square()),
-                        analysis.color_on(pos.posgui_to_square()))
+                        (analysis.piece_on(pos),
+                        analysis.color_on(pos))
                     } config::GameMode::Puzzle => {
-                        (board.piece_on(pos.posgui_to_square()),
-                        board.color_on(pos.posgui_to_square()))
+                        (board.piece_on(pos),
+                        board.color_on(pos))
                     }
                 };
 
@@ -989,7 +897,7 @@ fn gen_view<'a>(
                 } else {
                     styles::ButtonStyle::Paper
                 };
-                
+
                 if let Some(piece) = piece {
                     if color.unwrap() == Color::White {
                         text = match piece {
@@ -1078,7 +986,7 @@ fn gen_view<'a>(
                     .style(square_style)
                 );
             }
-        } 
+        }
 
         if show_coordinates {
             board_row = board_row.push(
