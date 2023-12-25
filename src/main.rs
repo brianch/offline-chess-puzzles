@@ -931,8 +931,11 @@ fn gen_view<'a>(
                 board_row =
                     board_row.push(Button::new(
                         Text::new(text)
+                            .width(board_height)
+                            .height(board_height)
                             .font(config::CHESS_ALPHA)
                             .size(board_height)
+                            .vertical_alignment(alignment::Vertical::Center)
                             .line_height(LineHeight::Absolute(board_height.into())
                         ))
                     .padding(0)
