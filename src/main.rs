@@ -689,16 +689,23 @@ impl Application for OfflinePuzzles {
                     } _ => {
                         let (eval, best_move) = eval;
                         if let Some(eval_str) = eval {
-                            //Keep the values relative to white, like it's usually done in GUIs
-                            if !eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
+                            if eval_str.contains("Mate") {
+                                let tokens: Vec<&str> = eval_str.split_whitespace().collect();
+                                let distance_to_mate_num = tokens[2].parse::<i32>().unwrap();
+                                self.engine_eval = if distance_to_mate_num < 0 {
+                                    lang::tr(&self.lang, "mate_in") + &(distance_to_mate_num * -1).to_string()
+                                } else if distance_to_mate_num > 0 {
+                                    lang::tr(&self.lang, "mate_in") + &distance_to_mate_num.to_string()
+                                } else {
+                                    lang::tr(&self.lang, "mate")
+                                };
+                            } else if self.analysis.side_to_move() == Color::White {
+                                self.engine_eval = eval_str;
+                            } else {
+                                // Invert to keep the values relative to white,
+                                // like it's usually done in GUIs.
                                 let eval = (eval_str.parse::<f32>().unwrap() * -1.).to_string();
                                 self.engine_eval = eval.to_string().clone();
-                            } else if eval_str.contains("Mate") && self.analysis.side_to_move() != Color::White {
-                                let tokens: Vec<&str> = eval_str.split_whitespace().collect();
-                                let distance_to_mate = (tokens[2].parse::<f32>().unwrap() * -1.).to_string();
-                                self.engine_eval = lang::tr(&self.lang, "mate_in") + &distance_to_mate;
-                            } else {
-                                self.engine_eval = eval_str;
                             }
                         }
                         if let Some(best_move) = best_move {
