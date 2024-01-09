@@ -110,7 +110,7 @@ pub struct Variation {
 }
 
 impl Variation {
-    pub const ANY_STR: &str = "Any_Variation";
+    pub const ANY_STR: &'static str = "Any_Variation";
     pub const ANY: Variation = Variation {name: Cow::Borrowed("Any_Variation"), family: Openings::Any};
 
     const SICILIAN_VARIATIONS: [Variation; 31] = [
