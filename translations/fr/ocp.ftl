@@ -26,18 +26,18 @@ black_to_move = Trait aux Noirs !
 correct_move = Correct ! Et maintenant ?
 correct_puzzle = Bravo !
 wrong_move_white_play = Oups ! Erreur... Trait aux Blancs.
-wrong_move_black_play = Oups ! Erreur... Trait au Noirs.
+wrong_move_black_play = Oups ! Erreur... Trait aux Noirs.
 all_puzzles_done = Tous les puzzles ont été réalisés pour cette recherche !
 no_puzzle_found = Désolé, aucun puzzle n'a été trouvé.
 
 #Search Tab
-lichess_db = Lichess DB
-my_favories = My Favorites
+lichess_db = BdD Lichess
+my_favories = Mes favoris
 min_rating = Classement minimal:{" "}
 max_rating = Classement maximal:{" "}
 theme_label = Thème tactique:
 in_opening = Issu de l'ouverture:
-in_the_variation = Variant:
+in_the_variation = Avec la variante:
 side = Côté:
 any = Les deux
 white = Blancs
@@ -45,7 +45,6 @@ black = Noirs
 searching = Recherche en cours, veuillez patienter...
 btn_search = Rechercher
 promotion_piece = Choix de la promotion:
-
 #Settings
 #============================================================
 piece_theme = Jeu de pièces:
@@ -59,7 +58,7 @@ play_sound = Activer le son sur les déplacements:
 auto_load = Passer immédiatement au puzzle suivant:
 flip_board = Tourner l'échiquier:
 show_coords = Montrer les coordonnées:
-pdf_number_of_pages = PDF Export no. of pages:
+pdf_number_of_pages = Limite de pages pour le PDF:
 get_first_puzzles1 = Accéder aux
 get_first_puzzles2 = {" "}premiers puzzles
 engine_path = Chemin d'accès du moteur (avec le nom du fichier .exe):
@@ -80,11 +79,11 @@ popularity = Popularité (de -100 à 100):{" "}
 times_played = Nombre de fois joué (sur Lichess):{" "}
 themes = Thèmes:
 url = URL de la partie:{" "}
-export_pdf_btn = Export current puzzles to PDF
+export_pdf_btn = Exporter en PDF les puzzles de la recherche
 no_puzzle = Aucun puzzle n'est chargé
 
-pdf_black_to_move = ) Black to move. Last move:{" "}
-pdf_white_to_move = ) White to move. Last move: ...{" "}
+pdf_black_to_move = ) Trait aux Noirs. Dernier coup:{" "}
+pdf_white_to_move = ) Trait aux Blancs. Dernier coup: ...{" "}
 
 #THEMES
 #============================================================
@@ -155,7 +154,6 @@ veryLong = Très long problème
 master = Parties de maîtres
 masterVsMaster = Parties jouées entre maîtres
 superGM = Parties de super GM
-
 #OPENINGS
 #============================================================
 any_opening = Toutes
@@ -193,31 +191,30 @@ Nimzo-Indian_Defense = Défense Nimzo-indienne
 Bird_Opening = Ouverture Bird
 Dutch_Defense = Défense hollandaise
 Semi-Slav_Defense = Défense semi-slave
-Owen_Defense = Owen_Defense
-Vant_Kruijs_Opening = Vant_Kruijs_Opening
-Center_Game = Center_Game
-Hungarian_Opening = Hungarian Opening
+Owen_Defense = Défense Owen
+Vant_Kruijs_Opening = Ouverture van't Kruijs
+Center_Game = Partie du centre
+Hungarian_Opening = Ouverture hongroise ou du fianchetto-roi
 Three_Knights_Opening = Partie des 3 cavaliers
 Ponziani_Opening = Début Ponziani
-Englund_Gambit = Englund Gambit
+Englund_Gambit = Gambit Englund
 Grunfeld_Defense = Défense Grünfeld
 Blackmar-Diemer_Gambit = Gambit Blackmar - Diemer
-Elephant_Gambit = Elephant Gambit
-Polish_Opening = Polish Opening
-Danish_Gambit = Danish Gambit
+Elephant_Gambit = Gambit de l'éléphant
+Polish_Opening = Ouverture polonaise
+Danish_Gambit = Gambit danois (ou gambit du Nord)
 Kings_Indian_Attack = Attaque est-indienne
-Trompowsky_Attack = Attaque Trompowsky (ouverture Ruth ou Opočenský)
-English_Defense = English Defense
-Grob_Opening = Grob_Opening
+Trompowsky_Attack = Attaque Trompowsky
+English_Defense = Défense anglaise
+Grob_Opening = Début Grob
 Rapport-Jobava_System = Système Rapport - Jobava
-Tarrasch_Defense = Tarrasch Defense
+Tarrasch_Defense = Défense Tarrasch
 Catalan_Opening = Partie catalane
 Reti_Opening = Début Réti (ouverture Zukertort - Réti)
-Queens_Indian_Defense = Queen's Indian Defense
-London_System = London System
+Queens_Indian_Defense = Défense ouest-indienne
+London_System = Système de Londres
 
-
-Any_Variation = Any
+Any_Variation = Toutes
 
 Sicilian_Defense_Bowdler_Attack = Bowdler Attack
 Sicilian_Defense_Old_Sicilian = Old Sicilian
