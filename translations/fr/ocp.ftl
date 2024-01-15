@@ -30,6 +30,13 @@ wrong_move_black_play = Oups ! Erreur... Trait aux Noirs.
 all_puzzles_done = Tous les puzzles ont été réalisés pour cette recherche !
 no_puzzle_found = Désolé, aucun puzzle n'a été trouvé.
 
+#Notation
+rook = T
+bishop = F
+knight = C
+queen = D
+king = R
+
 #Search Tab
 lichess_db = BdD Lichess
 my_favories = Mes favoris

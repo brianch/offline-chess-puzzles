@@ -86,7 +86,7 @@ pub fn load_config() -> OfflinePuzzlesConfig {
     config
 }
 
-pub fn coord_to_san(board: &Board, coords: String) -> Option<String> {
+pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Option<String> {
     let coords = if coords.len() > 4 {
         String::from(&coords[0..4]) + "=" + &coords[4..5].to_uppercase()
     } else {
@@ -103,51 +103,79 @@ pub fn coord_to_san(board: &Board, coords: String) -> Option<String> {
             san = Some(String::from("0-0-0"));
         } else {
             let mut san_str = String::new();
+            let mut san_localized = String::new();
             let is_en_passant = piece == Piece::Pawn &&
                 board.piece_on(dest_square).is_none() &&
                 dest_square.get_file() != orig_square.get_file();
             let is_normal_capture = board.piece_on(dest_square).is_some();
             match piece {
-                Piece::Pawn => san_str.push_str(&coords[0..1]),
-                Piece::Bishop => san_str.push_str("B"),
-                Piece::Knight => san_str.push_str("N"),
-                Piece::Rook => san_str.push_str("R"),
-                Piece::Queen => san_str.push_str("Q"),
-                Piece::King => san_str.push_str("K"),
+                Piece::Pawn => {
+                    // We're also creating the san in English notation because
+                    // we use the chess crate to check if it's valid (in order
+                    // to know if it needs disambiguation or not)
+                    san_str.push_str(&coords[0..1]);
+                    san_localized.push_str(&coords[0..1]);
+                } Piece::Bishop => {
+                    san_str.push_str("B");
+                    san_localized.push_str(&lang::tr(lang, "bishop"));
+                } Piece::Knight => {
+                    san_str.push_str("N");
+                    san_localized.push_str(&lang::tr(lang, "knight"));
+                } Piece::Rook => {
+                    san_str.push_str("R");
+                    san_localized.push_str(&lang::tr(lang, "rook"));
+                } Piece::Queen => {
+                    san_str.push_str("Q");
+                    san_localized.push_str(&lang::tr(lang, "queen"));
+                } Piece::King =>  {
+                    san_str.push_str("K");
+                    san_localized.push_str(&lang::tr(lang, "king"));
+                }
             }
+            // Checking fist the cases of capture
             if is_en_passant {
-                san_str.push_str(&"x");
-                san_str.push_str(&coords[2..4]);
-                san_str.push_str(" e.p.");
+                san_localized.push_str(&(String::from("x") + &coords[2..4] + " e.p."));
             } else if is_normal_capture {
                 let simple_capture = san_str.clone() + &"x" + &coords[2..];
                 let try_move = ChessMove::from_san(&board, &simple_capture);
                 if let Ok(_) = try_move {
-                    san_str.push_str(&"x");
-                    san_str.push_str(&coords[2..]);
+                    san_str.push_str(&(String::from("x") + &coords[2..]));
+                    san_localized.push_str(&(String::from("x") + &coords[2..]));
                 } else {
                     //the simple notation can only fail because of ambiguity, so we try to specify
                     //either the file or the rank
                     let capture_with_file = san_str.clone() + &coords[0..1] + &"x" + &coords[2..];
                     let try_move_file = ChessMove::from_san(&board, &capture_with_file);
                     if let Ok(_) = try_move_file {
-                        san_str.push_str(&coords[0..1]);
-                        san_str.push_str(&"x");
-                        san_str.push_str(&coords[2..]);
+                        san_localized.push_str(&(String::from(&coords[0..1]) + &"x" + &coords[2..]));
                     } else {
-                        san_str.push_str(&coords[1..2]);
-                        san_str.push_str(&"x");
-                        san_str.push_str(&coords[2..]);
+                        san_localized.push_str(&(String::from(&coords[1..2]) + &"x" + &coords[2..]));
                     }
                 }
+            // And now the regular moves
             } else {
                 if piece==Piece::Pawn {
-                    san_str = String::from(&coords[2..]);
+                    san_localized = String::from(&coords[2..]);
                 } else {
-                    san_str.push_str(&coords[2..]);
+                    let move_with_regular_notation = san_str.clone() + &coords[2..];
+                    let move_to_try = ChessMove::from_san(&board, &move_with_regular_notation);
+                    if let Ok(_) = move_to_try {
+                        san_str.push_str(&coords[2..]);
+                        san_localized.push_str(&coords[2..]);
+                    } else {
+                        //the simple notation can only fail because of ambiguity, so we try to specify
+                        //either the file or the rank
+                        let move_notation_with_file = san_str.clone() + &coords[0..1] + &coords[2..];
+                        let try_move_file = ChessMove::from_san(&board, &move_notation_with_file);
+                        if let Ok(_) = try_move_file {
+                            san_localized.push_str(&(String::from(&coords[0..1]) + &coords[2..]));
+                        } else {
+                            san_localized.push_str(&(String::from(&coords[1..2]) + &coords[2..]));
+                        }
+                    }
                 }
             }
-            san = Some(san_str);
+            san = Some(san_localized);
         }
     }
     san

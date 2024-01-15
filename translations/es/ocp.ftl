@@ -28,6 +28,13 @@ wrong_move_black_play = No! Ese no es el movimiento... Negras juegan.
 all_puzzles_done = Ya ha hecho todos los ejercícios de esta búsqueda!
 no_puzzle_found = Lo siento, ningún ejercício encontrado.
 
+#Notation
+rook = T
+bishop = A
+knight = C
+queen = D
+king = R
+
 #Search Tab
 lichess_db = Base de datos de Lichess
 my_favories = Mis favoritos

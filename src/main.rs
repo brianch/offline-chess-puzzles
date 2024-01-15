@@ -709,7 +709,7 @@ impl Application for OfflinePuzzles {
                             }
                         }
                         if let Some(best_move) = best_move {
-                            if let Some(best_move) = config::coord_to_san(&self.analysis.current_position(), best_move) {
+                            if let Some(best_move) = config::coord_to_san(&self.analysis.current_position(), best_move, &self.lang) {
                                 self.engine_move = best_move;
                             }
                         }

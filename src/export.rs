@@ -126,7 +126,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
             "Contents" => content_id,
         }).into());
     }
-    
+
     let mut ops: Vec<Operation> = vec![];
     let mut pos_x = 800;
     let pos_y = 75;
@@ -155,12 +155,12 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
         for chess_move in puzzle_moves {
             if half_move_number % 2 == 0 {
                 solution.push_str(" ");
-                solution.push_str(&config::coord_to_san(&board, String::from(chess_move)).unwrap());
+                solution.push_str(&config::coord_to_san(&board, String::from(chess_move), lang).unwrap());
             } else {
                 solution.push_str(" ");
                 solution.push_str(&move_label.to_string());
                 solution.push_str(". ");
-                solution.push_str(&config::coord_to_san(&board, String::from(chess_move)).unwrap());
+                solution.push_str(&config::coord_to_san(&board, String::from(chess_move), lang).unwrap());
                 move_label = move_label + 1;
             }
             half_move_number = half_move_number + 1;
@@ -188,7 +188,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
             let content = Content {
                 operations: ops,
             };
-        
+
             let content_id = doc.add_object(Stream::new(dictionary! {}, content.encode().unwrap()));
             page_ids.push(doc.add_object(dictionary! {
                 "Type" => "Page",
@@ -258,9 +258,9 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
     let last_move = if board.side_to_move() == Color::White {
-        index.to_string() + &lang::tr(lang, "pdf_black_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + &lang::tr(lang, "pdf_black_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap()
     } else {
-        index.to_string() + &lang::tr(lang, "pdf_white_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4])).unwrap()
+        index.to_string() + &lang::tr(lang, "pdf_white_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap()
     };
     board = board.make_move_new(movement);
 

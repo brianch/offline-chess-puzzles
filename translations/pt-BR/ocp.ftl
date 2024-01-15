@@ -28,6 +28,13 @@ wrong_move_black_play = Eita, lance errado... Pretas jogam.
 all_puzzles_done = Todos os problemas dessa busca já resolvidos!
 no_puzzle_found = Desculpe, nenhum problema encontrado.
 
+#Notation
+rook = T
+bishop = B
+knight = C
+queen = D
+king = R
+
 #Search Tab
 lichess_db = Banco de Dados do Lichess
 my_favories = Meus Favoritos

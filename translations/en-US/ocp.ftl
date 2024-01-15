@@ -28,6 +28,13 @@ wrong_move_black_play = Oops! Wrong move... Black to play.
 all_puzzles_done = All puzzles done for this search!
 no_puzzle_found = Sorry, no puzzle found.
 
+#Notation
+rook = R
+bishop = B
+knight = N
+queen = Q
+king = K
+
 #Search Tab
 lichess_db = Lichess DB
 my_favories = My Favorites
