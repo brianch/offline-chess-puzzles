@@ -249,7 +249,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     doc.compress();
 
     // Store file in current working directory.
-    doc.save("example.pdf").unwrap();
+    doc.save("puzzles.pdf").unwrap();
 }
 
 fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, start_y:i32, lang: &lang::Language) -> Vec<Operation> {
