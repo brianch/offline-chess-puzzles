@@ -7,6 +7,8 @@ use chess::{Board, ChessMove, Color, Piece, Square};
 
 use crate::{config, PuzzleTab, lang};
 
+// This is basically all copy-pasted from the lopdf example, I left the comments
+// as they might be useful.
 pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::Language) {
     let font_data = std::fs::read("font/Alpha.ttf").unwrap();
     // Load the font data from a file
@@ -22,7 +24,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
         "Type" => "TrueType",
         "FontName" => "Chess-Alpha",
         "FontFile2" => font_stream_id,
-        "Flags" => 1,
+        "Flags" => 33,
     };
     let font_descriptor_id = doc.add_object(font_descriptor_dict);
 
@@ -318,7 +320,7 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
                 }
             } else {
                 if light_square {
-                    new_piece = '0';
+                    new_piece = ' ';
                 } else {
                     new_piece = '+';
                 }
