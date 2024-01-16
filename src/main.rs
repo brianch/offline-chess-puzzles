@@ -930,7 +930,7 @@ fn gen_view<'a>(
                     }
                 } else {
                     if light_square {
-                        text = String::from("0");
+                        text = String::from(" ");
                     } else {
                         text = String::from("+");
                     }

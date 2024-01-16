@@ -14,31 +14,37 @@ macro_rules! rgb {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum PieceTheme {
-    FontAlpha,
     Cburnett,
+    Alpha,
     California,
     Cardinal,
+    Governor,
     Dubrovny,
     Gioco,
     Icpieces,
     Maestro,
     Staunty,
     Tatiana,
+    Merida,
+    FontAlpha,
 }
 
 impl PieceTheme {
 
-    pub const ALL: [PieceTheme; 10] = [
-        PieceTheme::FontAlpha,
+    pub const ALL: [PieceTheme; 13] = [
         PieceTheme::Cburnett,
+        PieceTheme::Alpha,
         PieceTheme::California,
         PieceTheme::Cardinal,
+        PieceTheme::Governor,
         PieceTheme::Dubrovny,
         PieceTheme::Gioco,
         PieceTheme::Icpieces,
         PieceTheme::Maestro,
         PieceTheme::Staunty,
         PieceTheme::Tatiana,
+        PieceTheme::Merida,
+        PieceTheme::FontAlpha,
     ];
 }
 
@@ -48,15 +54,18 @@ impl std::fmt::Display for PieceTheme {
             f,
             "{}",
             match self {
-                PieceTheme::FontAlpha => "paper - chess alpha",
+                PieceTheme::Alpha => "alpha",
                 PieceTheme::California => "california",
                 PieceTheme::Cardinal => "cardinal",
+                PieceTheme::Governor => "governor",
                 PieceTheme::Dubrovny => "dubrovny",
                 PieceTheme::Gioco => "gioco",
                 PieceTheme::Icpieces => "icpieces",
                 PieceTheme::Maestro => "maestro",
                 PieceTheme::Staunty => "staunty",
                 PieceTheme::Tatiana => "tatiana",
+                PieceTheme::Merida => "merida",
+                PieceTheme::FontAlpha => "Paper - chess alpha",
                 _ => "cburnett",
             }
         )
