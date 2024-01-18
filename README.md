@@ -29,7 +29,7 @@ I can't promise anything though, since this is just a hobby project (and the goa
 
 ## Features
 - Almost all the filters we have in Lichess, plus rating range (the exception is that we only have filter by opening family, not by each variation)
-- Flip the board to solve from the opponent's perspective (to practice seeing what is being threated against us)
+- Flip the board to solve from the opponent's perspective (to practice seeing what is being threatened against us)
 - A few piece themes and a bunch of board themes
 - Analysis board (with basic engine support)
 - Hint (see which piece to move)
