@@ -1,9 +1,8 @@
 use iced::widget::{Container, column as col, row, Scrollable, Text, TextInput, Button};
-use iced::{Element};
-use iced::{alignment, Command, Alignment, Length};
+use iced::{alignment, Command, Alignment, Length, Element};
 use chess::{Color, Piece};
 use iced_aw::TabLabel;
-
+use rfd::AsyncFileDialog;
 use crate::{Message, Tab, config, styles, lang};
 
 #[derive(Debug, Clone)]
@@ -16,7 +15,7 @@ pub enum PuzzleMessage {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum GameStatus {
-    Playing, PuzzleEnded, NoPuzzles, 
+    Playing, PuzzleEnded, NoPuzzles,
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +47,7 @@ impl PuzzleTab {
             PuzzleMessage::ChangeTextInputs(_) => {
                 Command::none()
             } PuzzleMessage::CopyText(text) => {
-                iced::clipboard::write::<Message>(text)                
+                iced::clipboard::write::<Message>(text)
             } PuzzleMessage::OpenLink(link) => {
                 let _ = open::that_detached(link);
                 Command::none()
@@ -58,9 +57,13 @@ impl PuzzleTab {
         }
     }
 
-    // This whole function call is just an ugly hack to bubble up the event, I hope Iced's hecrj will never see this XD
-    pub async fn export() -> bool {
-        false
+    pub async fn export() -> Option<String> {
+        let file_path = AsyncFileDialog::new().save_file();
+        if let Some(file_path) = file_path.await {
+            Some(file_path.path().display().to_string())
+        } else {
+            None
+        }
     }
 
     // Checks if the notation indicates a promotion and return the piece

@@ -9,7 +9,7 @@ use crate::{config, PuzzleTab, lang};
 
 // This is basically all copy-pasted from the lopdf example, I left the comments
 // as they might be useful.
-pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::Language) {
+pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::Language, path: String) {
     let font_data = std::fs::read("font/Alpha.ttf").unwrap();
     // Load the font data from a file
 
@@ -249,7 +249,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     doc.compress();
 
     // Store file in current working directory.
-    doc.save("puzzles.pdf").unwrap();
+    let _ = doc.save(path);
 }
 
 fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, start_y:i32, lang: &lang::Language) -> Vec<Operation> {

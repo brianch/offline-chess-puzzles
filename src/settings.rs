@@ -3,6 +3,8 @@ use iced::{alignment, Command, Alignment, Element, Length};
 
 use iced_aw::TabLabel;
 
+use rfd::AsyncFileDialog;
+
 use crate::{Message, Tab, config, styles, lang, lang::PickListWrapper};
 
 #[derive(Debug, Clone)]
@@ -18,6 +20,7 @@ pub enum SettingsMessage {
     ChangePuzzleDbLocation(String),
     ChangeSearchResultLimit(String),
     ChangeEnginePath(String),
+    SearchEnginePressed,
     ChangePressed
 }
 
@@ -86,6 +89,9 @@ impl SettingsTab {
             SettingsMessage::ChangeEnginePath(value) => {
                 self.engine_path = value;
                 Command::perform(SettingsTab::send_changes(self.play_sound, self.auto_load_next, self.flip_board, self.show_coordinates, self.piece_theme, self.board_theme, self.engine_path.clone(), self.lang.lang), Message::ChangeSettings)
+            }
+            SettingsMessage::SearchEnginePressed => {
+                Command::perform(Self::open_engine_exe(), Message::EngineFileChosen)
             }
             SettingsMessage::ChangeSearchResultLimit(value) => {
                 if value.is_empty() {
@@ -159,6 +165,15 @@ impl SettingsTab {
                 }
                 Command::none()
             }
+        }
+    }
+
+    async fn open_engine_exe() -> Option<String> {
+        let engine_exe = AsyncFileDialog::new().pick_file().await;
+        if let Some(engine_path) = engine_exe {
+            Some(engine_path.path().display().to_string())
+        } else {
+            None
         }
     }
 
@@ -280,10 +295,13 @@ impl Tab for SettingsTab {
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles2"))
             ].spacing(5).align_items(Alignment::Center),
             Text::new(lang::tr(&self.lang.lang, "engine_path")),
-            TextInput::new(
-                &self.engine_path,
-                &self.engine_path,
-            ).on_input(SettingsMessage::ChangeEnginePath).width(200).padding(10).size(20),
+            row![
+                TextInput::new(
+                    &self.engine_path,
+                    &self.engine_path,
+                ).on_input(SettingsMessage::ChangeEnginePath).width(200),
+                Button::new(Text::new("Select")).on_press(SettingsMessage::SearchEnginePressed),
+            ],
             Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed),
             Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
 

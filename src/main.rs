@@ -80,7 +80,7 @@ pub enum Message {
     ShowPreviousPuzzle,
     GoBackMove,
     RedoPuzzle,
-    ExportPDF(bool),
+    ExportPDF(Option<String>),
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
     EventOccurred(iced::Event),
@@ -88,6 +88,7 @@ pub enum Message {
     EngineStopped(bool),
     UpdateEval((Option<String>, Option<String>)),
     EngineReady(mpsc::Sender<String>),
+    EngineFileChosen(Option<String>),
     FavoritePuzzle,
     MinimizeUI,
 }
@@ -628,8 +629,10 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
-            } (_, Message::ExportPDF(_)) => {
-                export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang);
+            } (_, Message::ExportPDF(file_path)) => {
+                if let Some(file_path) = file_path {
+                    export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang, file_path);
+                }
                 Command::none()
             } (_, Message::EventOccurred(event)) => {
                 if let Event::Window(window::Event::CloseRequested) = event {
@@ -653,6 +656,11 @@ impl Application for OfflinePuzzles {
                 } else {
                     Command::none()
                 }
+            } (_, Message::EngineFileChosen(engine_path)) => {
+                if let Some(engine_path) = engine_path {
+                    self.settings_tab.engine_path = engine_path;
+                }
+                Command::none()
             } (_, Message::StartEngine) => {
                 match self.engine_state {
                     EngineStatus::TurnedOff => {
