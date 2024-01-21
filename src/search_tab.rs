@@ -16,7 +16,7 @@ use openings::{Openings, Variation};
 pub enum SearchMesssage {
     SliderMinRatingChanged(i32),
     SliderMaxRatingChanged(i32),
-    SelectTheme(PickListWrapper<TaticsThemes>),
+    SelectTheme(PickListWrapper<TacticalThemes>),
     SelectOpening(PickListWrapper<Openings>),
     SelectVariation(PickListWrapper<Variation>),
     SelectOpeningSide(OpeningSide),
@@ -25,12 +25,12 @@ pub enum SearchMesssage {
     SelectBase(SearchBase),
 }
 
-impl PickListWrapper<TaticsThemes> {
-    pub fn get_themes(lang: lang::Language) -> Vec<PickListWrapper<TaticsThemes>> {
+impl PickListWrapper<TacticalThemes> {
+    pub fn get_themes(lang: lang::Language) -> Vec<PickListWrapper<TacticalThemes>> {
         let mut themes_wrapper = Vec::new();
-        for theme in TaticsThemes::ALL {
+        for theme in TacticalThemes::ALL {
             themes_wrapper.push(
-                PickListWrapper::<TaticsThemes> {
+                PickListWrapper::<TacticalThemes> {
                     lang: lang,
                     item: theme,
                 }
@@ -39,13 +39,13 @@ impl PickListWrapper<TaticsThemes> {
         themes_wrapper
     }
 
-    pub fn new_theme(lang: lang::Language, theme: TaticsThemes) -> Self {
+    pub fn new_theme(lang: lang::Language, theme: TacticalThemes) -> Self {
         Self { lang, item: theme}
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
-pub enum TaticsThemes {
+pub enum TacticalThemes {
     All,
     Opening, Middlegame, Endgame, RookEndgame, BishopEndgame, PawnEndgame, KnightEndgame, QueenEndgame, QueenRookEndgame,
     AdvancedPawn, AtackingF2F7, CapturingDefender, DiscoveredAttack, DoubleCheck, ExposedKing, Fork, HangingPiece, KingsideAttack, Pin, QueensideAttack, Sacrifice, Skewer, TrappedPiece,
@@ -56,128 +56,128 @@ pub enum TaticsThemes {
     Master, MasterVsMaster, SuperGM
 }
 
-impl TaticsThemes {
+impl TacticalThemes {
 
-    const ALL: [TaticsThemes; 61] = [
-        TaticsThemes::All,
-        TaticsThemes::Opening, TaticsThemes::Middlegame, TaticsThemes::Endgame, TaticsThemes::RookEndgame,
-        TaticsThemes::BishopEndgame, TaticsThemes::PawnEndgame, TaticsThemes::KnightEndgame,
-        TaticsThemes::QueenEndgame, TaticsThemes::QueenRookEndgame,
+    const ALL: [TacticalThemes; 61] = [
+        TacticalThemes::All,
+        TacticalThemes::Opening, TacticalThemes::Middlegame, TacticalThemes::Endgame, TacticalThemes::RookEndgame,
+        TacticalThemes::BishopEndgame, TacticalThemes::PawnEndgame, TacticalThemes::KnightEndgame,
+        TacticalThemes::QueenEndgame, TacticalThemes::QueenRookEndgame,
 
-        TaticsThemes::AdvancedPawn, TaticsThemes::AtackingF2F7, TaticsThemes::CapturingDefender,
-        TaticsThemes::DiscoveredAttack, TaticsThemes::DoubleCheck, TaticsThemes::ExposedKing,
-        TaticsThemes::Fork, TaticsThemes::HangingPiece, TaticsThemes::KingsideAttack, TaticsThemes::Pin,
-        TaticsThemes::QueensideAttack, TaticsThemes::Sacrifice, TaticsThemes::Skewer,
-        TaticsThemes::TrappedPiece,
+        TacticalThemes::AdvancedPawn, TacticalThemes::AtackingF2F7, TacticalThemes::CapturingDefender,
+        TacticalThemes::DiscoveredAttack, TacticalThemes::DoubleCheck, TacticalThemes::ExposedKing,
+        TacticalThemes::Fork, TacticalThemes::HangingPiece, TacticalThemes::KingsideAttack, TacticalThemes::Pin,
+        TacticalThemes::QueensideAttack, TacticalThemes::Sacrifice, TacticalThemes::Skewer,
+        TacticalThemes::TrappedPiece,
 
-        TaticsThemes::Attraction, TaticsThemes::Clearance, TaticsThemes::DefensiveMove,
-        TaticsThemes::Deflection, TaticsThemes::Interference, TaticsThemes::Intermezzo,
-        TaticsThemes::QuietMove, TaticsThemes::XRayAttack, TaticsThemes::Zugzwang,
+        TacticalThemes::Attraction, TacticalThemes::Clearance, TacticalThemes::DefensiveMove,
+        TacticalThemes::Deflection, TacticalThemes::Interference, TacticalThemes::Intermezzo,
+        TacticalThemes::QuietMove, TacticalThemes::XRayAttack, TacticalThemes::Zugzwang,
 
-        TaticsThemes::Mate, TaticsThemes::MateIn1, TaticsThemes::MateIn2, TaticsThemes::MateIn3,
-        TaticsThemes::MateIn4, TaticsThemes::MateIn5, TaticsThemes::AnastasiaMate, TaticsThemes::ArabianMate,
-        TaticsThemes::BackRankMate, TaticsThemes::BodenMate, TaticsThemes::DoubleBishopMate,
-        TaticsThemes::DovetailMate, TaticsThemes::HookMate, TaticsThemes::SmotheredMate,
+        TacticalThemes::Mate, TacticalThemes::MateIn1, TacticalThemes::MateIn2, TacticalThemes::MateIn3,
+        TacticalThemes::MateIn4, TacticalThemes::MateIn5, TacticalThemes::AnastasiaMate, TacticalThemes::ArabianMate,
+        TacticalThemes::BackRankMate, TacticalThemes::BodenMate, TacticalThemes::DoubleBishopMate,
+        TacticalThemes::DovetailMate, TacticalThemes::HookMate, TacticalThemes::SmotheredMate,
 
-        TaticsThemes::Castling, TaticsThemes::EnPassant, TaticsThemes::Promotion,
-        TaticsThemes::UnderPromotion, TaticsThemes::Equality, TaticsThemes::Advantage,
-        TaticsThemes::Crushing,
+        TacticalThemes::Castling, TacticalThemes::EnPassant, TacticalThemes::Promotion,
+        TacticalThemes::UnderPromotion, TacticalThemes::Equality, TacticalThemes::Advantage,
+        TacticalThemes::Crushing,
 
-        TaticsThemes::OneMove, TaticsThemes::Short, TaticsThemes::Long, TaticsThemes::VeryLong,
+        TacticalThemes::OneMove, TacticalThemes::Short, TacticalThemes::Long, TacticalThemes::VeryLong,
 
-        TaticsThemes::Master, TaticsThemes::MasterVsMaster, TaticsThemes::SuperGM
+        TacticalThemes::Master, TacticalThemes::MasterVsMaster, TacticalThemes::SuperGM
     ];
 
     pub fn get_tr_key(&self) -> &str {
         match self {
-            TaticsThemes::All => "themes_all",
+            TacticalThemes::All => "themes_all",
             _ => self.get_tag_name(),
         }
     }
 
     pub fn get_tag_name(&self) -> &str {
         match self {
-            TaticsThemes::All => "",
-            TaticsThemes::Opening => "opening",
-            TaticsThemes::Middlegame => "middlegame",
-            TaticsThemes::Endgame => "endgame",
-            TaticsThemes::RookEndgame => "rookEndgame",
-            TaticsThemes::BishopEndgame => "bishopEndgame",
-            TaticsThemes::PawnEndgame => "pawnEndgame",
-            TaticsThemes::KnightEndgame => "knightEndgame",
-            TaticsThemes::QueenEndgame => "queenEndgame",
-            TaticsThemes::QueenRookEndgame => "queenRookEndgame",
+            TacticalThemes::All => "",
+            TacticalThemes::Opening => "opening",
+            TacticalThemes::Middlegame => "middlegame",
+            TacticalThemes::Endgame => "endgame",
+            TacticalThemes::RookEndgame => "rookEndgame",
+            TacticalThemes::BishopEndgame => "bishopEndgame",
+            TacticalThemes::PawnEndgame => "pawnEndgame",
+            TacticalThemes::KnightEndgame => "knightEndgame",
+            TacticalThemes::QueenEndgame => "queenEndgame",
+            TacticalThemes::QueenRookEndgame => "queenRookEndgame",
 
-            TaticsThemes::AdvancedPawn => "advancedPawn",
-            TaticsThemes::AtackingF2F7 => "attackingF2F7",
-            TaticsThemes::CapturingDefender => "capturingDefender",
-            TaticsThemes::DiscoveredAttack => "discoveredAttack",
-            TaticsThemes::DoubleCheck => "doubleCheck",
-            TaticsThemes::ExposedKing => "exposedKing",
-            TaticsThemes::Fork => "fork",
-            TaticsThemes::HangingPiece => "hangingPiece",
-            TaticsThemes::KingsideAttack => "kingsideAttack",
-            TaticsThemes::Pin => "pin",
-            TaticsThemes::QueensideAttack => "queensideAttack",
-            TaticsThemes::Sacrifice => "sacrifice",
-            TaticsThemes::Skewer => "skewer",
-            TaticsThemes::TrappedPiece => "trappedPiece",
+            TacticalThemes::AdvancedPawn => "advancedPawn",
+            TacticalThemes::AtackingF2F7 => "attackingF2F7",
+            TacticalThemes::CapturingDefender => "capturingDefender",
+            TacticalThemes::DiscoveredAttack => "discoveredAttack",
+            TacticalThemes::DoubleCheck => "doubleCheck",
+            TacticalThemes::ExposedKing => "exposedKing",
+            TacticalThemes::Fork => "fork",
+            TacticalThemes::HangingPiece => "hangingPiece",
+            TacticalThemes::KingsideAttack => "kingsideAttack",
+            TacticalThemes::Pin => "pin",
+            TacticalThemes::QueensideAttack => "queensideAttack",
+            TacticalThemes::Sacrifice => "sacrifice",
+            TacticalThemes::Skewer => "skewer",
+            TacticalThemes::TrappedPiece => "trappedPiece",
 
-            TaticsThemes::Attraction => "attraction",
-            TaticsThemes::Clearance => "clearance",
-            TaticsThemes::DefensiveMove => "defensiveMove",
-            TaticsThemes::Deflection => "deflection",
-            TaticsThemes::Interference => "interference",
-            TaticsThemes::Intermezzo => "intermezzo",
-            TaticsThemes::QuietMove => "quietMove",
-            TaticsThemes::XRayAttack =>"xRayAttack",
-            TaticsThemes::Zugzwang => "zugzwang",
+            TacticalThemes::Attraction => "attraction",
+            TacticalThemes::Clearance => "clearance",
+            TacticalThemes::DefensiveMove => "defensiveMove",
+            TacticalThemes::Deflection => "deflection",
+            TacticalThemes::Interference => "interference",
+            TacticalThemes::Intermezzo => "intermezzo",
+            TacticalThemes::QuietMove => "quietMove",
+            TacticalThemes::XRayAttack =>"xRayAttack",
+            TacticalThemes::Zugzwang => "zugzwang",
 
-            TaticsThemes::Mate => "mate",
-            TaticsThemes::MateIn1 => "mateIn1",
-            TaticsThemes::MateIn2 => "mateIn2",
-            TaticsThemes::MateIn3 => "mateIn3",
-            TaticsThemes::MateIn4 => "mateIn4",
-            TaticsThemes::MateIn5 => "mateIn5",
-            TaticsThemes::AnastasiaMate => "anastasiaMate",
-            TaticsThemes::ArabianMate => "arabianMate",
-            TaticsThemes::BackRankMate => "backRankMate",
-            TaticsThemes::BodenMate => "bodenMate",
-            TaticsThemes::DoubleBishopMate => "doubleBishopMate",
-            TaticsThemes::DovetailMate => "dovetailMate",
-            TaticsThemes::HookMate => "hookMate",
-            TaticsThemes::SmotheredMate => "smotheredMate",
+            TacticalThemes::Mate => "mate",
+            TacticalThemes::MateIn1 => "mateIn1",
+            TacticalThemes::MateIn2 => "mateIn2",
+            TacticalThemes::MateIn3 => "mateIn3",
+            TacticalThemes::MateIn4 => "mateIn4",
+            TacticalThemes::MateIn5 => "mateIn5",
+            TacticalThemes::AnastasiaMate => "anastasiaMate",
+            TacticalThemes::ArabianMate => "arabianMate",
+            TacticalThemes::BackRankMate => "backRankMate",
+            TacticalThemes::BodenMate => "bodenMate",
+            TacticalThemes::DoubleBishopMate => "doubleBishopMate",
+            TacticalThemes::DovetailMate => "dovetailMate",
+            TacticalThemes::HookMate => "hookMate",
+            TacticalThemes::SmotheredMate => "smotheredMate",
 
-            TaticsThemes::Castling => "castling",
-            TaticsThemes::EnPassant => "enPassant",
-            TaticsThemes::Promotion => "promotion",
-            TaticsThemes::UnderPromotion => "underPromotion",
-            TaticsThemes::Equality => "equality",
-            TaticsThemes::Advantage => "advantage",
-            TaticsThemes::Crushing => "crushing",
+            TacticalThemes::Castling => "castling",
+            TacticalThemes::EnPassant => "enPassant",
+            TacticalThemes::Promotion => "promotion",
+            TacticalThemes::UnderPromotion => "underPromotion",
+            TacticalThemes::Equality => "equality",
+            TacticalThemes::Advantage => "advantage",
+            TacticalThemes::Crushing => "crushing",
 
-            TaticsThemes::OneMove => "oneMove",
-            TaticsThemes::Short => "short",
-            TaticsThemes::Long => "long",
-            TaticsThemes::VeryLong => "veryLong",
+            TacticalThemes::OneMove => "oneMove",
+            TacticalThemes::Short => "short",
+            TacticalThemes::Long => "long",
+            TacticalThemes::VeryLong => "veryLong",
 
-            TaticsThemes::Master => "master",
-            TaticsThemes::MasterVsMaster => "masterVsMaster",
-            TaticsThemes::SuperGM => "superGM",
+            TacticalThemes::Master => "master",
+            TacticalThemes::MasterVsMaster => "masterVsMaster",
+            TacticalThemes::SuperGM => "superGM",
         }
     }
 
 }
 
-impl DisplayTranslated for TaticsThemes {
+impl DisplayTranslated for TacticalThemes {
     fn to_str_tr(&self) -> &str {
         self.get_tr_key()
     }
 }
 
-impl Default for TaticsThemes {
-    fn default() -> TaticsThemes {
-        TaticsThemes::Mate
+impl Default for TacticalThemes {
+    fn default() -> TacticalThemes {
+        TacticalThemes::Mate
     }
 }
 
@@ -193,7 +193,7 @@ pub enum SearchBase {
 
 #[derive(Debug)]
 pub struct SearchTab {
-    pub theme: PickListWrapper<TaticsThemes>,
+    pub theme: PickListWrapper<TacticalThemes>,
     pub opening: PickListWrapper<Openings>,
     pub variation: PickListWrapper<Variation>,
     pub opening_side: Option<OpeningSide>,
@@ -275,7 +275,7 @@ impl SearchTab {
         }
     }
 
-    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
+    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
         let file = std::fs::File::open("settings.json");
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
@@ -297,11 +297,11 @@ impl SearchTab {
         }
     }
 
-    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation:Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation:Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         db::get_favorites(min_rating, max_rating, theme, opening, variation, op_side, result_limit)
     }
 
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
 
         let reader = csv::ReaderBuilder::new()

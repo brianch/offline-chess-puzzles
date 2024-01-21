@@ -8,7 +8,7 @@ use crate::schema::favs;
 use crate::schema::favs::dsl::*;
 use crate::config::Puzzle;
 
-use crate::search_tab::{TaticsThemes, OpeningSide};
+use crate::search_tab::{TacticalThemes, OpeningSide};
 use crate::openings::{Openings, Variation};
 
 pub fn establish_connection() -> SqliteConnection {
@@ -19,7 +19,7 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TaticsThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
+pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
     let mut conn = establish_connection();
     let results;
     let theme_filter = String::from("%") + theme.get_tag_name() + "%";
