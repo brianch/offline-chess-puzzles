@@ -455,8 +455,7 @@ impl Application for OfflinePuzzles {
 
                 Command::none()
             } (_, Message::ShowNextPuzzle) => {
-                // The previous puzzle ended, and we still have puzzles available,
-                // so we prepare the next one.
+                self.hint_square = None;
                 self.puzzle_tab.current_puzzle += 1;
                 self.puzzle_tab.current_puzzle_move = 1;
 
@@ -489,6 +488,7 @@ impl Application for OfflinePuzzles {
                 Command::none()
             } (_, Message::ShowPreviousPuzzle) => {
                 if self.puzzle_tab.current_puzzle > 0 && self.game_mode == config::GameMode::Puzzle {
+                    self.hint_square = None;
                     self.puzzle_tab.current_puzzle -= 1;
                     self.puzzle_tab.current_puzzle_move = 1;
 
