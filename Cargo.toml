@@ -24,7 +24,8 @@ diesel = { version = "2.1.0", features = ["sqlite"] }
 dotenvy = "0.15"
 lopdf = "0.31.0"
 open = "5.0.1"
-rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
+#rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
+rfd = "0.13.0"
 
 [target.'cfg(windows)'.dependencies]
 libsqlite3-sys = { version = "0.26.0", features = ["bundled"] }
