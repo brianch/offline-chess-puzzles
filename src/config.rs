@@ -175,6 +175,17 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
                     }
                 }
             }
+            let chess_move = ChessMove::from_san(&board, &san_localized);
+            // Note: It can indeed return Err for a moment when using the engine (and quickly taking
+            // back moves), I guess for a sec the engine & board may get desynced, so we can't just unwrap it.
+            if let Ok(chess_move) = chess_move {
+                let current_board = board.make_move_new(chess_move);
+                if current_board.status() == chess::BoardStatus::Checkmate {
+                    san_localized.push_str("#");
+                } else if current_board.checkers().popcnt() != 0 {
+                    san_localized.push_str("+");
+                }
+            }
             san = Some(san_localized);
         }
     }
