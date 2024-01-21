@@ -284,14 +284,14 @@ impl Tab for SettingsTab {
                 TextInput::new(
                     &self.export_pgs,
                     &self.export_pgs,
-                ).on_input(SettingsMessage::ChangePDFExportPgs).width(60).padding(10).size(20),
+                ).on_input(SettingsMessage::ChangePDFExportPgs).width(60),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles1")),
                 TextInput::new(
                     &self.search_results_limit_value,
                     &self.search_results_limit_value,
-                ).on_input(SettingsMessage::ChangeSearchResultLimit).width(80).padding(10).size(20),
+                ).on_input(SettingsMessage::ChangeSearchResultLimit).width(80),
                 Text::new(lang::tr(&self.lang.lang, "get_first_puzzles2"))
             ].spacing(5).align_items(Alignment::Center),
             Text::new(lang::tr(&self.lang.lang, "engine_path")),
