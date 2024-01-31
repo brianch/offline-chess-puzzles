@@ -3,6 +3,7 @@ use iced::{alignment, Command, Alignment, Length, Element};
 use chess::{Color, Piece};
 use iced_aw::TabLabel;
 use rfd::AsyncFileDialog;
+
 use crate::{Message, Tab, config, styles, lang};
 
 #[derive(Debug, Clone)]
@@ -10,6 +11,7 @@ pub enum PuzzleMessage {
     ChangeTextInputs(String),
     CopyText(String),
     OpenLink(String),
+    TakeScreenshot,
     ExportToPDF,
 }
 
@@ -51,6 +53,8 @@ impl PuzzleTab {
             } PuzzleMessage::OpenLink(link) => {
                 let _ = open::that_detached(link);
                 Command::none()
+            } PuzzleMessage::TakeScreenshot => {
+                iced::window::screenshot(Message::ScreenshotCreated)
             } PuzzleMessage::ExportToPDF => {
                 Command::perform(PuzzleTab::export(), Message::ExportPDF)
             }
@@ -132,6 +136,7 @@ impl Tab for PuzzleTab {
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
                     Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink(self.puzzles[self.current_puzzle].game_url.clone())),
                 ],
+                Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot),
                 Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
             ].spacing(10).align_items(Alignment::Center))
         } else {

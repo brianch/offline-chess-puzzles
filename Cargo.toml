@@ -26,6 +26,7 @@ lopdf = "0.31.0"
 open = "5.0.1"
 #rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
 rfd = "0.13.0"
+image = { version = "0.24.8", default-features = false, features = ["jpeg"] }
 
 [target.'cfg(windows)'.dependencies]
 libsqlite3-sys = { version = "0.26.0", features = ["bundled"] }

@@ -85,6 +85,7 @@ popularity = Popularidade (-100 to 100):{" "}
 times_played = Nº de vezes jogado (no lichess):{" "}
 themes = Temas:
 url = Url do jogo:{" "}
+screenshot = Salvar como Imagem
 export_pdf_btn = Exportar puzzles para PDF
 no_puzzle = Nenhum puzzle carregado
 

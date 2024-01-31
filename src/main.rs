@@ -9,11 +9,13 @@ use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
 use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio, responsive};
-use iced::{Application, Element, Size, Subscription};
+use iced::{Application, Element, Rectangle, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
-use iced::window;
+use iced::window::{self, Screenshot};
 use iced::Event;
 use std::borrow::Cow;
+use image::RgbaImage;
+use rfd::AsyncFileDialog;
 
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
@@ -80,6 +82,8 @@ pub enum Message {
     ShowPreviousPuzzle,
     GoBackMove,
     RedoPuzzle,
+    ScreenshotCreated(Screenshot),
+    SaveScreenshot(Option<(Screenshot, String)>),
     ExportPDF(Option<String>),
     LoadPuzzle(Option<Vec<config::Puzzle>>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
@@ -629,6 +633,26 @@ impl Application for OfflinePuzzles {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
+            } (_, Message::ScreenshotCreated(screenshot)) => {
+                Command::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
+            } (_, Message::SaveScreenshot(img_and_path)) => {
+                if let Some(img_and_path) = img_and_path {
+                    let screenshot = img_and_path.0;
+                    let path = img_and_path.1;
+                    let crop = screenshot.crop(Rectangle::<u32> {
+                        x: 0,
+                        y: 0,
+                        width: self.settings_tab.window_height - 110,
+                        height: self.settings_tab.window_height - 110}
+                    );
+                    if let Ok (screenshot) = crop {
+                        let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, (&screenshot.bytes).to_vec());
+                        if let Some(image) = img {
+                            let _ = image.save_with_format(path, image::ImageFormat::Jpeg);
+                        }
+                    }
+                }
+                Command::none()
             } (_, Message::ExportPDF(file_path)) => {
                 if let Some(file_path) = file_path {
                     export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang, file_path);
@@ -811,6 +835,15 @@ impl Application for OfflinePuzzles {
 
     fn theme(&self) -> Self::Theme {
         self.settings_tab.board_theme
+    }
+}
+
+pub async fn screenshot_save_dialog(img: Screenshot) -> Option<(Screenshot, String)> {
+    let file_path = AsyncFileDialog::new().add_filter("jpg", &["jpg", "jpeg"]).save_file();
+    if let Some(file_path) = file_path.await {
+        Some((img, file_path.path().display().to_string()))
+    } else {
+        None
     }
 }
 
