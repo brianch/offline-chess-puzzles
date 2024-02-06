@@ -4,7 +4,8 @@ use chess::{Color, Piece};
 use iced_aw::TabLabel;
 use rfd::AsyncFileDialog;
 
-use crate::{Message, Tab, config, styles, lang};
+use crate::styles::Theme;
+use crate::{Message, Tab, config, lang};
 
 #[derive(Debug, Clone)]
 pub enum PuzzleMessage {
@@ -54,7 +55,7 @@ impl PuzzleTab {
                 let _ = open::that_detached(link);
                 Command::none()
             } PuzzleMessage::TakeScreenshot => {
-                iced::window::screenshot(Message::ScreenshotCreated)
+                iced::window::screenshot(iced::window::Id::MAIN, Message::ScreenshotCreated)
             } PuzzleMessage::ExportToPDF => {
                 Command::perform(PuzzleTab::export(), Message::ExportPDF)
             }
@@ -101,7 +102,7 @@ impl Tab for PuzzleTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+    fn content(&self) -> Element<Message, Theme, iced::Renderer> {
         let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
             Scrollable::new(col![
                 Text::new(lang::tr(&self.lang, "puzzle_link")),
@@ -146,7 +147,7 @@ impl Tab for PuzzleTab {
                     .width(Length::Fill)
                 ].spacing(10))
         };
-        let content: Element<PuzzleMessage, iced::Renderer<styles::Theme>> = Container::new(col_puzzle_info)
+        let content: Element<PuzzleMessage, Theme, iced::Renderer> = Container::new(col_puzzle_info)
             .align_x(alignment::Horizontal::Center).height(Length::Fill).into();
 
         content.map(Message::PuzzleInfo)

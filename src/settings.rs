@@ -5,6 +5,7 @@ use iced_aw::TabLabel;
 
 use rfd::AsyncFileDialog;
 
+use crate::styles::Theme;
 use crate::{Message, Tab, config, styles, lang, lang::PickListWrapper};
 
 #[derive(Debug, Clone)]
@@ -221,7 +222,7 @@ impl Tab for SettingsTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+    fn content(&self) -> Element<Message, Theme, iced::Renderer> {
         let col_settings = column![
             row![
                 Text::new(lang::tr(&self.lang.lang, "piece_theme")),
@@ -249,35 +250,19 @@ impl Tab for SettingsTab {
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "play_sound")),
-                Checkbox::new(
-                    "",
-                    self.play_sound,
-                    SettingsMessage::CheckPlaySound,
-                ).size(20),
+                Checkbox::new("",self.play_sound).on_toggle(SettingsMessage::CheckPlaySound).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "auto_load")),
-                Checkbox::new(
-                    "",
-                    self.auto_load_next,
-                    SettingsMessage::CheckAutoLoad,
-                ).size(20),
+                Checkbox::new("",self.auto_load_next).on_toggle(SettingsMessage::CheckAutoLoad).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "flip_board")),
-                Checkbox::new(
-                    "",
-                    self.flip_board,
-                    SettingsMessage::CheckFlipBoard,
-                ).size(20),
+                Checkbox::new("",self.flip_board).on_toggle(SettingsMessage::CheckFlipBoard).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "show_coords")),
-                Checkbox::new(
-                    "",
-                    self.show_coordinates,
-                    SettingsMessage::CheckShowCoords,
-                ).size(20),
+                Checkbox::new("", self.show_coordinates).on_toggle(SettingsMessage::CheckShowCoords).size(20),
             ].spacing(5).align_items(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "pdf_number_of_pages")),
@@ -306,7 +291,7 @@ impl Tab for SettingsTab {
             Text::new(&self.settings_status).vertical_alignment(alignment::Vertical::Bottom),
 
         ].spacing(10).align_items(Alignment::Center);
-        let content: Element<SettingsMessage, iced::Renderer<styles::Theme>> = Container::new(
+        let content: Element<SettingsMessage, Theme, iced::Renderer> = Container::new(
             Scrollable::new(
                 Column::new().spacing(10).push(col_settings)
             )

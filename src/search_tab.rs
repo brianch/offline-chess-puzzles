@@ -6,7 +6,7 @@ use std::io::BufReader;
 use iced_aw::TabLabel;
 use chess::Piece;
 use crate::config::load_config;
-use crate::styles::PieceTheme;
+use crate::styles::{PieceTheme, Theme};
 use crate::{Tab, Message, config, styles, lang, db, openings};
 
 use lang::{DisplayTranslated,PickListWrapper};
@@ -398,7 +398,7 @@ impl Tab for SearchTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+    fn content(&self) -> Element<Message, Theme, iced::Renderer> {
         let mut search_col = col![
             Container::new(
                 row![
@@ -541,7 +541,7 @@ impl Tab for SearchTab {
             .push(row_promotion);
 
         let scroll = Scrollable::new(search_col);
-        let content: Element<SearchMesssage, iced::Renderer<styles::Theme>> = Container::new(scroll)
+        let content: Element<SearchMesssage, Theme, iced::Renderer> = Container::new(scroll)
             .align_x(alignment::Horizontal::Center).height(Length::Fill)
             .into();
 

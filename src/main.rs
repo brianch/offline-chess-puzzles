@@ -1,24 +1,27 @@
 #![windows_subsystem = "windows"]
 
 use eval::{Engine, EngineStatus};
+use iced::widget::container::Id;
+use iced::advanced::widget::Id as GenericId;
 use iced::widget::text::LineHeight;
-use styles::PieceTheme;
+use styles::{PieceTheme, Theme};
+use std::collections::HashMap;
 use std::io::BufReader;
 use std::path::Path;
 use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{Svg, Container, Button, row, Row, Column, Text, Radio, responsive};
+use iced::widget::{container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
 use iced::{Application, Element, Rectangle, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
 use iced::window::{self, Screenshot};
-use iced::Event;
+use iced::event::{self, Event};
 use std::borrow::Cow;
 use image::RgbaImage;
 use rfd::AsyncFileDialog;
 
 use iced_aw::{TabLabel, Tabs};
-use chess::{Board, BoardStatus, ChessMove, Color, Piece, Rank, Square, File, Game};
+use chess::{Board, BoardStatus, ChessMove, Color, File, Game, Piece, Rank, Square, ALL_SQUARES};
 
 use rodio::{Decoder, OutputStream, OutputStreamHandle};
 use rodio::source::{Source, Buffered};
@@ -82,6 +85,8 @@ pub enum Message {
     ShowPreviousPuzzle,
     GoBackMove,
     RedoPuzzle,
+    DropPiece(Square, iced::Point, iced::Rectangle),
+    HandleDropZones(Square, Vec<(iced::advanced::widget::Id, iced::Rectangle)>),
     ScreenshotCreated(Screenshot),
     SaveScreenshot(Option<(Screenshot, String)>),
     ExportPDF(Option<String>),
@@ -163,6 +168,7 @@ struct OfflinePuzzles {
     sound_playback: Option<SoundPlayback>,
     lang: lang::Language,
     mini_ui: bool,
+    square_ids: HashMap<GenericId, Square>,
 }
 
 impl Default for OfflinePuzzles {
@@ -196,8 +202,170 @@ impl Default for OfflinePuzzles {
             sound_playback: SoundPlayback::init_sound(),
             lang: config::SETTINGS.lang,
             mini_ui: false,
+            square_ids: gen_square_hashmap(),
         }
     }
+}
+
+impl OfflinePuzzles {
+    fn verify_and_make_move(&mut self, from: Square, to: Square) {
+        let side =
+        match self.game_mode {
+            config::GameMode::Analysis => { self.analysis.side_to_move() }
+            config::GameMode::Puzzle => { self.board.side_to_move() }
+        };
+        let color =
+            match self.game_mode {
+                config::GameMode::Analysis => { self.analysis.current_position().color_on(to) }
+                config::GameMode::Puzzle => { self.board.color_on(to) }
+            };
+        // If the user clicked on another piece of his own side,
+        // just replace the previous selection and exit
+        if self.puzzle_tab.is_playing() && color == Some(side) {
+            self.from_square = Some(to);
+            return;
+        }
+        self.from_square = None;
+
+        if self.game_mode == config::GameMode::Analysis {
+            let move_made_notation =
+                get_notation_string(self.analysis.current_position(), self.search_tab.piece_to_promote_to, from, to);
+
+            let move_made = ChessMove::new(
+                Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
+                Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
+
+            if self.analysis.make_move(move_made) {
+                self.analysis_history.push(self.analysis.current_position());
+                self.engine.position = self.analysis.current_position().to_string();
+                if let Some(sender) = &self.engine_sender {
+                    if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
+                        eprintln!("Lost contact with the engine: {}", e);
+                    }
+                }
+                if self.settings_tab.saved_configs.play_sound {
+                    if let Some(audio) = &self.sound_playback {
+                        audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
+                    }
+                }
+            }
+        } else if !self.puzzle_tab.puzzles.is_empty() {
+            let movement;
+            let move_made_notation =
+                get_notation_string(self.board, self.search_tab.piece_to_promote_to, from, to);
+
+            let move_made = ChessMove::new(
+                Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
+                Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
+
+            let is_mate = self.board.legal(move_made) && self.board.make_move_new(move_made).status() == BoardStatus::Checkmate;
+
+            let correct_moves : Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
+            let correct_move = ChessMove::new(
+                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
+                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
+
+            // If the move is correct we can apply it to the board
+            if is_mate || (move_made == correct_move) {
+
+                self.board = self.board.make_move_new(move_made);
+                self.analysis_history.push(self.board);
+
+                self.puzzle_tab.current_puzzle_move += 1;
+
+                if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
+                    if self.settings_tab.saved_configs.play_sound {
+                        if let Some(audio) = &self.sound_playback {
+                            audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
+                        }
+                    }
+                    if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
+                        if self.settings_tab.saved_configs.auto_load_next {
+                            // The previous puzzle ended, and we still have puzzles available,
+                            // so we prepare the next one.
+                            self.puzzle_tab.current_puzzle += 1;
+                            self.puzzle_tab.current_puzzle_move = 1;
+
+                            let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+                            // The opponent's last move (before the puzzle starts)
+                            // is in the "moves" field of the cvs, so we need to apply it.
+                            self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+                            movement = ChessMove::new(
+                                Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+                                Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
+
+                            self.last_move_from = Some(movement.get_source());
+                            self.last_move_to = Some(movement.get_dest());
+
+                            self.board = self.board.make_move_new(movement);
+                            self.analysis_history = vec![self.board];
+
+                            if self.board.side_to_move() == Color::White {
+                                self.puzzle_status = lang::tr(&self.lang, "white_to_move");
+                            } else {
+                                self.puzzle_status = lang::tr(&self.lang, "black_to_move");
+                            }
+
+                            self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+                            self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
+                        } else {
+                            self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
+                            self.puzzle_status = lang::tr(&self.lang, "correct_puzzle");
+                        }
+                    } else {
+                        if self.settings_tab.saved_configs.auto_load_next {
+                            self.board = Board::default();
+                            // quite meaningless but allows the user to use the takeback button
+                            // to analyze a full game in analysis mode after the puzzles ended.
+                            self.analysis_history = vec![self.board];
+                            self.puzzle_tab.current_puzzle_move = 1;
+                            self.puzzle_tab.game_status = GameStatus::NoPuzzles;
+                        } else {
+                            self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
+                        }
+                        self.last_move_from = None;
+                        self.last_move_to = None;
+                        self.puzzle_status = lang::tr(&self.lang, "all_puzzles_done");
+                    }
+                } else {
+                    if self.settings_tab.saved_configs.play_sound {
+                        if let Some(audio) = &self.sound_playback {
+                            audio.play_audio(SoundPlayback::TWO_PIECE_SOUND);
+                        }
+                    }
+                    movement = ChessMove::new(
+                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
+                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
+
+                    self.last_move_from = Some(movement.get_source());
+                    self.last_move_to = Some(movement.get_dest());
+
+                    self.board = self.board.make_move_new(movement);
+                    self.analysis_history.push(self.board);
+
+                    self.puzzle_tab.current_puzzle_move += 1;
+                    self.puzzle_status = lang::tr(&self.lang, "correct_move");
+                }
+            } else {
+                #[allow(clippy::collapsible_else_if)]
+                if self.board.side_to_move() == Color::White {
+                    self.puzzle_status = lang::tr(&self.lang, "wrong_move_white_play");
+                } else {
+                    self.puzzle_status = lang::tr(&self.lang, "wrong_move_black_play");
+                }
+            }
+        }
+    }
+}
+
+fn gen_square_hashmap() -> HashMap<GenericId, Square> {
+    let mut squares_map = HashMap::new();
+    for square in ALL_SQUARES {
+        squares_map.insert(GenericId::new(square.to_string()), square);
+    }
+    squares_map
 }
 
 // The chess crate has a bug on how it returns the en passant square
@@ -279,154 +447,7 @@ impl Application for OfflinePuzzles {
                 }
                 Command::none()
             } (Some(from), Message::SelectSquare(to)) if from != to => {
-                let side =
-                    match self.game_mode {
-                        config::GameMode::Analysis => { self.analysis.side_to_move() }
-                        config::GameMode::Puzzle => { self.board.side_to_move() }
-                    };
-                let color =
-                    match self.game_mode {
-                        config::GameMode::Analysis => { self.analysis.current_position().color_on(to) }
-                        config::GameMode::Puzzle => { self.board.color_on(to) }
-                    };
-                // If the user clicked on another piece of his own side,
-                // just replace the previous selection and exit
-                if self.puzzle_tab.is_playing() && color == Some(side) {
-                    self.from_square = Some(to);
-                    return Command::none()
-                }
-                self.from_square = None;
-
-                if self.game_mode == config::GameMode::Analysis {
-                     let move_made_notation =
-                        get_notation_string(self.analysis.current_position(), self.search_tab.piece_to_promote_to, from, to);
-
-                    let move_made = ChessMove::new(
-                        Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
-                        Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
-
-                    if self.analysis.make_move(move_made) {
-                        self.analysis_history.push(self.analysis.current_position());
-                        self.engine.position = self.analysis.current_position().to_string();
-                        if let Some(sender) = &self.engine_sender {
-                            if let Err(e) = sender.blocking_send(san_correct_ep(self.analysis.current_position().to_string())) {
-                                eprintln!("Lost contact with the engine: {}", e);
-                            }
-                        }
-                        if self.settings_tab.saved_configs.play_sound {
-                            if let Some(audio) = &self.sound_playback {
-                                audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
-                            }
-                        }
-                    }
-                } else if !self.puzzle_tab.puzzles.is_empty() {
-                    let movement;
-                    let move_made_notation =
-                        get_notation_string(self.board, self.search_tab.piece_to_promote_to, from, to);
-
-                    let move_made = ChessMove::new(
-                        Square::from_str(&String::from(&move_made_notation[..2])).unwrap(),
-                        Square::from_str(&String::from(&move_made_notation[2..4])).unwrap(), PuzzleTab::check_promotion(&move_made_notation));
-
-                    let is_mate = self.board.legal(move_made) && self.board.make_move_new(move_made).status() == BoardStatus::Checkmate;
-
-                    let correct_moves : Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
-                    let correct_move = ChessMove::new(
-                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
-                        Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
-
-                    // If the move is correct we can apply it to the board
-                    if is_mate || (move_made == correct_move) {
-
-                        self.board = self.board.make_move_new(move_made);
-                        self.analysis_history.push(self.board);
-
-                        self.puzzle_tab.current_puzzle_move += 1;
-
-                        if self.puzzle_tab.current_puzzle_move == correct_moves.len() {
-                            if self.settings_tab.saved_configs.play_sound {
-                                if let Some(audio) = &self.sound_playback {
-                                    audio.play_audio(SoundPlayback::ONE_PIECE_SOUND);
-                                }
-                            }
-                            if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
-                                if self.settings_tab.saved_configs.auto_load_next {
-                                    // The previous puzzle ended, and we still have puzzles available,
-                                    // so we prepare the next one.
-                                    self.puzzle_tab.current_puzzle += 1;
-                                    self.puzzle_tab.current_puzzle_move = 1;
-
-                                    let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                                    // The opponent's last move (before the puzzle starts)
-                                    // is in the "moves" field of the cvs, so we need to apply it.
-                                    self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                                    movement = ChessMove::new(
-                                        Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                                        Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                                    self.last_move_from = Some(movement.get_source());
-                                    self.last_move_to = Some(movement.get_dest());
-
-                                    self.board = self.board.make_move_new(movement);
-                                    self.analysis_history = vec![self.board];
-
-                                    if self.board.side_to_move() == Color::White {
-                                        self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                                    } else {
-                                        self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                                    }
-
-                                    self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                                    self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
-                                } else {
-                                    self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
-                                    self.puzzle_status = lang::tr(&self.lang, "correct_puzzle");
-                                }
-                            } else {
-                                if self.settings_tab.saved_configs.auto_load_next {
-                                    self.board = Board::default();
-                                    // quite meaningless but allows the user to use the takeback button
-                                    // to analyze a full game in analysis mode after the puzzles ended.
-                                    self.analysis_history = vec![self.board];
-                                    self.puzzle_tab.current_puzzle_move = 1;
-                                    self.puzzle_tab.game_status = GameStatus::NoPuzzles;
-                                } else {
-                                    self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
-                                }
-                                self.last_move_from = None;
-                                self.last_move_to = None;
-                                self.puzzle_status = lang::tr(&self.lang, "all_puzzles_done");
-                            }
-                        } else {
-                            if self.settings_tab.saved_configs.play_sound {
-                                if let Some(audio) = &self.sound_playback {
-                                    audio.play_audio(SoundPlayback::TWO_PIECE_SOUND);
-                                }
-                            }
-                            movement = ChessMove::new(
-                                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][..2])).unwrap(),
-                                Square::from_str(&String::from(&correct_moves[self.puzzle_tab.current_puzzle_move][2..4])).unwrap(), PuzzleTab::check_promotion(correct_moves[self.puzzle_tab.current_puzzle_move]));
-
-                            self.last_move_from = Some(movement.get_source());
-                            self.last_move_to = Some(movement.get_dest());
-
-                            self.board = self.board.make_move_new(movement);
-                            self.analysis_history.push(self.board);
-
-                            self.puzzle_tab.current_puzzle_move += 1;
-                            self.puzzle_status = lang::tr(&self.lang, "correct_move");
-                        }
-                    } else {
-                        #[allow(clippy::collapsible_else_if)]
-                        if self.board.side_to_move() == Color::White {
-                            self.puzzle_status = lang::tr(&self.lang, "wrong_move_white_play");
-                        } else {
-                            self.puzzle_status = lang::tr(&self.lang, "wrong_move_black_play");
-                        }
-                    }
-                }
+                self.verify_and_make_move(from, to);
                 Command::none()
             } (Some(_), Message::SelectSquare(to)) => {
                 self.from_square = Some(to);
@@ -659,11 +680,11 @@ impl Application for OfflinePuzzles {
                 }
                 Command::none()
             } (_, Message::EventOccurred(event)) => {
-                if let Event::Window(window::Event::CloseRequested) = event {
+                if let Event::Window(window::Id::MAIN, window::Event::CloseRequested) = event {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
                             SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
-                            window::close()
+                            window::close(window::Id::MAIN)
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
@@ -671,7 +692,7 @@ impl Application for OfflinePuzzles {
                             Command::none()
                         }
                     }
-                } else if let Event::Window(window::Event::Resized { width, height }) = event {
+                } else if let Event::Window(window::Id::MAIN, window::Event::Resized { width, height }) = event {
                     if !self.mini_ui {
                         self.settings_tab.window_width = width;
                         self.settings_tab.window_height = height;
@@ -705,7 +726,7 @@ impl Application for OfflinePuzzles {
                 self.engine_state = EngineStatus::TurnedOff;
                 if exit {
                     SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
-                    window::close()
+                    window::close(window::Id::MAIN)
                 } else {
                     self.engine_eval = String::new();
                     self.engine_move = String::new();
@@ -756,18 +777,33 @@ impl Application for OfflinePuzzles {
             } (_, Message::MinimizeUI) => {
                 if self.mini_ui {
                     self.mini_ui = false;
-                    let new_size = Size::new(self.settings_tab.window_width,self.settings_tab.window_height);
-                    iced::window::resize(new_size)
+                    let new_size = Size::new(self.settings_tab.window_width as f32, self.settings_tab.window_height as f32);
+                    iced::window::resize(window::Id::MAIN, new_size)
                 } else {
                     self.mini_ui = true;
                     let new_size =
                         // "110" accounts for the buttons below the board, since the board
                         // is a square, we make the width the same as the height,
                         // with just a bit extra for the > button
-                        Size::new((self.settings_tab.window_height - 110) + 25,
-                        self.settings_tab.window_height);
-                    iced::window::resize(new_size)
+                        Size::new(((self.settings_tab.window_height - 110) + 25) as f32,
+                        self.settings_tab.window_height as f32);
+                    iced::window::resize(window::Id::MAIN, new_size)
                 }
+            } (_, Message::DropPiece(square, cursor_pos, _bounds)) => {
+                iced_drop::zones_on_point(
+                    move |zones| Message::HandleDropZones(square, zones),
+                    cursor_pos,
+                    None,
+                    None,
+                )
+            } (_, Message::HandleDropZones(from, zones)) => {
+                if !zones.is_empty() {
+                    let id: &GenericId = &zones[0].0.clone().into();
+                    if let Some(to) = self.square_ids.get(id) {
+                        self.verify_and_make_move(from, *to);
+                    }
+                }
+                Command::none()
             }
         }
     }
@@ -775,17 +811,17 @@ impl Application for OfflinePuzzles {
     fn subscription(&self) -> Subscription<Message> {
         match self.engine_state {
             EngineStatus::TurnedOff => {
-                iced::subscription::events().map(Message::EventOccurred)
+                event::listen().map(Message::EventOccurred)
             } _ => {
                 Subscription::batch(vec![
                     Engine::run_engine(self.engine.clone()),
-                    iced::subscription::events().map(Message::EventOccurred)
+                    event::listen().map(Message::EventOccurred)
                 ])
             }
         }
     }
 
-    fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+    fn view(&self) -> Element<Message, Theme, iced::Renderer> {
         let has_previous = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle > 0;
         let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
         let is_fav = if self.puzzle_tab.puzzles.is_empty() {
@@ -874,13 +910,13 @@ fn gen_view<'a>(
     search_tab_label: TabLabel,
     settings_tab_label: TabLabel,
     puzzle_tab_label: TabLabel,
-    search_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
-    settings_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
-    puzzle_tab: Element<'a, Message, iced::Renderer<styles::Theme>>,
+    search_tab: Element<'a, Message, Theme, iced::Renderer>,
+    settings_tab: Element<'a, Message, Theme, iced::Renderer>,
+    puzzle_tab: Element<'a, Message, Theme, iced::Renderer>,
     lang: &lang::Language,
     size: Size,
     mini_ui: bool,
-) -> Element<'a, Message, iced::Renderer<styles::Theme>> {
+) -> Element<'a, Message, Theme, iced::Renderer> {
 
     let font = piece_theme == PieceTheme::FontAlpha;
     let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
@@ -979,16 +1015,16 @@ fn gen_view<'a>(
                 board_row =
                     board_row.push(Button::new(
                         Text::new(text)
-                            .width(board_height)
-                            .height(board_height)
-                            .font(config::CHESS_ALPHA)
-                            .size(board_height)
-                            .vertical_alignment(alignment::Vertical::Center)
-                            .line_height(LineHeight::Absolute(board_height.into())
-                        ))
-                    .padding(0)
-                    .on_press(Message::SelectSquare(pos))
-                    .style(square_style)
+                        .width(board_height)
+                        .height(board_height)
+                        .font(config::CHESS_ALPHA)
+                        .size(board_height)
+                        .vertical_alignment(alignment::Vertical::Center)
+                        .line_height(LineHeight::Absolute(board_height.into())
+                    ))
+                .padding(0)
+                .on_press(Message::SelectSquare(pos))
+                .style(square_style)
                 );
             } else {
                 let square_style :styles::ButtonStyle = if light_square {
@@ -1026,20 +1062,23 @@ fn gen_view<'a>(
                             Piece::King => "/bK.svg"
                         };
                     }
+
                     board_row = board_row.push(
-                        Button::new(
-                            Svg::from_path(String::from("pieces/") + &piece_theme.to_string() + text)
-                        ).width(board_height)
-                        .height(board_height)
-                        .on_press(Message::SelectSquare(pos))
-                        .style(square_style)
-                    );
+                        container(
+                            iced_drop::droppable(
+                                Svg::from_path(String::from("pieces/") + &piece_theme.to_string() + text).width(board_height)
+                                .height(board_height)
+                            ).drag_hide(true).drag_center(true).on_drop(move |point, rect| Message::DropPiece(pos, point, rect)).on_click(Message::SelectSquare(pos))
+                        ).style(square_style).id(Id::new(pos.to_string()))
+                     );
                 } else {
-                    board_row = board_row.push(Button::new(Text::new(""))
-                        .width(board_height)
-                        .height(board_height)
-                        .on_press(Message::SelectSquare(pos))
-                        .style(square_style)
+                    board_row = board_row.push(container(
+                            Button::new(Text::new(""))
+                            .width(board_height)
+                            .height(board_height)
+                            .on_press(Message::SelectSquare(pos))
+                            .style(square_style)
+                        ).id(Id::new(pos.to_string()))
                     );
                 }
             }
@@ -1168,7 +1207,7 @@ trait Tab {
 
     fn tab_label(&self) -> TabLabel;
 
-    fn view(&self) -> Element<Message, iced::Renderer<styles::Theme>> {
+    fn view(&self) -> Element<Message, Theme, iced::Renderer> {
         let column = Column::new()
             .spacing(20)
             .push(Text::new(self.title()).size(HEADER_SIZE))
@@ -1183,20 +1222,20 @@ trait Tab {
             .into()
     }
 
-    fn content(&self) -> Element<Message, iced::Renderer<styles::Theme>>;
+    fn content(&self) -> Element<Message, Theme, iced::Renderer>;
 }
 
 fn main() -> iced::Result {
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
-            size: (
-                config::SETTINGS.window_width, //(config::SETTINGS.square_size * 8) as u32 + 450,
-                config::SETTINGS.window_height,//(config::SETTINGS.square_size * 8) as u32 + 120,
-            ),
+            size: Size {
+                width: config::SETTINGS.window_width as f32, //(config::SETTINGS.square_size * 8) as u32 + 450,
+                height: config::SETTINGS.window_height as f32,//(config::SETTINGS.square_size * 8) as u32 + 120,
+            },
             resizable: true,
+            exit_on_close_request: false,
             ..iced::window::Settings::default()
         },
-        exit_on_close_request:false,
         ..Settings::default()
     })
 }
