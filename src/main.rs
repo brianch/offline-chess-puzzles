@@ -281,35 +281,7 @@ impl OfflinePuzzles {
                     }
                     if self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1 {
                         if self.settings_tab.saved_configs.auto_load_next {
-                            // The previous puzzle ended, and we still have puzzles available,
-                            // so we prepare the next one.
-                            self.puzzle_tab.current_puzzle += 1;
-                            self.puzzle_tab.current_puzzle_move = 1;
-
-                            let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                            // The opponent's last move (before the puzzle starts)
-                            // is in the "moves" field of the cvs, so we need to apply it.
-                            self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                            movement = ChessMove::new(
-                                Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                                Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                            self.last_move_from = Some(movement.get_source());
-                            self.last_move_to = Some(movement.get_dest());
-
-                            self.board = self.board.make_move_new(movement);
-                            self.analysis_history = vec![self.board];
-
-                            if self.board.side_to_move() == Color::White {
-                                self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                            } else {
-                                self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                            }
-
-                            self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                            self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
+                            self.load_puzzle(true);
                         } else {
                             self.puzzle_tab.game_status = GameStatus::PuzzleEnded;
                             self.puzzle_status = lang::tr(&self.lang, "correct_puzzle");
@@ -357,6 +329,40 @@ impl OfflinePuzzles {
                 }
             }
         }
+    }
+
+    fn load_puzzle(&mut self, inc_counter: bool) {
+        self.hint_square = None;
+        self.puzzle_tab.current_puzzle_move = 1;
+        if inc_counter {
+            self.puzzle_tab.current_puzzle += 1;
+        }
+        let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
+
+        // The opponent's last move (before the puzzle starts)
+        // is in the "moves" field of the cvs, so we need to apply it.
+        self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
+
+        let movement = ChessMove::new(
+            Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
+            Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
+
+        self.last_move_from = Some(movement.get_source());
+        self.last_move_to = Some(movement.get_dest());
+
+        self.board = self.board.make_move_new(movement);
+        self.analysis_history = vec![self.board];
+
+        if self.board.side_to_move() == Color::White {
+            self.puzzle_status = lang::tr(&self.lang, "white_to_move");
+        } else {
+            self.puzzle_status = lang::tr(&self.lang, "black_to_move");
+        }
+
+        self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
+        self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
+        self.puzzle_tab.game_status = GameStatus::Playing;
+        self.game_mode = config::GameMode::Puzzle;
     }
 }
 
@@ -480,68 +486,13 @@ impl Application for OfflinePuzzles {
 
                 Command::none()
             } (_, Message::ShowNextPuzzle) => {
-                self.hint_square = None;
                 self.puzzle_tab.current_puzzle += 1;
-                self.puzzle_tab.current_puzzle_move = 1;
-
-                let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                // The opponent's last move (before the puzzle starts)
-                // is in the "moves" field of the cvs, so we need to apply it.
-                self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                let movement = ChessMove::new(
-                    Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                self.last_move_from = Some(movement.get_source());
-                self.last_move_to = Some(movement.get_dest());
-
-                self.board = self.board.make_move_new(movement);
-                self.analysis_history = vec![self.board];
-
-                if self.board.side_to_move() == Color::White {
-                    self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                } else {
-                    self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                }
-
-                self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
-                self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                self.puzzle_tab.game_status = GameStatus::Playing;
-                self.game_mode = config::GameMode::Puzzle;
+                self.load_puzzle(false);
                 Command::none()
             } (_, Message::ShowPreviousPuzzle) => {
                 if self.puzzle_tab.current_puzzle > 0 && self.game_mode == config::GameMode::Puzzle {
-                    self.hint_square = None;
                     self.puzzle_tab.current_puzzle -= 1;
-                    self.puzzle_tab.current_puzzle_move = 1;
-
-                    let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                    // The opponent's last move (before the puzzle starts)
-                    // is in the "moves" field of the cvs, so we need to apply it.
-                    self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                    let movement = ChessMove::new(
-                        Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                        Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                    self.last_move_from = Some(movement.get_source());
-                    self.last_move_to = Some(movement.get_dest());
-
-                    self.board = self.board.make_move_new(movement);
-                    self.analysis_history = vec![self.board];
-
-                    if self.board.side_to_move() == Color::White {
-                        self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                    } else {
-                        self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                    }
-
-                    self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
-                    self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                    self.puzzle_tab.game_status = GameStatus::Playing;
+                    self.load_puzzle(false);
                 }
                 Command::none()
             } (_, Message::GoBackMove) => {
@@ -556,31 +507,7 @@ impl Application for OfflinePuzzles {
                 }
                 Command::none()
             } (_, Message::RedoPuzzle) => {
-                self.puzzle_tab.current_puzzle_move = 1;
-
-                let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
-
-                // The opponent's last move (before the puzzle starts)
-                // is in the "moves" field of the cvs, so we need to apply it.
-                self.board = Board::from_str(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].fen).unwrap();
-
-                let movement = ChessMove::new(
-                    Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
-                    Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                self.last_move_from = Some(movement.get_source());
-                self.last_move_to = Some(movement.get_dest());
-
-                self.board = self.board.make_move_new(movement);
-                self.analysis_history = vec![self.board];
-
-                if self.board.side_to_move() == Color::White {
-                    self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                } else {
-                    self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                }
-                self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                self.puzzle_tab.game_status = GameStatus::Playing;
+                self.load_puzzle(false);
                 Command::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
                 self.from_square = None;
@@ -595,32 +522,8 @@ impl Application for OfflinePuzzles {
                     if !puzzles_vec.is_empty() {
                         self.puzzle_tab.puzzles = puzzles_vec;
                         self.puzzle_tab.puzzles.shuffle(&mut thread_rng());
-                        self.puzzle_tab.current_puzzle_move = 1;
                         self.puzzle_tab.current_puzzle = 0;
-
-                        self.board = Board::from_str(&self.puzzle_tab.puzzles[0].fen).unwrap();
-                        let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[0].moves.split_whitespace().collect();
-
-                        // The last opponent's move is in the "moves" field of the cvs,
-                        // so we need to apply it.
-                        let movement = ChessMove::new(
-                                Square::from_str(&puzzle_moves[0][..2]).unwrap(),
-                                Square::from_str(&puzzle_moves[0][2..4]).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
-
-                        self.last_move_from = Some(movement.get_source());
-                        self.last_move_to = Some(movement.get_dest());
-
-                        self.board = self.board.make_move_new(movement);
-                        self.analysis_history = vec![self.board];
-
-                        if self.board.side_to_move() == Color::White {
-                            self.puzzle_status = lang::tr(&self.lang, "white_to_move");
-                        } else {
-                            self.puzzle_status = lang::tr(&self.lang, "black_to_move");
-                        }
-                        self.puzzle_tab.current_puzzle_fen = san_correct_ep(self.board.to_string());
-                        self.puzzle_tab.current_puzzle_side = self.board.side_to_move();
-                        self.puzzle_tab.game_status = GameStatus::Playing;
+                        self.load_puzzle(false);
                     } else {
                         // Just putting the default position to make it obvious the search ended.
                         self.board = Board::default();
