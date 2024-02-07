@@ -1,6 +1,6 @@
 [package]
 name = "offline-chess-puzzles"
-version = "2.2.0"
+version = "2.4.0"
 authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
@@ -8,23 +8,23 @@ edition = "2021"
 #iced = {version = "0.10.0", features = ["svg", "tokio", "lazy"] }
 #iced_aw = {version = "0.7.0", default-features = false, features = ["tabs"] }
 iced = { git = "https://github.com/iced-rs/iced.git", features = ["svg", "tokio", "lazy", "advanced"] }
-iced_aw = {git = "https://github.com/brianch/iced_aw", branch = "update-overlay-code", default-features = false, features = ["tabs"] }
+iced_aw = {git = "https://github.com/iced-rs/iced_aw.git", default-features = false, features = ["tabs"] }
 iced_drop = {git = "https://github.com/brianch/iced_drop.git", branch = "center-on-cursor"}
 
 rand = "0.8.5"
 chess = "3.2.0"
-csv = "1.2.1"
-serde = "1.0.160"
+csv = "1.3.0"
+serde = "1.0.196"
 serde_derive = "1.0.160"
-serde_json = "1.0.96"
-tokio = { version = "1.27.0", features = ["process", "io-std", "io-util", "sync"] }
-rodio = { version = "0.17.1", default-features = false, features = ["vorbis"] }
+serde_json = "1.0.113"
+tokio = { version = "1.36.0", features = ["process", "io-std", "io-util", "sync"] }
+rodio = { version = "0.17.3", default-features = false, features = ["vorbis"] }
 fluent-bundle = "0.15.2"
 intl-memoizer = "0.5.1"
-once_cell = "1.17.1"
-unic-langid = { version = "0.9.1", features = ["macros"] }
-diesel = { version = "2.1.0", features = ["sqlite"] }
-dotenvy = "0.15"
+once_cell = "1.19.0"
+unic-langid = { version = "0.9.4", features = ["macros"] }
+diesel = { version = "2.1.4", features = ["sqlite"] }
+dotenvy = "0.15.7"
 lopdf = "0.32.0"
 open = "5.0.1"
 #rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
@@ -32,4 +32,4 @@ rfd = "0.13.0"
 image = { version = "0.24.8", default-features = false, features = ["jpeg"] }
 
 [target.'cfg(windows)'.dependencies]
-libsqlite3-sys = { version = "0.26.0", features = ["bundled"] }
+libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
