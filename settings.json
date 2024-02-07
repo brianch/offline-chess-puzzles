@@ -3,6 +3,7 @@
   "engine_limit": "depth 40",
   "window_width": 1010,
   "window_height": 680,
+  "maximized": false,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",
   "piece_theme": "Cburnett",
   "search_results_limit": 20000,
@@ -23,4 +24,3 @@
   },
   "last_opening_side": "Any"
 }
-

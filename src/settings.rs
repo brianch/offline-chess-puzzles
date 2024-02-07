@@ -29,6 +29,7 @@ pub struct SettingsTab {
     pub engine_path: String,
     pub window_width: u32,
     pub window_height: u32,
+    pub maximized: bool,
     pub piece_theme: styles::PieceTheme,
     pub board_theme: styles::Theme,
     pub lang: PickListWrapper<lang::Language>,
@@ -52,6 +53,7 @@ impl SettingsTab {
             engine_path: config::SETTINGS.engine_path.clone().unwrap_or_default(),
             window_width: config::SETTINGS.window_width,
             window_height: config::SETTINGS.window_width,
+            maximized: config::SETTINGS.maximized,
             piece_theme: config::SETTINGS.piece_theme,
             board_theme: config::SETTINGS.board_theme,
             lang: PickListWrapper::new_lang(config::SETTINGS.lang, config::SETTINGS.lang),
@@ -137,6 +139,7 @@ impl SettingsTab {
                     engine_limit: self.saved_configs.engine_limit.clone(),
                     window_width: self.window_width,
                     window_height: self.window_height,
+                    maximized: self.maximized,
                     puzzle_db_location: String::from(&self.puzzle_db_location_value),
                     piece_theme: self.piece_theme,
                     search_results_limit: self.search_results_limit_value.parse().unwrap(),
@@ -178,10 +181,11 @@ impl SettingsTab {
         }
     }
 
-    pub fn save_window_size(width: u32, height: u32) {
+    pub fn save_window_size(&self) {
         let mut config = config::load_config();
-        config.window_width = width;
-        config.window_height = height;
+        config.window_width = self.window_width;
+        config.window_height = self.window_height;
+        config.maximized = self.maximized;
         let file = std::fs::File::create("settings.json");
         match file {
             Ok(file) => {

@@ -71,6 +71,11 @@ pub enum TabId {
     CurrentPuzzle,
 }
 
+#[derive(Default)]
+struct Flags {
+    maximize: bool,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     ChessFontLoaded(Result<(), iced::font::Error>),
@@ -100,6 +105,7 @@ pub enum Message {
     EngineFileChosen(Option<String>),
     FavoritePuzzle,
     MinimizeUI,
+    SaveMaximizedStatusAndExit(bool),
 }
 
 struct SoundPlayback {
@@ -420,12 +426,15 @@ impl Application for OfflinePuzzles {
     type Executor = executor::Default;
     type Theme = styles::Theme;
     type Message = Message;
-    type Flags = ();
+    type Flags = Flags;
 
-    fn new(_flags: ()) -> (OfflinePuzzles, Command<Message>) {
+    fn new(flags: Flags) -> (OfflinePuzzles, Command<Message>) {
         (
             Self::default(),
-            iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES)).map(Message::ChessFontLoaded),
+            Command::batch([
+                iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES)).map(Message::ChessFontLoaded),
+                iced::window::maximize(window::Id::MAIN, flags.maximize),
+            ])
         )
     }
 
@@ -586,8 +595,10 @@ impl Application for OfflinePuzzles {
                 if let Event::Window(window::Id::MAIN, window::Event::CloseRequested) = event {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
-                            SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
-                            window::close(window::Id::MAIN)
+                            return iced::window::fetch_maximized(
+                                window::Id::MAIN,
+                                |maximized| Message::SaveMaximizedStatusAndExit(maximized)
+                            );
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
@@ -604,6 +615,10 @@ impl Application for OfflinePuzzles {
                 } else {
                     Command::none()
                 }
+            } (_, Message::SaveMaximizedStatusAndExit(is_maximized)) => {
+                self.settings_tab.maximized = is_maximized;
+                self.settings_tab.save_window_size();
+                window::close(window::Id::MAIN)
             } (_, Message::EngineFileChosen(engine_path)) => {
                 if let Some(engine_path) = engine_path {
                     self.settings_tab.engine_path = engine_path;
@@ -628,7 +643,7 @@ impl Application for OfflinePuzzles {
             } (_, Message::EngineStopped(exit)) => {
                 self.engine_state = EngineStatus::TurnedOff;
                 if exit {
-                    SettingsTab::save_window_size(self.settings_tab.window_width, self.settings_tab.window_height);
+                    self.settings_tab.save_window_size();
                     window::close(window::Id::MAIN)
                 } else {
                     self.engine_eval = String::new();
@@ -1138,6 +1153,9 @@ fn main() -> iced::Result {
             resizable: true,
             exit_on_close_request: false,
             ..iced::window::Settings::default()
+        },
+        flags: Flags {
+            maximize: config::SETTINGS.maximized
         },
         ..Settings::default()
     })
