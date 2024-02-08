@@ -621,7 +621,8 @@ impl Application for OfflinePuzzles {
                 window::close(window::Id::MAIN)
             } (_, Message::EngineFileChosen(engine_path)) => {
                 if let Some(engine_path) = engine_path {
-                    self.settings_tab.engine_path = engine_path;
+                    self.settings_tab.engine_path = engine_path.clone();
+                    self.engine.engine_path = engine_path;
                 }
                 Command::none()
             } (_, Message::StartEngine) => {
