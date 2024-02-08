@@ -63,12 +63,8 @@ impl PuzzleTab {
     }
 
     pub async fn export() -> Option<String> {
-        let file_path = AsyncFileDialog::new().save_file();
-        if let Some(file_path) = file_path.await {
-            Some(file_path.path().display().to_string())
-        } else {
-            None
-        }
+        let file_path = AsyncFileDialog::new().save_file().await;
+        file_path.map(|file_path| file_path.path().display().to_string())
     }
 
     // Checks if the notation indicates a promotion and return the piece
@@ -122,10 +118,10 @@ impl Tab for PuzzleTab {
                     ).on_input(PuzzleMessage::ChangeTextInputs),
                     Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.current_puzzle_fen.clone())),
                 ],
-                Text::new(String::from(lang::tr(&self.lang, "rating")) + &self.puzzles[self.current_puzzle].rating.to_string()),
-                Text::new(String::from(lang::tr(&self.lang, "rd")) + &self.puzzles[self.current_puzzle].rating_deviation.to_string()),
-                Text::new(String::from(lang::tr(&self.lang, "popularity")) + &self.puzzles[self.current_puzzle].popularity.to_string()),
-                Text::new(String::from(lang::tr(&self.lang, "times_played")) + &self.puzzles[self.current_puzzle].nb_plays.to_string()),
+                Text::new(lang::tr(&self.lang, "rating") + &self.puzzles[self.current_puzzle].rating.to_string()),
+                Text::new(lang::tr(&self.lang, "rd") + &self.puzzles[self.current_puzzle].rating_deviation.to_string()),
+                Text::new(lang::tr(&self.lang, "popularity") + &self.puzzles[self.current_puzzle].popularity.to_string()),
+                Text::new(lang::tr(&self.lang, "times_played") + &self.puzzles[self.current_puzzle].nb_plays.to_string()),
                 Text::new(lang::tr(&self.lang, "themes")),
                 Text::new(&self.puzzles[self.current_puzzle].themes),
                 Text::new(lang::tr(&self.lang, "url")),

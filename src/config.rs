@@ -118,19 +118,19 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
                     san_str.push_str(&coords[0..1]);
                     san_localized.push_str(&coords[0..1]);
                 } Piece::Bishop => {
-                    san_str.push_str("B");
+                    san_str.push('B');
                     san_localized.push_str(&lang::tr(lang, "bishop"));
                 } Piece::Knight => {
-                    san_str.push_str("N");
+                    san_str.push('N');
                     san_localized.push_str(&lang::tr(lang, "knight"));
                 } Piece::Rook => {
-                    san_str.push_str("R");
+                    san_str.push('R');
                     san_localized.push_str(&lang::tr(lang, "rook"));
                 } Piece::Queen => {
-                    san_str.push_str("Q");
+                    san_str.push('Q');
                     san_localized.push_str(&lang::tr(lang, "queen"));
                 } Piece::King =>  {
-                    san_str.push_str("K");
+                    san_str.push('K');
                     san_localized.push_str(&lang::tr(lang, "king"));
                 }
             }
@@ -138,54 +138,52 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
             if is_en_passant {
                 san_localized.push_str(&(String::from("x") + &coords[2..4] + " e.p."));
             } else if is_normal_capture {
-                let simple_capture = san_str.clone() + &"x" + &coords[2..];
-                let try_move = ChessMove::from_san(&board, &simple_capture);
-                if let Ok(_) = try_move {
+                let simple_capture = san_str.clone() + "x" + &coords[2..];
+                let try_move = ChessMove::from_san(board, &simple_capture);
+                if try_move.is_ok() {
                     san_str.push_str(&(String::from("x") + &coords[2..]));
                     san_localized.push_str(&(String::from("x") + &coords[2..]));
                 } else {
                     //the simple notation can only fail because of ambiguity, so we try to specify
                     //either the file or the rank
-                    let capture_with_file = san_str.clone() + &coords[0..1] + &"x" + &coords[2..];
-                    let try_move_file = ChessMove::from_san(&board, &capture_with_file);
-                    if let Ok(_) = try_move_file {
-                        san_localized.push_str(&(String::from(&coords[0..1]) + &"x" + &coords[2..]));
+                    let capture_with_file = san_str.clone() + &coords[0..1] + "x" + &coords[2..];
+                    let try_move_file = ChessMove::from_san(board, &capture_with_file);
+                    if try_move_file.is_ok() {
+                        san_localized.push_str(&(String::from(&coords[0..1]) + "x" + &coords[2..]));
                     } else {
-                        san_localized.push_str(&(String::from(&coords[1..2]) + &"x" + &coords[2..]));
+                        san_localized.push_str(&(String::from(&coords[1..2]) + "x" + &coords[2..]));
                     }
                 }
             // And now the regular moves
+            } else if piece==Piece::Pawn {
+                san_localized = String::from(&coords[2..]);
             } else {
-                if piece==Piece::Pawn {
-                    san_localized = String::from(&coords[2..]);
+                let move_with_regular_notation = san_str.clone() + &coords[2..];
+                let move_to_try = ChessMove::from_san(board, &move_with_regular_notation);
+                if move_to_try.is_ok() {
+                    san_str.push_str(&coords[2..]);
+                    san_localized.push_str(&coords[2..]);
                 } else {
-                    let move_with_regular_notation = san_str.clone() + &coords[2..];
-                    let move_to_try = ChessMove::from_san(&board, &move_with_regular_notation);
-                    if let Ok(_) = move_to_try {
-                        san_str.push_str(&coords[2..]);
-                        san_localized.push_str(&coords[2..]);
+                    //the simple notation can only fail because of ambiguity, so we try to specify
+                    //either the file or the rank
+                    let move_notation_with_file = san_str.clone() + &coords[0..1] + &coords[2..];
+                    let try_move_file = ChessMove::from_san(board, &move_notation_with_file);
+                    if try_move_file.is_ok() {
+                        san_localized.push_str(&(String::from(&coords[0..1]) + &coords[2..]));
                     } else {
-                        //the simple notation can only fail because of ambiguity, so we try to specify
-                        //either the file or the rank
-                        let move_notation_with_file = san_str.clone() + &coords[0..1] + &coords[2..];
-                        let try_move_file = ChessMove::from_san(&board, &move_notation_with_file);
-                        if let Ok(_) = try_move_file {
-                            san_localized.push_str(&(String::from(&coords[0..1]) + &coords[2..]));
-                        } else {
-                            san_localized.push_str(&(String::from(&coords[1..2]) + &coords[2..]));
-                        }
+                        san_localized.push_str(&(String::from(&coords[1..2]) + &coords[2..]));
                     }
                 }
             }
-            let chess_move = ChessMove::from_san(&board, &san_localized);
+            let chess_move = ChessMove::from_san(board, &san_localized);
             // Note: It can indeed return Err for a moment when using the engine (and quickly taking
             // back moves), I guess for a sec the engine & board may get desynced, so we can't just unwrap it.
             if let Ok(chess_move) = chess_move {
                 let current_board = board.make_move_new(chess_move);
                 if current_board.status() == chess::BoardStatus::Checkmate {
-                    san_localized.push_str("#");
+                    san_localized.push('#');
                 } else if current_board.checkers().popcnt() != 0 {
-                    san_localized.push_str("+");
+                    san_localized.push('+');
                 }
             }
             san = Some(san_localized);

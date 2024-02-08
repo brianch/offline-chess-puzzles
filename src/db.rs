@@ -36,7 +36,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, op
         } else {
             opening.get_field_name()
         };
-        let opening_filter = opening_tags.like(String::from("%") + &opening_tag + "%");
+        let opening_filter = opening_tags.like(String::from("%") + opening_tag + "%");
         let side = match op_side {
             None => OpeningSide::Any,
             Some(x) => x
@@ -74,10 +74,8 @@ pub fn is_favorite(id: &str) -> bool {
     let results = favs
         .filter(puzzle_id.eq(id))
         .first::<Puzzle>(&mut conn);
-    if results.is_ok() {
-        return true;
-    }
-    return false;
+
+    results.is_ok()
 }
 
 pub fn toggle_favorite(puzzle: Puzzle) {

@@ -198,7 +198,7 @@ impl Default for OfflinePuzzles {
             engine_sender: None,
             engine_move: String::new(),
 
-            puzzle_status: String::from(lang::tr(&config::SETTINGS.lang, "use_search")),
+            puzzle_status: lang::tr(&config::SETTINGS.lang, "use_search"),
             search_tab: SearchTab::new(),
             settings_tab: SettingsTab::new(),
             puzzle_tab: PuzzleTab::new(),
@@ -579,7 +579,7 @@ impl Application for OfflinePuzzles {
                         height: self.settings_tab.window_height - 110}
                     );
                     if let Ok (screenshot) = crop {
-                        let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, (&screenshot.bytes).to_vec());
+                        let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.bytes.to_vec());
                         if let Some(image) = img {
                             let _ = image.save_with_format(path, image::ImageFormat::Jpeg);
                         }
@@ -595,10 +595,10 @@ impl Application for OfflinePuzzles {
                 if let Event::Window(window::Id::MAIN, window::Event::CloseRequested) = event {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
-                            return iced::window::fetch_maximized(
+                            iced::window::fetch_maximized(
                                 window::Id::MAIN,
-                                |maximized| Message::SaveMaximizedStatusAndExit(maximized)
-                            );
+                                Message::SaveMaximizedStatusAndExit
+                            )
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
@@ -663,12 +663,11 @@ impl Application for OfflinePuzzles {
                             if eval_str.contains("Mate") {
                                 let tokens: Vec<&str> = eval_str.split_whitespace().collect();
                                 let distance_to_mate_num = tokens[2].parse::<i32>().unwrap();
-                                self.engine_eval = if distance_to_mate_num < 0 {
-                                    lang::tr(&self.lang, "mate_in") + &(distance_to_mate_num * -1).to_string()
-                                } else if distance_to_mate_num > 0 {
-                                    lang::tr(&self.lang, "mate_in") + &distance_to_mate_num.to_string()
-                                } else {
-                                    lang::tr(&self.lang, "mate")
+                                self.engine_eval = match distance_to_mate_num {
+                                    1.. => { lang::tr(&self.lang, "mate_in") + &distance_to_mate_num.to_string() }
+                                    0 => { lang::tr(&self.lang, "mate") }
+                                    _ => { lang::tr(&self.lang, "mate_in") + &(-distance_to_mate_num).to_string() }
+
                                 };
                             } else if self.analysis.side_to_move() == Color::White {
                                 self.engine_eval = eval_str;
@@ -716,7 +715,7 @@ impl Application for OfflinePuzzles {
                 )
             } (_, Message::HandleDropZones(from, zones)) => {
                 if !zones.is_empty() {
-                    let id: &GenericId = &zones[0].0.clone().into();
+                    let id: &GenericId = &zones[0].0.clone();
                     if let Some(to) = self.square_ids.get(id) {
                         self.verify_and_make_move(from, *to);
                     }
@@ -793,12 +792,8 @@ impl Application for OfflinePuzzles {
 }
 
 pub async fn screenshot_save_dialog(img: Screenshot) -> Option<(Screenshot, String)> {
-    let file_path = AsyncFileDialog::new().add_filter("jpg", &["jpg", "jpeg"]).save_file();
-    if let Some(file_path) = file_path.await {
-        Some((img, file_path.path().display().to_string()))
-    } else {
-        None
-    }
+    let file_path = AsyncFileDialog::new().add_filter("jpg", &["jpg", "jpeg"]).save_file().await;
+    file_path.map(|file_path| (img, file_path.path().display().to_string()))
 }
 
 fn gen_view<'a>(
@@ -843,19 +838,18 @@ fn gen_view<'a>(
     let is_white = (current_puzzle_side == Color::White) ^ flip_board;
 
     //Reserve more space below the board if we'll show the engine eval
-    let board_height = if engine_eval.is_empty() {
-        if show_coordinates {
-            ((size.height - 120.) / 8.) as u16
-        } else {
-            ((size.height - 110.) / 8.) as u16
-        }
-    } else {
-        if show_coordinates {
+    let board_height =
+        if engine_eval.is_empty() {
+            if show_coordinates {
+                ((size.height - 120.) / 8.) as u16
+            } else {
+                ((size.height - 110.) / 8.) as u16
+            }
+        } else if show_coordinates {
             ((size.height - 150.) / 8.) as u16
         } else {
             ((size.height - 140.) / 8.) as u16
-        }
-    };
+        };
 
     let ranks;
     let files;
@@ -923,13 +917,12 @@ fn gen_view<'a>(
                     if light_square {
                         text = text.to_lowercase();
                     }
+                } else if light_square {
+                    text = String::from(" ");
                 } else {
-                    if light_square {
-                        text = String::from(" ");
-                    } else {
-                        text = String::from("+");
-                    }
+                    text = String::from("+");
                 }
+
                 board_row =
                     board_row.push(Button::new(
                         Text::new(text)
@@ -960,9 +953,8 @@ fn gen_view<'a>(
                     }
                 };
                 if let Some(piece) = piece {
-                    let text;
-                    if color.unwrap() == Color::White {
-                        text = match piece {
+                    let text = if color.unwrap() == Color::White {
+                        match piece {
                             Piece::Pawn => "/wP.svg",
                             Piece::Rook => "/wR.svg",
                             Piece::Knight => "/wN.svg",
@@ -971,15 +963,15 @@ fn gen_view<'a>(
                             Piece::King => "/wK.svg"
                         }
                     } else {
-                        text = match piece {
+                        match piece {
                             Piece::Pawn => "/bP.svg",
                             Piece::Rook => "/bR.svg",
                             Piece::Knight => "/bN.svg",
                             Piece::Bishop => "/bB.svg",
                             Piece::Queen => "/bQ.svg",
                             Piece::King => "/bK.svg"
-                        };
-                    }
+                        }
+                    };
 
                     board_row = board_row.push(
                         container(
@@ -1097,8 +1089,8 @@ fn gen_view<'a>(
     if !engine_eval.is_empty() {
         board_col = board_col.push(
             row![
-                Text::new(String::from(lang::tr(lang, "eval")) + &engine_eval),
-                Text::new(String::from(lang::tr(lang, "best_move")) + &engine_move)
+                Text::new(lang::tr(lang, "eval") + engine_eval),
+                Text::new(lang::tr(lang, "best_move") + engine_move)
             ].padding(5).spacing(15)
         );
     }

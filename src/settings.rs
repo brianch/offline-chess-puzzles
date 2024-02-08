@@ -122,9 +122,9 @@ impl SettingsTab {
                 Command::none()
             }
             SettingsMessage::ChangePDFExportPgs(value) => {
-                if let Ok(_) = value.parse::<i32>() {
+                if value.parse::<i32>().is_ok() {
                     self.export_pgs = value;
-                } else if value == "" {
+                } else if value.is_empty() {
                     self.export_pgs = String::from("0");
                 }
                 Command::none()
@@ -174,11 +174,7 @@ impl SettingsTab {
 
     async fn open_engine_exe() -> Option<String> {
         let engine_exe = AsyncFileDialog::new().pick_file().await;
-        if let Some(engine_path) = engine_exe {
-            Some(engine_path.path().display().to_string())
-        } else {
-            None
-        }
+        engine_exe.map(|engine_path| engine_path.path().display().to_string())
     }
 
     pub fn save_window_size(&self) {
@@ -189,7 +185,7 @@ impl SettingsTab {
         let file = std::fs::File::create("settings.json");
         match file {
             Ok(file) => {
-                if !serde_json::to_writer_pretty(file, &config).is_ok() {
+                if serde_json::to_writer_pretty(file, &config).is_err() {
                     println!("Error saving config file.");
                 }
             } Err(_) => println!("Error opening settings file")
@@ -247,7 +243,7 @@ impl Tab for SettingsTab {
             row![
                 Text::new(lang::tr(&self.lang.lang, "language")),
                 PickList::new(
-                    PickListWrapper::get_langs(self.lang.lang.clone()),
+                    PickListWrapper::get_langs(self.lang.lang),
                     Some(self.lang.clone()),
                     SettingsMessage::SelectLanguage
                 )

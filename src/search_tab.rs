@@ -31,7 +31,7 @@ impl PickListWrapper<TacticalThemes> {
         for theme in TacticalThemes::ALL {
             themes_wrapper.push(
                 PickListWrapper::<TacticalThemes> {
-                    lang: lang,
+                    lang,
                     item: theme,
                 }
             );
@@ -44,8 +44,9 @@ impl PickListWrapper<TacticalThemes> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum TacticalThemes {
+    #[default]
     All,
     Opening, Middlegame, Endgame, RookEndgame, BishopEndgame, PawnEndgame, KnightEndgame, QueenEndgame, QueenRookEndgame,
     AdvancedPawn, AtackingF2F7, CapturingDefender, DiscoveredAttack, DoubleCheck, ExposedKing, Fork, HangingPiece, KingsideAttack, Pin, QueensideAttack, Sacrifice, Skewer, TrappedPiece,
@@ -172,12 +173,6 @@ impl TacticalThemes {
 impl DisplayTranslated for TacticalThemes {
     fn to_str_tr(&self) -> &str {
         self.get_tr_key()
-    }
-}
-
-impl Default for TacticalThemes {
-    fn default() -> TacticalThemes {
-        TacticalThemes::Mate
     }
 }
 
@@ -426,19 +421,19 @@ impl Tab for SearchTab {
                 ].width(Length::Fill),
             Text::new(lang::tr(&self.lang, "theme_label")),
             PickList::new(
-                PickListWrapper::get_themes(self.lang.clone()),
+                PickListWrapper::get_themes(self.lang),
                 Some(self.theme.clone()),
                 SearchMesssage::SelectTheme
             ),
             Text::new(lang::tr(&self.lang, "in_opening")),
             PickList::new(
-                PickListWrapper::get_openings(self.lang.clone()),
+                PickListWrapper::get_openings(self.lang),
                 Some(self.opening.clone()),
                 SearchMesssage::SelectOpening
             ),
             Text::new(lang::tr(&self.lang, "in_the_variation")),
             PickList::new(
-                PickListWrapper::get_variations(self.lang.clone(), Some(&self.opening.item)),
+                PickListWrapper::get_variations(self.lang, Some(&self.opening.item)),
                 Some(self.variation.clone()),
                 SearchMesssage::SelectVariation
             )

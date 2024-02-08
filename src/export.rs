@@ -84,7 +84,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     //let number_of_pages: i64 = 100;//(puzzles.len() / 6).try_into().unwrap();
     let mut page_ids = vec![];
     let mut puzzle_index = 0;
-    for _ in 0..num_of_pages.into() {
+    for _ in 0..num_of_pages {
         let mut ops: Vec<Operation> = vec![];
         let mut pos_x = 750;
         let mut pos_y = 75;
@@ -132,11 +132,10 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     let mut ops: Vec<Operation> = vec![];
     let mut pos_x = 800;
     let pos_y = 75;
-    let mut num_pages_of_solution = 1;
-    for puzzle_number in 0..num_of_puzzles_to_print {
+    for (puzzle_number, puzzle) in puzzles.iter().enumerate().take(num_of_puzzles_to_print) {
         // need to start by making the 1st move in the list, because it's only then that
         // the puzzle starts.
-        let mut board = Board::from_str(&puzzles[puzzle_number].fen).unwrap();
+        let mut board = Board::from_str(&puzzle.fen).unwrap();
         let mut puzzle_moves: VecDeque<&str> = puzzles[puzzle_number].moves.split_whitespace().collect();
         let movement = ChessMove::new(
             Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
@@ -156,16 +155,16 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
         }
         for chess_move in puzzle_moves {
             if half_move_number % 2 == 0 {
-                solution.push_str(" ");
+                solution.push(' ');
                 solution.push_str(&config::coord_to_san(&board, String::from(chess_move), lang).unwrap());
             } else {
-                solution.push_str(" ");
+                solution.push(' ');
                 solution.push_str(&move_label.to_string());
                 solution.push_str(". ");
                 solution.push_str(&config::coord_to_san(&board, String::from(chess_move), lang).unwrap());
-                move_label = move_label + 1;
+                move_label += 1;
             }
-            half_move_number = half_move_number + 1;
+            half_move_number += 1;
             // Apply move, so we have the updated board to generate the SAN for the next move.
             let movement = ChessMove::new(
                 Square::from_str(&String::from(&chess_move[..2])).unwrap(),
@@ -180,12 +179,11 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
                 Operation::new("Tj", vec![Object::string_literal(solution)]),
                 Operation::new("ET", vec![]),
         ]);
-        pos_x = pos_x - 18;
+        pos_x -= 18;
 
         // We need a page break
         if pos_x < 18 {
             pos_x = 800;
-            num_pages_of_solution = num_pages_of_solution + 1;
 
             let content = Content {
                 operations: ops,
@@ -318,12 +316,10 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
                         new_piece = new_piece.to_lowercase().collect::<Vec<_>>()[0];
                     }
                 }
+            } else if light_square {
+                new_piece = ' ';
             } else {
-                if light_square {
-                    new_piece = ' ';
-                } else {
-                    new_piece = '+';
-                }
+                new_piece = '+';
             }
             rank_string.push(new_piece);
         }

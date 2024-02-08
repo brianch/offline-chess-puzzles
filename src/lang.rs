@@ -58,7 +58,7 @@ pub fn tr(lang: &Language, key: &str) -> String {
     let msg = bundle.get_message(key).expect(&("Missing translation key ".to_owned() + key));
     let mut errors = vec![];
     let pattern = msg.value().expect("Missing Value.");
-    bundle.format_pattern(&pattern, None, &mut errors).to_string()
+    bundle.format_pattern(pattern, None, &mut errors).to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
