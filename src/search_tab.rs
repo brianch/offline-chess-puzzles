@@ -1,5 +1,5 @@
 use iced::widget::svg::Handle;
-use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable};
+use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
 use iced::widget::text::LineHeight;
 use iced::{alignment, Command, Element, Alignment, Length};
 use std::io::BufReader;
@@ -520,6 +520,7 @@ impl Tab for SearchTab {
             }
         }
 
+        search_col = search_col.push(Space::new(Length::Fill, 10));
         if self.show_searching_msg {
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "searching")));
         }
