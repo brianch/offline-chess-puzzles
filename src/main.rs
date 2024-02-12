@@ -607,15 +607,20 @@ impl Application for OfflinePuzzles {
             } (_, Message::ScreenshotCreated(screenshot)) => {
                 Command::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
             } (_, Message::SaveScreenshot(img_and_path)) => {
+                let (crop_height, crop_width) = if self.settings_tab.show_coordinates {
+                    (self.settings_tab.window_height - 100, self.settings_tab.window_height - 105)
+                } else {
+                    (self.settings_tab.window_height - 114, self.settings_tab.window_height - 114)
+                };
                 if let Some(img_and_path) = img_and_path {
                     let screenshot = img_and_path.0;
                     let path = img_and_path.1;
                     let crop = screenshot.crop(Rectangle::<u32> {
                         x: 0,
                         y: 0,
-                        width: self.settings_tab.window_height - 110,
-                        height: self.settings_tab.window_height - 110}
-                    );
+                        width: crop_width,
+                        height: crop_height,
+                    });
                     if let Ok (screenshot) = crop {
                         let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.bytes.to_vec());
                         if let Some(image) = img {
