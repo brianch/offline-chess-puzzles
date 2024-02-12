@@ -135,7 +135,7 @@ impl Tab for PuzzleTab {
                 ],
                 Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot),
                 Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
-            ].spacing(10).align_items(Alignment::Center))
+            ].padding([0, 0, 30, 0]).spacing(10).align_items(Alignment::Center))
         } else {
             Scrollable::new(col![
                     Text::new(lang::tr(&self.lang, "no_puzzle"))

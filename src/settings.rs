@@ -293,7 +293,7 @@ impl Tab for SettingsTab {
         ].spacing(10).align_items(Alignment::Center);
         let content: Element<SettingsMessage, Theme, iced::Renderer> = Container::new(
             Scrollable::new(
-                Column::new().spacing(10).push(col_settings)
+                Column::new().padding([0, 0, 30, 0]).spacing(10).push(col_settings)
             )
         ).align_x(alignment::Horizontal::Center).height(Length::Fill).width(Length::Fill).into();
 
