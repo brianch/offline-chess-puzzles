@@ -419,16 +419,16 @@ impl tab_bar::StyleSheet for Theme {
 impl scrollable::StyleSheet for Theme {
     type Style = Scrollable;
 
-    fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
-        scrollable::Scrollbar {
-            background: Some(iced::Background::Color(self.palette().light_square)),
-            border: Border {
-                color: self.palette().light_square,
-                width: 1.,
-                radius: 1.0.into(),
-            },
-            scroller: scrollable::Scroller
-                {
+    fn active(&self, _style: &Self::Style) -> scrollable::Appearance {
+        scrollable::Appearance {
+            scrollbar: scrollable::Scrollbar {
+                background: Some(iced::Background::Color(self.palette().light_square)),
+                border: Border {
+                    color: self.palette().light_square,
+                    width: 1.,
+                    radius: 1.0.into(),
+                },
+                scroller: scrollable::Scroller {
                     color: self.palette().dark_square,
                     border: Border {
                         color: self.palette().light_square,
@@ -436,19 +436,22 @@ impl scrollable::StyleSheet for Theme {
                         radius: 0.0.into(),
                     },
                 }
+            },
+            container: container::Appearance::default(),
+            gap: None,
         }
     }
 
-    fn hovered(&self, _style: &Self::Style, _is_mouse_over_scrollbar: bool) -> scrollable::Scrollbar {
-        scrollable::Scrollbar {
-            background: Some(iced::Background::Color(self.palette().light_square)),
-            border: Border {
-                color: self.palette().dark_square,
-                width: 1.,
-                radius:  1.0.into(),
-            },
-            scroller: scrollable::Scroller
-                {
+    fn hovered(&self, _style: &Self::Style, _is_mouse_over_scrollbar: bool) -> scrollable::Appearance {
+        scrollable::Appearance {
+            scrollbar: scrollable::Scrollbar {
+                background: Some(iced::Background::Color(self.palette().light_square)),
+                border: Border {
+                    color: self.palette().dark_square,
+                    width: 1.,
+                    radius:  1.0.into(),
+                },
+                scroller: scrollable::Scroller {
                     color: self.palette().dark_square,
                     border: Border {
                         color: Color::BLACK,
@@ -456,6 +459,9 @@ impl scrollable::StyleSheet for Theme {
                         radius:  1.0.into(),
                     },
                 }
+            },
+            container: container::Appearance::default(),
+            gap: None,
         }
     }
 }
