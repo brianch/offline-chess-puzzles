@@ -1,10 +1,11 @@
+use iced::widget::svg::Handle;
 use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
 use iced::widget::text::LineHeight;
 use iced::{alignment, Command, Element, Alignment, Length};
 use std::io::BufReader;
 
 use iced_aw::TabLabel;
-use chess::Piece;
+use chess::{Piece, PROMOTION_PIECES};
 use crate::config::load_config;
 use crate::styles::{PieceTheme, Theme};
 use crate::{Tab, Message, config, styles, lang, db, openings};
@@ -186,6 +187,18 @@ pub enum SearchBase {
     Lichess, Favorites
 }
 
+pub fn gen_piece_vec(theme: &PieceTheme) -> Vec<Handle> {
+    let mut handles = Vec::<Handle>::with_capacity(5);
+    let theme_str = &theme.to_string();
+    // this first entry won't be used, it's there just to fill the vec, so we can index by the Piece
+    handles.insert(0, Handle::from_path("pieces/cburnett/wP.svg"));
+    handles.insert(Piece::Knight.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wN.svg"));
+    handles.insert(Piece::Bishop.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wB.svg"));
+    handles.insert(Piece::Rook.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wR.svg"));
+    handles.insert(Piece::Queen.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wQ.svg"));
+    handles
+}
+
 #[derive(Debug)]
 pub struct SearchTab {
     pub theme: PickListWrapper<TacticalThemes>,
@@ -200,6 +213,7 @@ pub struct SearchTab {
     pub show_searching_msg: bool,
     pub lang: lang::Language,
     base: Option<SearchBase>,
+    pub promotion_piece_img: Vec<Handle>,
 }
 
 impl SearchTab {
@@ -216,6 +230,7 @@ impl SearchTab {
             show_searching_msg: false,
             lang: config::SETTINGS.lang,
             base: Some(SearchBase::Lichess),
+            promotion_piece_img: gen_piece_vec(&config::SETTINGS.piece_theme),
         }
     }
 
@@ -378,7 +393,6 @@ impl SearchTab {
         }
         Some(puzzles)
     }
-
 }
 
 
@@ -487,27 +501,7 @@ impl Tab for SearchTab {
                 ));
             }
         } else {
-            for i in 0..4 {
-                let piece;
-                let image;
-                match i {
-                    0 => {
-                        piece = Piece::Rook;
-                        image = "/wR.svg";
-                    }
-                    1 => {
-                        piece = Piece::Knight;
-                        image = "/wN.svg";
-                    }
-                    2 => {
-                        piece = Piece::Bishop;
-                        image = "/wB.svg";
-                    }
-                    _ => {
-                        piece = Piece::Queen;
-                        image = "/wQ.svg";
-                    }
-                };
+            for piece in PROMOTION_PIECES {
                 let square_style =
                     if self.piece_to_promote_to == piece {
                         styles::ButtonStyle::DarkSquare
@@ -516,7 +510,7 @@ impl Tab for SearchTab {
                     };
                 row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
                     .push(Button::new(
-                        Svg::from_path(String::from("pieces/") + &self.piece_theme_promotion.to_string() + image)
+                        Svg::new(self.promotion_piece_img[piece.to_index()].clone())
                     )
                     .width(60)
                     .height(60)

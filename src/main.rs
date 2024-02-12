@@ -3,6 +3,7 @@
 use eval::{Engine, EngineStatus};
 use iced::widget::container::Id;
 use iced::advanced::widget::Id as GenericId;
+use iced::widget::svg::Handle;
 use iced::widget::text::LineHeight;
 use styles::{PieceTheme, Theme};
 use std::collections::HashMap;
@@ -74,6 +75,18 @@ pub enum TabId {
 #[derive(Default)]
 struct Flags {
     maximize: bool,
+}
+
+#[derive(Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord)]
+enum PieceWithColor {
+    WhitePawn, WhiteRook, WhiteKnight, WhiteBishop, WhiteQueen, WhiteKing,
+    BlackPawn, BlackRook, BlackKnight, BlackBishop, BlackQueen, BlackKing,
+}
+
+impl PieceWithColor {
+    fn index(&self) -> usize {
+        *self as usize
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -175,6 +188,7 @@ struct OfflinePuzzles {
     lang: lang::Language,
     mini_ui: bool,
     square_ids: HashMap<GenericId, Square>,
+    piece_imgs: Vec<Handle>,
 }
 
 impl Default for OfflinePuzzles {
@@ -209,6 +223,7 @@ impl Default for OfflinePuzzles {
             lang: config::SETTINGS.lang,
             mini_ui: false,
             square_ids: gen_square_hashmap(),
+            piece_imgs: get_image_handles(&config::SETTINGS.piece_theme),
         }
     }
 }
@@ -370,6 +385,27 @@ impl OfflinePuzzles {
         self.puzzle_tab.game_status = GameStatus::Playing;
         self.game_mode = config::GameMode::Puzzle;
     }
+}
+
+fn get_image_handles(theme: &PieceTheme) -> Vec<Handle> {
+    let mut handles = Vec::<Handle>::with_capacity(12);
+    let theme_str = &theme.to_string();
+
+    handles.insert(PieceWithColor::WhitePawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wP.svg"));
+    handles.insert(PieceWithColor::WhiteRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wR.svg"));
+    handles.insert(PieceWithColor::WhiteKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wN.svg"));
+    handles.insert(PieceWithColor::WhiteBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wB.svg"));
+    handles.insert(PieceWithColor::WhiteQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wQ.svg"));
+    handles.insert(PieceWithColor::WhiteKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wK.svg"));
+
+    handles.insert(PieceWithColor::BlackPawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bP.svg"));
+    handles.insert(PieceWithColor::BlackRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bR.svg"));
+    handles.insert(PieceWithColor::BlackKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bN.svg"));
+    handles.insert(PieceWithColor::BlackBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bB.svg"));
+    handles.insert(PieceWithColor::BlackQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bQ.svg"));
+    handles.insert(PieceWithColor::BlackKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bK.svg"));
+
+    handles
 }
 
 fn gen_square_hashmap() -> HashMap<GenericId, Square> {
@@ -559,6 +595,8 @@ impl Application for OfflinePuzzles {
                     self.search_tab.opening.lang = self.lang;
                     self.puzzle_tab.lang = self.lang;
                     self.settings_tab.saved_configs = settings;
+                    self.piece_imgs = get_image_handles(&self.settings_tab.piece_theme);
+                    self.search_tab.promotion_piece_img = search_tab::gen_piece_vec(&self.settings_tab.piece_theme);
                 }
                 Command::none()
             }
@@ -781,6 +819,7 @@ impl Application for OfflinePuzzles {
                 &self.lang,
                 size,
                 self.mini_ui,
+                &self.piece_imgs,
             )});
         Container::new(resp)
             .padding(1)
@@ -830,6 +869,7 @@ fn gen_view<'a>(
     lang: &lang::Language,
     size: Size,
     mini_ui: bool,
+    imgs: &Vec<Handle>,
 ) -> Element<'a, Message, Theme, iced::Renderer> {
 
     let font = piece_theme == PieceTheme::FontAlpha;
@@ -954,30 +994,30 @@ fn gen_view<'a>(
                     }
                 };
                 if let Some(piece) = piece {
-                    let text = if color.unwrap() == Color::White {
+                    let piece_index = if color.unwrap() == Color::White {
                         match piece {
-                            Piece::Pawn => "/wP.svg",
-                            Piece::Rook => "/wR.svg",
-                            Piece::Knight => "/wN.svg",
-                            Piece::Bishop => "/wB.svg",
-                            Piece::Queen => "/wQ.svg",
-                            Piece::King => "/wK.svg"
+                            Piece::Pawn => PieceWithColor::WhitePawn.index(),
+                            Piece::Rook => PieceWithColor::WhiteRook.index(),
+                            Piece::Knight => PieceWithColor::WhiteKnight.index(),
+                            Piece::Bishop => PieceWithColor::WhiteBishop.index(),
+                            Piece::Queen => PieceWithColor::WhiteQueen.index(),
+                            Piece::King => PieceWithColor::WhiteKing.index(),
                         }
                     } else {
                         match piece {
-                            Piece::Pawn => "/bP.svg",
-                            Piece::Rook => "/bR.svg",
-                            Piece::Knight => "/bN.svg",
-                            Piece::Bishop => "/bB.svg",
-                            Piece::Queen => "/bQ.svg",
-                            Piece::King => "/bK.svg"
+                            Piece::Pawn => PieceWithColor::BlackPawn.index(),
+                            Piece::Rook => PieceWithColor::BlackRook.index(),
+                            Piece::Knight => PieceWithColor::BlackKnight.index(),
+                            Piece::Bishop => PieceWithColor::BlackBishop.index(),
+                            Piece::Queen => PieceWithColor::BlackQueen.index(),
+                            Piece::King => PieceWithColor::BlackKing.index(),
                         }
                     };
 
                     board_row = board_row.push(
                         container(
                             iced_drop::droppable(
-                                Svg::from_path(String::from("pieces/") + &piece_theme.to_string() + text).width(board_height)
+                                Svg::new(imgs[piece_index].clone()).width(board_height)
                                 .height(board_height)
                             ).drag_hide(true).drag_center(true).on_drop(move |point, rect| Message::DropPiece(pos, point, rect)).on_click(Message::SelectSquare(pos))
                         ).style(square_style).id(Id::new(pos.to_string()))
