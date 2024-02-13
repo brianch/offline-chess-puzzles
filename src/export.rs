@@ -75,7 +75,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     let num_of_pages;
     if (6 * number_of_pages) as usize > puzzles.len() {
         num_of_puzzles_to_print = puzzles.len();
-        num_of_pages = puzzles.len() % 6;
+        num_of_pages = (puzzles.len() as f32 / 6.0).ceil() as usize;
     } else {
         num_of_puzzles_to_print = (6 * number_of_pages) as usize;
         num_of_pages = number_of_pages as usize;
