@@ -88,12 +88,23 @@ pub fn load_config() -> OfflinePuzzlesConfig {
     config
 }
 
+fn piece_localized(lang: &lang::Language, piece: &str) -> String {
+    match piece {
+        "B" => lang::tr(lang, "bishop"),
+        "N" => lang::tr(lang, "knight"),
+        "R" => lang::tr(lang, "rook"),
+        "Q" => lang::tr(lang, "queen"),
+        _ => lang::tr(lang, "king"),
+    }
+}
+
 pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Option<String> {
-    let coords = if coords.len() > 4 {
-        String::from(&coords[0..4]) + "=" + &coords[4..5].to_uppercase()
+    let (promotion_piece, coords) = if coords.len() > 4 {
+        (coords[4..5].to_uppercase(), String::from(&coords[0..4]))
     } else {
-        coords
+        (String::from(""), coords)
     };
+
     let mut san = None;
     let orig_square = Square::from_str(&coords[0..2]).unwrap();
     let dest_square = Square::from_str(&coords[2..4]).unwrap();
@@ -109,7 +120,7 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
             let is_en_passant = piece == Piece::Pawn &&
                 board.piece_on(dest_square).is_none() &&
                 dest_square.get_file() != orig_square.get_file();
-            let is_normal_capture = board.piece_on(dest_square).is_some();
+            let is_capture = board.piece_on(dest_square).is_some();
             match piece {
                 Piece::Pawn => {
                     // We're also creating the san in English notation because
@@ -137,12 +148,22 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
             // Checking fist the cases of capture
             if is_en_passant {
                 san_localized.push_str(&(String::from("x") + &coords[2..4] + " e.p."));
-            } else if is_normal_capture {
-                let simple_capture = san_str.clone() + "x" + &coords[2..];
-                let try_move = ChessMove::from_san(board, &simple_capture);
+            } else if is_capture {
+                let capture = if piece == Piece::Pawn {
+                    // Note: For the from_san() function we really can't use the equal sign: https://github.com/jordanbray/chess/issues/80
+                    san_str.clone() + "x" + &coords[2..] + &promotion_piece
+                } else {
+                    san_str.clone() + "x" + &coords[2..]
+                };
+                let try_move = ChessMove::from_san(board, &capture);
                 if try_move.is_ok() {
-                    san_str.push_str(&(String::from("x") + &coords[2..]));
-                    san_localized.push_str(&(String::from("x") + &coords[2..]));
+                    if promotion_piece.is_empty() {
+                        san_str.push_str(&(String::from("x") + &coords[2..]));
+                        san_localized.push_str(&(String::from("x") + &coords[2..]));
+                    } else {
+                        san_str.push_str(&(String::from("x") + &coords[2..] + &promotion_piece));
+                        san_localized.push_str(&(String::from("x") + &coords[2..] + "=" + &piece_localized(lang, &promotion_piece)));
+                    }
                 } else {
                     //the simple notation can only fail because of ambiguity, so we try to specify
                     //either the file or the rank
@@ -155,8 +176,13 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
                     }
                 }
             // And now the regular moves
-            } else if piece==Piece::Pawn {
-                san_localized = String::from(&coords[2..]);
+            } else if piece == Piece::Pawn {
+                if promotion_piece.is_empty() {
+                    san_localized = String::from(&coords[2..]);
+                } else {
+                    san_str = san_str + &coords[2..] + &promotion_piece;
+                    san_localized = String::from(&coords[2..]) + "=" + &piece_localized(lang, &promotion_piece);
+                }
             } else {
                 let move_with_regular_notation = san_str.clone() + &coords[2..];
                 let move_to_try = ChessMove::from_san(board, &move_with_regular_notation);
@@ -175,7 +201,7 @@ pub fn coord_to_san(board: &Board, coords: String, lang: &lang::Language) -> Opt
                     }
                 }
             }
-            let chess_move = ChessMove::from_san(board, &san_localized);
+            let chess_move = ChessMove::from_san(board, &san_str);
             // Note: It can indeed return Err for a moment when using the engine (and quickly taking
             // back moves), I guess for a sec the engine & board may get desynced, so we can't just unwrap it.
             if let Ok(chess_move) = chess_move {
