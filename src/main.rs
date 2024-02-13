@@ -608,9 +608,9 @@ impl Application for OfflinePuzzles {
                 Command::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
             } (_, Message::SaveScreenshot(img_and_path)) => {
                 let (crop_height, crop_width) = if self.settings_tab.show_coordinates {
-                    (self.settings_tab.window_height - 100, self.settings_tab.window_height - 105)
+                    (self.settings_tab.window_height - 118, self.settings_tab.window_height - 123)
                 } else {
-                    (self.settings_tab.window_height - 114, self.settings_tab.window_height - 114)
+                    (self.settings_tab.window_height - 128, self.settings_tab.window_height - 128)
                 };
                 if let Some(img_and_path) = img_and_path {
                     let screenshot = img_and_path.0;
@@ -746,7 +746,7 @@ impl Application for OfflinePuzzles {
                         // "110" accounts for the buttons below the board, since the board
                         // is a square, we make the width the same as the height,
                         // with just a bit extra for the > button
-                        Size::new(((self.settings_tab.window_height - 110) + 25) as f32,
+                        Size::new(((self.settings_tab.window_height - 120) + 25) as f32,
                         self.settings_tab.window_height as f32);
                     iced::window::resize(window::Id::MAIN, new_size)
                 }
@@ -887,14 +887,14 @@ fn gen_view<'a>(
     let board_height =
         if engine_eval.is_empty() {
             if show_coordinates {
-                ((size.height - 120.) / 8.) as u16
+                ((size.height - 135.) / 8.) as u16
             } else {
-                ((size.height - 110.) / 8.) as u16
+                ((size.height - 125.) / 8.) as u16
             }
         } else if show_coordinates {
-            ((size.height - 150.) / 8.) as u16
+            ((size.height - 165.) / 8.) as u16
         } else {
-            ((size.height - 140.) / 8.) as u16
+            ((size.height - 155.) / 8.) as u16
         };
 
     let ranks;
