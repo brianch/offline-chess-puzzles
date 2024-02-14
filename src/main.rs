@@ -707,11 +707,16 @@ impl Application for OfflinePuzzles {
                             if eval_str.contains("Mate") {
                                 let tokens: Vec<&str> = eval_str.split_whitespace().collect();
                                 let distance_to_mate_num = tokens[2].parse::<i32>().unwrap();
-                                self.engine_eval = match distance_to_mate_num {
-                                    1.. => { lang::tr(&self.lang, "mate_in") + &distance_to_mate_num.to_string() }
-                                    0 => { lang::tr(&self.lang, "mate") }
-                                    _ => { lang::tr(&self.lang, "mate_in") + &(-distance_to_mate_num).to_string() }
-
+                                match distance_to_mate_num {
+                                    1.. => {
+                                        self.engine_eval = lang::tr(&self.lang, "mate_in") + &distance_to_mate_num.to_string();
+                                    } 0 => {
+                                        self.engine_eval = lang::tr(&self.lang, "mate");
+                                        self.engine_move = String::from("");
+                                        return Command::none();
+                                    } _ => {
+                                        self.engine_eval = lang::tr(&self.lang, "mate_in") + &(-distance_to_mate_num).to_string();
+                                    }
                                 };
                             } else if self.analysis.side_to_move() == Color::White {
                                 self.engine_eval = eval_str;
