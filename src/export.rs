@@ -21,9 +21,14 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     // Create a font descriptor dictionary object
     let font_stream_id = doc.add_object(font_stream);
     let font_descriptor_dict = dictionary! {
-        "Type" => "TrueType",
-        "FontName" => "Chess-Alpha",
+        "Type" => "FontDescriptor",
+        "FontName" => "Chess Alpha",
         "FontFile2" => font_stream_id,
+        //"FontWeight" => "Medium",
+        //"Ascent" => 0,
+        //"Descent" => 0,
+        //"StemV" => 100,
+        "FontBBox" => vec![0.into(),0.into(), 1024.into(), 1024.into()],
         "Flags" => 33,
     };
     let font_descriptor_id = doc.add_object(font_descriptor_dict);
@@ -37,12 +42,13 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     let font_dict = dictionary! {
         "Type" => "Font",
         "Subtype" => "TrueType",
-        "BaseFont" => "Chess-Alpha",
-        "FirstChar" => 0,
+        "BaseFont" => "Chess Alpha",
+        "FirstChar" => 32,
         "LastChar" => 255,
-        "Widths" => vec![1000.into();256],
+        "Widths" => vec![1024.into();256],
         "FontDescriptor" => font_descriptor_id,
         "Encoding" => doc.add_object(encoding),
+        "Length1" => font_data.len() as i32
     };
 
     let font_id = doc.add_object(font_dict);
@@ -66,7 +72,7 @@ pub fn to_pdf(puzzles: &Vec<config::Puzzle>, number_of_pages: i32, lang: &lang::
     let resources_id = doc.add_object(dictionary! {
         // fonts are actually triplely nested dictionaries. Fun!
         "Font" => dictionary! {
-            "Chess-Alpha" => font_id,
+            "Chess Alpha" => font_id,
             "Regular" => regular_font_id,
         },
     });
@@ -273,7 +279,7 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
             Operation::new("ET", vec![]),
 
             Operation::new("BT", vec![]),
-            Operation::new("Tf", vec!["Chess-Alpha".into(), 25.into()]),
+            Operation::new("Tf", vec!["Chess Alpha".into(), 25.into()]),
             Operation::new("rg", vec![0.into(),0.into(),0.into()]),
             Operation::new("Td", vec![start_y.into(), start_x.into()]),
             ];
