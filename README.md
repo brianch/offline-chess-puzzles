@@ -36,7 +36,6 @@ I can't promise anything though, since this is just a hobby project (and the goa
 - Settings are remembered and loaded when you open the app again
 - Navigate to the previous/next puzzles
 - Favorite puzzles and search those favorites
-- You can navigate to the previous or next puzzles
 - Export part of the search to PDF
 - Save puzzle as a .jpg file
 
