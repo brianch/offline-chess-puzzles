@@ -7,9 +7,9 @@ edition = "2021"
 [dependencies]
 #iced = {version = "0.10.0", features = ["svg", "tokio", "lazy"] }
 #iced_aw = {version = "0.7.0", default-features = false, features = ["tabs"] }
-iced = { git = "https://github.com/iced-rs/iced.git", features = ["svg", "tokio", "lazy", "advanced"] }
-iced_aw = {git = "https://github.com/iced-rs/iced_aw.git", default-features = false, features = ["tabs"] }
-iced_drop = {git = "https://github.com/brianch/iced_drop.git", branch = "center-on-cursor"}
+iced = { version = "0.12.1", default-features = false, features = ["svg", "tokio", "lazy", "advanced"] }
+iced_aw = { version = "0.8.0", default-features = false, features = ["tabs"] }
+iced_drop = {git = "https://github.com/brianch/iced_drop.git"}
 
 rand = "0.8.5"
 chess = "3.2.0"
