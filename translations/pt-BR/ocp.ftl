@@ -40,6 +40,7 @@ lichess_db = Banco de Dados do Lichess
 my_favories = Meus Favoritos
 min_rating = Rating Min.:{" "}
 max_rating = Rating Máx.:{" "}
+min_popularity = Popularidade (de -100 a 100):{" "}
 theme_label = Tema Tático:
 in_opening = Na Abertura:
 in_the_variation = Variante:

@@ -42,6 +42,7 @@ lichess_db = BdD Lichess
 my_favories = Mes favoris
 min_rating = Classement minimal:{" "}
 max_rating = Classement maximal:{" "}
+min_popularity = Popularity (-100 to 100):{" "}
 theme_label = Thème tactique:
 in_opening = Issu de l'ouverture:
 in_the_variation = Avec la variante:

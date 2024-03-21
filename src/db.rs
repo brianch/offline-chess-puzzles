@@ -19,7 +19,7 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
+pub fn get_favorites(min_rating: i32, max_rating: i32, min_popularity: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<Puzzle>> {
     let mut conn = establish_connection();
     let results;
     let theme_filter = String::from("%") + theme.get_tag_name() + "%";
@@ -27,6 +27,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, op
     if opening == Openings::Any {
         results = favs
             .filter(rating.between(min_rating, max_rating))
+            .filter(popularity.ge(min_popularity))
             .filter(themes.like(theme_filter))
             .limit(limit)
             .load::<Puzzle>(&mut conn);
@@ -44,6 +45,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, op
         if side == OpeningSide::White {
             results = favs
                 .filter(rating.between(min_rating, max_rating))
+                .filter(popularity.ge(min_popularity))
                 .filter(themes.like(theme_filter))
                 .filter(opening_filter)
                 .filter(game_url.like("%black%"))
@@ -52,6 +54,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, op
         } else if side == OpeningSide::Black {
             results = favs
                 .filter(rating.between(min_rating, max_rating))
+                .filter(popularity.ge(min_popularity))
                 .filter(themes.like(theme_filter))
                 .filter(opening_filter)
                 .filter(game_url.not_like("%black%"))
@@ -60,6 +63,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, theme: TacticalThemes, op
         } else {
             results = favs
                 .filter(rating.between(min_rating, max_rating))
+                .filter(popularity.ge(min_popularity))
                 .filter(themes.like(theme_filter))
                 .filter(opening_filter)
                 .limit(limit)

@@ -152,6 +152,7 @@ impl SettingsTab {
                     export_pgs: self.export_pgs.parse().unwrap(),
                     last_min_rating: self.saved_configs.last_min_rating,
                     last_max_rating: self.saved_configs.last_max_rating,
+                    last_min_popularity: self.saved_configs.last_min_popularity,
                     last_theme: self.saved_configs.last_theme,
                     last_opening: self.saved_configs.last_opening,
                     last_variation: self.saved_configs.last_variation.clone(),

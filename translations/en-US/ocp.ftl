@@ -40,6 +40,7 @@ lichess_db = Lichess DB
 my_favories = My Favorites
 min_rating = Min. Rating:{" "}
 max_rating = Max. Rating:{" "}
+min_popularity = Popularity (-100 to 100):{" "}
 theme_label = Tactics theme:
 in_opening = In the opening:
 in_the_variation = Variation:

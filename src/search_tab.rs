@@ -17,6 +17,7 @@ use openings::{Openings, Variation};
 pub enum SearchMesssage {
     SliderMinRatingChanged(i32),
     SliderMaxRatingChanged(i32),
+    SliderMinPopularityChanged(i32),
     SelectTheme(PickListWrapper<TacticalThemes>),
     SelectOpening(PickListWrapper<Openings>),
     SelectVariation(PickListWrapper<Variation>),
@@ -207,6 +208,7 @@ pub struct SearchTab {
     pub opening_side: Option<OpeningSide>,
     slider_min_rating_value: i32,
     slider_max_rating_value: i32,
+    slider_min_popularity: i32,
     pub piece_theme_promotion: styles::PieceTheme,
     pub piece_to_promote_to: Piece,
 
@@ -225,6 +227,7 @@ impl SearchTab {
             opening_side: config::SETTINGS.last_opening_side,
             slider_min_rating_value: config::SETTINGS.last_min_rating,
             slider_max_rating_value: config::SETTINGS.last_max_rating,
+            slider_min_popularity: config::SETTINGS.last_min_popularity,
             piece_theme_promotion: config::SETTINGS.piece_theme,
             piece_to_promote_to: Piece::Queen,
             show_searching_msg: false,
@@ -241,6 +244,9 @@ impl SearchTab {
                 Command::none()
             } SearchMesssage::SliderMaxRatingChanged(new_value) => {
                 self.slider_max_rating_value = new_value;
+                Command::none()
+            } SearchMesssage::SliderMinPopularityChanged(new_value) => {
+                self.slider_min_popularity = new_value;
                 Command::none()
             } SearchMesssage::SelectTheme(new_theme) => {
                 self.theme = new_theme;
@@ -261,20 +267,20 @@ impl SearchTab {
             } SearchMesssage::ClickSearch => {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
-                    self.slider_max_rating_value, self.theme.item,
+                    self.slider_max_rating_value, self.slider_min_popularity, self.theme.item,
                     self.opening.item, self.variation.item.clone(), self.opening_side);
 
                 let config = load_config();
                 if self.base == Some(SearchBase::Favorites) {
                     Command::perform(
                         SearchTab::search_favs(self.slider_min_rating_value,
-                            self.slider_max_rating_value,
+                            self.slider_max_rating_value, self.slider_min_popularity,
                             self.theme.item, self.opening.item, self.variation.item.clone(),
                             self.opening_side, config.search_results_limit), Message::LoadPuzzle)
                 } else {
                     Command::perform(
                         SearchTab::search(self.slider_min_rating_value,
-                            self.slider_max_rating_value,
+                            self.slider_max_rating_value, self.slider_min_popularity,
                             self.theme.item, self.opening.item, self.variation.item.clone(),
                             self.opening_side, config.search_results_limit), Message::LoadPuzzle)
                 }
@@ -285,13 +291,14 @@ impl SearchTab {
         }
     }
 
-    pub fn save_search_settings(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
+    pub fn save_search_settings(min_rating: i32, max_rating: i32, min_popularity: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
         let file = std::fs::File::open("settings.json");
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
             if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
                 config.last_min_rating = min_rating;
                 config.last_max_rating = max_rating;
+                config.last_min_popularity = min_popularity;
                 config.last_theme = theme;
                 config.last_opening = opening;
                 config.last_variation = variation;
@@ -307,11 +314,11 @@ impl SearchTab {
         }
     }
 
-    pub async fn search_favs(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation:Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
-        db::get_favorites(min_rating, max_rating, theme, opening, variation, op_side, result_limit)
+    pub async fn search_favs(min_rating: i32, max_rating: i32, min_popularity: i32, theme: TacticalThemes, opening: Openings, variation:Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+        db::get_favorites(min_rating, max_rating, min_popularity, theme, opening, variation, op_side, result_limit)
     }
 
-    pub async fn search(min_rating: i32, max_rating: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
+    pub async fn search(min_rating: i32, max_rating: i32, min_popularity: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>, result_limit: usize) -> Option<Vec<config::Puzzle>> {
         let mut puzzles: Vec<config::Puzzle> = Vec::new();
 
         let reader = csv::ReaderBuilder::new()
@@ -339,6 +346,7 @@ impl SearchTab {
                             if let Ok(record) = result {
                                 if record.opening.contains(opening_tag) &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.popularity >= min_popularity &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
                                 }
@@ -353,6 +361,7 @@ impl SearchTab {
                                 if record.opening.contains(opening_tag) &&
                                         !record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.popularity >= min_popularity &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
                                 }
@@ -367,6 +376,7 @@ impl SearchTab {
                                 if record.opening.contains(opening_tag) &&
                                         record.game_url.contains("black") &&
                                         record.rating >= min_rating && record.rating <= max_rating &&
+                                        record.popularity >= min_popularity &&
                                         record.themes.contains(theme.get_tag_name()) {
                                     puzzles.push(record);
                                 }
@@ -381,6 +391,7 @@ impl SearchTab {
                 for result in reader.deserialize::<config::Puzzle>() {
                     if let Ok(record) = result {
                         if record.rating >= min_rating && record.rating <= max_rating &&
+                                record.popularity >= min_popularity &&
                                 record.themes.contains(theme.get_tag_name()) {
                             puzzles.push(record);
                         }
@@ -433,6 +444,15 @@ impl Tab for SearchTab {
                 ),
                 Text::new(self.slider_max_rating_value.to_string())
                 ].width(Length::Fill),
+            row![
+                Text::new(lang::tr(&self.lang, "min_popularity")),
+                Slider::new(
+                    -100..=100,
+                    self.slider_min_popularity,
+                    SearchMesssage::SliderMinPopularityChanged,
+                ),
+                Text::new(self.slider_min_popularity.to_string())
+                ].width(Length::Fill),
             Text::new(lang::tr(&self.lang, "theme_label")),
             PickList::new(
                 PickListWrapper::get_themes(self.lang),
@@ -450,7 +470,7 @@ impl Tab for SearchTab {
                 PickListWrapper::get_variations(self.lang, Some(&self.opening.item)),
                 Some(self.variation.clone()),
                 SearchMesssage::SelectVariation
-            )
+            ),
         ].padding([0, 0, 30, 0]).spacing(10).align_items(Alignment::Center);
 
         if self.opening.item != Openings::Any {
