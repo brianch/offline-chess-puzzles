@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+use download_db::download_lichess_db;
 use eval::{Engine, EngineStatus};
 use iced::widget::container::Id;
 use iced::advanced::widget::Id as GenericId;
@@ -12,7 +13,7 @@ use std::path::Path;
 use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
+use iced::widget::{button, container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
 use iced::{Application, Element, Rectangle, Size, Subscription};
 use iced::{executor, alignment, Command, Alignment, Length, Settings };
 use iced::window::{self, Screenshot};
@@ -33,6 +34,7 @@ use rand::seq::SliceRandom;
 mod config;
 mod styles;
 mod search_tab;
+pub mod download_db;
 use search_tab::{SearchMesssage, SearchTab};
 
 mod settings;
@@ -58,6 +60,7 @@ extern crate serde_derive;
 
 const HEADER_SIZE: u16 = 32;
 const TAB_PADDING: u16 = 16;
+const LICHESS_DB_URL: &str = "https://database.lichess.org/lichess_db_puzzle.csv.zst";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PositionGUI {
@@ -75,6 +78,7 @@ pub enum TabId {
 #[derive(Default)]
 struct Flags {
     maximize: bool,
+    has_lichess_db: bool,
 }
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord)]
@@ -119,6 +123,9 @@ pub enum Message {
     FavoritePuzzle,
     MinimizeUI,
     SaveMaximizedStatusAndExit(bool),
+    StartDBDownload,
+    DBDownloadFinished,
+    DownloadProgress(String),
 }
 
 struct SoundPlayback {
@@ -164,6 +171,7 @@ impl SoundPlayback {
 
 //#[derive(Clone)]
 struct OfflinePuzzles {
+    has_db: bool,
     from_square: Option<Square>,
     board: Board,
     last_move_from: Option<Square>,
@@ -179,6 +187,8 @@ struct OfflinePuzzles {
     engine_sender: Option<Sender<String>>,
     engine_move: String,
 
+    downloading_db: bool,
+    download_progress: String,
     active_tab: TabId,
     search_tab: SearchTab,
     settings_tab: SettingsTab,
@@ -191,9 +201,10 @@ struct OfflinePuzzles {
     piece_imgs: Vec<Handle>,
 }
 
-impl Default for OfflinePuzzles {
-    fn default() -> Self {
+impl OfflinePuzzles {
+    fn new(has_lichess_db: bool) -> Self {
         Self {
+            has_db: has_lichess_db,
             from_square: None,
             board: Board::default(),
             last_move_from: None,
@@ -212,6 +223,8 @@ impl Default for OfflinePuzzles {
             engine_sender: None,
             engine_move: String::new(),
 
+            downloading_db: false,
+            download_progress: String::new(),
             puzzle_status: lang::tr(&config::SETTINGS.lang, "use_search"),
             search_tab: SearchTab::new(),
             settings_tab: SettingsTab::new(),
@@ -226,9 +239,7 @@ impl Default for OfflinePuzzles {
             piece_imgs: get_image_handles(&config::SETTINGS.piece_theme),
         }
     }
-}
 
-impl OfflinePuzzles {
     fn verify_and_make_move(&mut self, from: Square, to: Square) {
         let side =
         match self.game_mode {
@@ -466,7 +477,7 @@ impl Application for OfflinePuzzles {
 
     fn new(flags: Flags) -> (OfflinePuzzles, Command<Message>) {
         (
-            Self::default(),
+            Self::new(flags.has_lichess_db),
             Command::batch([
                 iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES)).map(Message::ChessFontLoaded),
                 iced::window::maximize(window::Id::MAIN, flags.maximize),
@@ -735,6 +746,16 @@ impl Application for OfflinePuzzles {
                         Command::none()
                     }
                 }
+            } (_, Message::StartDBDownload) => {
+                self.downloading_db = true;
+                Command::none()
+            } (_, Message::DBDownloadFinished) => {
+                self.downloading_db = false;
+                self.has_db = true;
+                Command::none()
+            } (_, Message::DownloadProgress(progress)) => {
+                self.download_progress = progress;
+                Command::none()
             } (_, Message::FavoritePuzzle) => {
                 db::toggle_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
                 Command::none()
@@ -777,7 +798,17 @@ impl Application for OfflinePuzzles {
     fn subscription(&self) -> Subscription<Message> {
         match self.engine_state {
             EngineStatus::TurnedOff => {
-                event::listen().map(Message::EventOccurred)
+                if self.downloading_db {
+                    Subscription::batch(vec![
+                        download_lichess_db(
+                            String::from(LICHESS_DB_URL),
+                            config::SETTINGS.puzzle_db_location.clone()
+                        ),
+                        event::listen().map(Message::EventOccurred)
+                    ])
+                } else {
+                    event::listen().map(Message::EventOccurred)
+                }
             } _ => {
                 Subscription::batch(vec![
                     Engine::run_engine(self.engine.clone()),
@@ -788,52 +819,95 @@ impl Application for OfflinePuzzles {
     }
 
     fn view(&self) -> Element<Message, Theme, iced::Renderer> {
-        let has_previous = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle > 0;
-        let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
-        let is_fav = if self.puzzle_tab.puzzles.is_empty() {
-            false
-        } else {
-            db::is_favorite(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].puzzle_id)
-        };
-        let resp = responsive(move |size| {
-            gen_view(
-                self.game_mode,
-                self.puzzle_tab.current_puzzle_side,
-                self.settings_tab.flip_board,
-                self.settings_tab.show_coordinates,
-                &self.board,
-                &self.analysis.current_position(),
-                self.from_square,
-                self.last_move_from,
-                self.last_move_to,
-                self.hint_square,
-                self.settings_tab.saved_configs.piece_theme,
-                &self.puzzle_status,
-                is_fav,
-                has_more_puzzles,
-                has_previous,
-                self.analysis_history.len(),
-                self.puzzle_tab.current_puzzle_move,
-                self.puzzle_tab.game_status,
-                &self.active_tab,
-                &self.engine_eval,
-                &self.engine_move,
+        if self.has_db {
+            let has_previous = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle > 0;
+            let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
+            let is_fav = if self.puzzle_tab.puzzles.is_empty() {
+                false
+            } else {
+                db::is_favorite(&self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].puzzle_id)
+            };
+            let resp = responsive(move |size| {
+                gen_view(
+                    self.game_mode,
+                    self.puzzle_tab.current_puzzle_side,
+                    self.settings_tab.flip_board,
+                    self.settings_tab.show_coordinates,
+                    &self.board,
+                    &self.analysis.current_position(),
+                    self.from_square,
+                    self.last_move_from,
+                    self.last_move_to,
+                    self.hint_square,
+                    self.settings_tab.saved_configs.piece_theme,
+                    &self.puzzle_status,
+                    is_fav,
+                    has_more_puzzles,
+                    has_previous,
+                    self.analysis_history.len(),
+                    self.puzzle_tab.current_puzzle_move,
+                    self.puzzle_tab.game_status,
+                    &self.active_tab,
+                    &self.engine_eval,
+                    &self.engine_move,
 
-                self.engine_state != EngineStatus::TurnedOff,
-                self.search_tab.tab_label(),
-                self.settings_tab.tab_label(),
-                self.puzzle_tab.tab_label(),
-                self.search_tab.view(),
-                self.settings_tab.view(),
-                self.puzzle_tab.view(),
-                &self.lang,
-                size,
-                self.mini_ui,
-                &self.piece_imgs,
-            )});
-        Container::new(resp)
-            .padding(1)
-            .into()
+                    self.engine_state != EngineStatus::TurnedOff,
+                    self.search_tab.tab_label(),
+                    self.settings_tab.tab_label(),
+                    self.puzzle_tab.tab_label(),
+                    self.search_tab.view(),
+                    self.settings_tab.view(),
+                    self.puzzle_tab.view(),
+                    &self.lang,
+                    size,
+                    self.mini_ui,
+                    &self.piece_imgs,
+                )});
+            Container::new(resp)
+                .padding(1)
+                .into()
+        } else {
+            let mut col = Column::new()
+                .push(
+                    container(
+                        Text::new(lang::tr(&self.lang, "db_not_found"))
+                        .size(30)
+                        .width(Length::Fill)
+                        .horizontal_alignment(alignment::Horizontal::Center))
+                    )
+                .push(
+                    Text::new(lang::tr(&self.lang, "do_you_wanna_download"))
+                    .width(Length::Fill)
+                    .horizontal_alignment(alignment::Horizontal::Center))
+                .push(
+                    Text::new(lang::tr(&self.lang, "download_size_info"))
+                    .width(Length::Fill)
+                    .horizontal_alignment(alignment::Horizontal::Center));
+            if self.downloading_db {
+                col = col
+                    .push(
+                        container(button(Text::new("downloading"))).width(Length::Fill).center_x().padding(20)
+                    )
+                    .push(Text::new(&self.download_progress)
+                        .size(20)
+                        .width(Length::Fill)
+                        .horizontal_alignment(alignment::Horizontal::Center)
+                    );
+            } else {
+                col = col.push(
+                    container(
+                        button(Text::new(lang::tr(&self.lang, "download_btn"))).on_press(Message::StartDBDownload)
+                    ).width(Length::Fill).center_x().padding(20)
+                );
+            };
+            Container::new(col)
+                .center_x()
+                .center_y()
+                .height(Length::Fill)
+                .width(Length::Fill)
+                .padding(1)
+                .into()
+        }
     }
 
     fn theme(&self) -> Self::Theme {
@@ -1187,6 +1261,8 @@ trait Tab {
 }
 
 fn main() -> iced::Result {
+    let has_lichess_db = std::path::Path::new(&config::SETTINGS.puzzle_db_location).exists();
+
     OfflinePuzzles::run(Settings {
         window: iced::window::Settings {
             size: Size {
@@ -1198,7 +1274,8 @@ fn main() -> iced::Result {
             ..iced::window::Settings::default()
         },
         flags: Flags {
-            maximize: config::SETTINGS.maximized
+            maximize: config::SETTINGS.maximized,
+            has_lichess_db,
         },
         ..Settings::default()
     })

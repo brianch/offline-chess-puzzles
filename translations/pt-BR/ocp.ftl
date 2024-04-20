@@ -35,6 +35,13 @@ knight = C
 queen = D
 king = R
 
+#Downloader
+db_not_found = Bando de dados do lichess não encontrado
+do_you_wanna_download = Quer baixar agora?
+download_size_info = o download é de aprox. 200mb, e mais de 650mb depois de descompactado.
+downloading = Baixando...
+download_btn = Baixar
+
 #Search Tab
 lichess_db = Banco de Dados do Lichess
 my_favories = Meus Favoritos

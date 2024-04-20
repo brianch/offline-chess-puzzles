@@ -35,6 +35,13 @@ knight = N
 queen = Q
 king = K
 
+#Downloader
+db_not_found = Lichess Database not found
+do_you_wanna_download = Do you want to download it now?
+download_size_info = the download is around 200mb, and larger than 650mb when decompressed.
+downloading = Downloading...
+download_btn = Download
+
 #Search Tab
 lichess_db = Lichess DB
 my_favories = My Favorites
