@@ -97,8 +97,8 @@ screenshot = Guardar como imagen
 export_pdf_btn = Exportar ejercícios para PDF
 no_puzzle = Ningún ejercício cargado
 
-pdf_black_to_move = ) Negras juegan. Ultimo mov.:{" "}
-pdf_white_to_move = ) Brancas juegan. Ultimo mov.: ...{" "}
+pdf_black_to_move = ) Juegan negras. Ultimo mov.:{" "}
+pdf_white_to_move = ) Juegan blancas. Ultimo mov.: ...{" "}
 
 #THEMES
 #============================================================
