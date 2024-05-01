@@ -38,18 +38,18 @@ queen = D
 king = R
 
 #Downloader
-db_not_found = Lichess Database not found
-do_you_wanna_download = Do you want to download it now?
-download_size_info = the download is around 200mb, and larger than 650mb when decompressed.
-downloading = Downloading...
-download_btn = Download
+db_not_found = La base de données Lichess n’est pas installée
+do_you_wanna_download = Voulez-vous la télécharger maintenant ?
+download_size_info = Le fichier à télécharger a une taille d’environ 200 Mo et sera décompressé (taille supérieure à 650 Mo).
+downloading = Téléchargement en cours...
+download_btn = Télécharger
 
 #Search Tab
 lichess_db = BdD Lichess
 my_favories = Mes favoris
 min_rating = Classement minimal:{" "}
 max_rating = Classement maximal:{" "}
-min_popularity = Popularity (-100 to 100):{" "}
+min_popularity = Popularité minimale:{" "}
 theme_label = Thème tactique:
 in_opening = Issu de l'ouverture:
 in_the_variation = Avec la variante:

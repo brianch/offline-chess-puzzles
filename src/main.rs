@@ -886,7 +886,7 @@ impl Application for OfflinePuzzles {
             if self.downloading_db {
                 col = col
                     .push(
-                        container(button(Text::new("downloading"))).width(Length::Fill).center_x().padding(20)
+                        container(button(Text::new(lang::tr(&self.lang, "downloading")))).width(Length::Fill).center_x().padding(20)
                     )
                     .push(Text::new(&self.download_progress)
                         .size(20)
