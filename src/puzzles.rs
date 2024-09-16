@@ -81,10 +81,6 @@ impl PuzzleTab {
         }
         promotion
     }
-
-    pub fn is_playing(&self) -> bool {
-        self.game_status != GameStatus::NoPuzzles
-    }
 }
 
 impl Tab for PuzzleTab {

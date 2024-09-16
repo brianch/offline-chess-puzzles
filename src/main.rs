@@ -253,7 +253,7 @@ impl OfflinePuzzles {
             };
         // If the user clicked on another piece of his own side,
         // just replace the previous selection and exit
-        if self.puzzle_tab.is_playing() && color == Some(side) {
+        if self.puzzle_tab.game_status == GameStatus::Playing && color == Some(side) {
             self.from_square = Some(to);
             return;
         }
@@ -503,7 +503,7 @@ impl Application for OfflinePuzzles {
                         config::GameMode::Puzzle => { self.board.color_on(pos) }
                     };
 
-                if (self.puzzle_tab.is_playing() || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
+                if (self.puzzle_tab.game_status == GameStatus::Playing || self.game_mode == config::GameMode::Analysis) && color == Some(side) {
                     self.hint_square = None;
                     self.from_square = Some(pos);
                 }
@@ -777,12 +777,16 @@ impl Application for OfflinePuzzles {
                     iced::window::resize(window::Id::MAIN, new_size)
                 }
             } (_, Message::DropPiece(square, cursor_pos, _bounds)) => {
-                iced_drop::zones_on_point(
-                    move |zones| Message::HandleDropZones(square, zones),
-                    cursor_pos,
-                    None,
-                    None,
-                )
+                if self.puzzle_tab.game_status == GameStatus::Playing {
+                    iced_drop::zones_on_point(
+                        move |zones| Message::HandleDropZones(square, zones),
+                        cursor_pos,
+                        None,
+                        None,
+                    )
+                } else {
+                    Command::none()
+                }
             } (_, Message::HandleDropZones(from, zones)) => {
                 if !zones.is_empty() {
                     let id: &GenericId = &zones[0].0.clone();
