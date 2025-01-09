@@ -1,8 +1,8 @@
 {
   "engine_path": null,
   "engine_limit": "depth 40",
-  "window_width": 1010,
-  "window_height": 680,
+  "window_width": 1010.0,
+  "window_height": 680.0,
   "maximized": false,
   "puzzle_db_location": "puzzles/lichess_db_puzzle.csv",
   "piece_theme": "Cburnett",

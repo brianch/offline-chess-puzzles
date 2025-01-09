@@ -1,10 +1,10 @@
 use iced::widget::{Container, column as col, row, Scrollable, Text, TextInput, Button};
-use iced::{alignment, Command, Alignment, Length, Element};
+use iced::window::Id;
+use iced::{alignment, Alignment, Element, Length, Task, Theme};
 use chess::{Color, Piece};
 use iced_aw::TabLabel;
 use rfd::AsyncFileDialog;
 
-use crate::styles::Theme;
 use crate::{Message, Tab, config, lang};
 
 #[derive(Debug, Clone)]
@@ -23,6 +23,7 @@ pub enum GameStatus {
 
 #[derive(Debug, Clone)]
 pub struct PuzzleTab {
+    pub window_id: Option<Id>,
     pub puzzles: Vec<config::Puzzle>,
     pub current_puzzle: usize,
     pub current_puzzle_move: usize,
@@ -35,6 +36,7 @@ pub struct PuzzleTab {
 impl PuzzleTab {
     pub fn new() -> Self {
         PuzzleTab {
+            window_id: None,
             puzzles: Vec::new(),
             current_puzzle: 0,
             current_puzzle_move: 1,
@@ -45,19 +47,19 @@ impl PuzzleTab {
         }
     }
 
-    pub fn update(&mut self, message: PuzzleMessage) -> Command<Message> {
+    pub fn update(&mut self, message: PuzzleMessage) -> Task<Message> {
         match message {
             PuzzleMessage::ChangeTextInputs(_) => {
-                Command::none()
+                Task::none()
             } PuzzleMessage::CopyText(text) => {
                 iced::clipboard::write::<Message>(text)
             } PuzzleMessage::OpenLink(link) => {
                 let _ = open::that_detached(link);
-                Command::none()
+                Task::none()
             } PuzzleMessage::TakeScreenshot => {
-                iced::window::screenshot(iced::window::Id::MAIN, Message::ScreenshotCreated)
+                iced::window::screenshot(self.window_id.unwrap()).map(Message::ScreenshotCreated)
             } PuzzleMessage::ExportToPDF => {
-                Command::perform(PuzzleTab::export(), Message::ExportPDF)
+                Task::perform(PuzzleTab::export(), Message::ExportPDF)
             }
         }
     }
@@ -94,7 +96,7 @@ impl Tab for PuzzleTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message, Theme, iced::Renderer> {
+    fn content(&self) -> Element<'_, Message> {
         let col_puzzle_info = if !self.puzzles.is_empty() && self.current_puzzle < self.puzzles.len() {
             Scrollable::new(col![
                 Text::new(lang::tr(&self.lang, "puzzle_link")),
@@ -131,11 +133,11 @@ impl Tab for PuzzleTab {
                 ],
                 Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot),
                 Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
-            ].padding([0, 0, 30, 0]).spacing(10).align_items(Alignment::Center))
+            ].padding([0, 30]).spacing(10).align_x(Alignment::Center))
         } else {
             Scrollable::new(col![
                     Text::new(lang::tr(&self.lang, "no_puzzle"))
-                    .horizontal_alignment(alignment::Horizontal::Center)
+                    .align_x(alignment::Horizontal::Center)
                     .width(Length::Fill)
                 ].spacing(10))
         };

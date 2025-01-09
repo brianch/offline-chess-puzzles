@@ -1,5 +1,7 @@
-use iced::futures::SinkExt;
-use iced::{Subscription, subscription};
+use iced::futures::Stream;
+use iced::stream;
+use iced::futures::sink::SinkExt;
+use iced::Subscription;
 use std::fs::File;
 use std::io::{Seek, Write};
 use std::io::Cursor;
@@ -25,11 +27,12 @@ pub enum DownloadState {
 }
 
 pub fn download_lichess_db(url: String, path: String) -> Subscription<Message> {
-    struct DownloadDb;
+    Subscription::run_with_id(std::any::TypeId::of::<DownloadState>(), download_stream(url, path))
+}
 
-    subscription::channel(
-        std::any::TypeId::of::<DownloadDb>(),
-        100,
+fn download_stream(url: String, path: String) -> impl Stream<Item = Message> {
+
+    stream::channel(100,
         |mut output| async move  {
             let mut state = DownloadState::StartDownload{ url , path: path.clone()};
             loop {

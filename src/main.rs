@@ -6,16 +6,16 @@ use iced::widget::container::Id;
 use iced::advanced::widget::Id as GenericId;
 use iced::widget::svg::Handle;
 use iced::widget::text::LineHeight;
-use styles::{PieceTheme, Theme};
+use styles::PieceTheme;
 use std::collections::HashMap;
 use std::io::BufReader;
 use std::path::Path;
 use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{button, container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
-use iced::{Application, Element, Rectangle, Size, Subscription};
-use iced::{executor, alignment, Command, Alignment, Length, Settings };
+use iced::widget::{button, center, container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
+use iced::{Element, Rectangle, Size, Subscription, Theme};
+use iced::{alignment, Task, Alignment, Length};
 use iced::window::{self, Screenshot};
 use iced::event::{self, Event};
 use std::borrow::Cow;
@@ -75,12 +75,6 @@ pub enum TabId {
     CurrentPuzzle,
 }
 
-#[derive(Default)]
-struct Flags {
-    maximize: bool,
-    has_lichess_db: bool,
-}
-
 #[derive(Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord)]
 enum PieceWithColor {
     WhitePawn, WhiteRook, WhiteKnight, WhiteBishop, WhiteQueen, WhiteKing,
@@ -95,7 +89,7 @@ impl PieceWithColor {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    ChessFontLoaded(Result<(), iced::font::Error>),
+    WindowInitialized(Option<iced::window::Id>),
     SelectSquare(Square),
     Search(SearchMesssage),
     Settings(SettingsMessage),
@@ -169,8 +163,80 @@ impl SoundPlayback {
     }
 }
 
+fn get_image_handles(theme: &PieceTheme) -> Vec<Handle> {
+    let mut handles = Vec::<Handle>::with_capacity(12);
+    let theme_str = &theme.to_string();
+
+    handles.insert(PieceWithColor::WhitePawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wP.svg"));
+    handles.insert(PieceWithColor::WhiteRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wR.svg"));
+    handles.insert(PieceWithColor::WhiteKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wN.svg"));
+    handles.insert(PieceWithColor::WhiteBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wB.svg"));
+    handles.insert(PieceWithColor::WhiteQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wQ.svg"));
+    handles.insert(PieceWithColor::WhiteKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wK.svg"));
+
+    handles.insert(PieceWithColor::BlackPawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bP.svg"));
+    handles.insert(PieceWithColor::BlackRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bR.svg"));
+    handles.insert(PieceWithColor::BlackKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bN.svg"));
+    handles.insert(PieceWithColor::BlackBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bB.svg"));
+    handles.insert(PieceWithColor::BlackQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bQ.svg"));
+    handles.insert(PieceWithColor::BlackKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bK.svg"));
+
+    handles
+}
+
+fn gen_square_hashmap() -> HashMap<GenericId, Square> {
+    let mut squares_map = HashMap::new();
+    for square in ALL_SQUARES {
+        squares_map.insert(GenericId::new(square.to_string()), square);
+    }
+    squares_map
+}
+
+// The chess crate has a bug on how it returns the en passant square
+// https://github.com/jordanbray/chess/issues/36
+// For communication with the engine we need to pass the correct value,
+// so this ugly solution is needed.
+fn san_correct_ep(fen: String) -> String {
+    let mut tokens_vec: Vec<&str> = fen.split_whitespace().collect::<Vec<&str>>();
+    let mut new_ep_square = String::from("-");
+    if let Some(en_passant) = tokens_vec.get(3) {
+        if en_passant != &"-" {
+            let rank = if String::from(&en_passant[1..2]).parse::<usize>().unwrap() == 4 {
+                3
+            } else {
+                6
+            };
+            new_ep_square = String::from(&en_passant[0..1]) + &rank.to_string();
+        }
+    }
+    tokens_vec[3] = &new_ep_square;
+    tokens_vec.join(" ")
+}
+
+fn get_notation_string(board: Board, promo_piece: Piece, from: Square, to: Square) -> String {
+
+    let mut move_made_notation = from.to_string() + &to.to_string();
+    let piece = board.piece_on(from);
+    let color = board.color_on(from);
+
+    // Check for promotion and adjust the notation accordingly
+    if let (Some(piece), Some(color)) = (piece, color) {
+        if piece == Piece::Pawn && ((color == Color::White && to.get_rank() == Rank::Eighth) ||
+                                   (color == Color::Black && to.get_rank() == Rank::First)) {
+            match promo_piece {
+                Piece::Rook => move_made_notation += "r",
+                Piece::Knight => move_made_notation += "n",
+                Piece::Bishop => move_made_notation += "b",
+                _ => move_made_notation += "q"
+            }
+        }
+    }
+    move_made_notation
+}
+
 //#[derive(Clone)]
 struct OfflinePuzzles {
+    pub window_id: Option<iced::window::Id>,
     has_db: bool,
     from_square: Option<Square>,
     board: Board,
@@ -201,9 +267,16 @@ struct OfflinePuzzles {
     piece_imgs: Vec<Handle>,
 }
 
+impl Default for OfflinePuzzles {
+    fn default() -> Self {
+        OfflinePuzzles::new(false)
+    }
+}
+
 impl OfflinePuzzles {
-    fn new(has_lichess_db: bool) -> Self {
+    pub fn new(has_lichess_db: bool) -> Self {
         Self {
+            window_id: None,
             has_db: has_lichess_db,
             from_square: None,
             board: Board::default(),
@@ -396,100 +469,19 @@ impl OfflinePuzzles {
         self.puzzle_tab.game_status = GameStatus::Playing;
         self.game_mode = config::GameMode::Puzzle;
     }
-}
 
-fn get_image_handles(theme: &PieceTheme) -> Vec<Handle> {
-    let mut handles = Vec::<Handle>::with_capacity(12);
-    let theme_str = &theme.to_string();
+    // Old Iced application trait stuff
 
-    handles.insert(PieceWithColor::WhitePawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wP.svg"));
-    handles.insert(PieceWithColor::WhiteRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wR.svg"));
-    handles.insert(PieceWithColor::WhiteKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wN.svg"));
-    handles.insert(PieceWithColor::WhiteBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wB.svg"));
-    handles.insert(PieceWithColor::WhiteQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wQ.svg"));
-    handles.insert(PieceWithColor::WhiteKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wK.svg"));
-
-    handles.insert(PieceWithColor::BlackPawn.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bP.svg"));
-    handles.insert(PieceWithColor::BlackRook.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bR.svg"));
-    handles.insert(PieceWithColor::BlackKnight.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bN.svg"));
-    handles.insert(PieceWithColor::BlackBishop.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bB.svg"));
-    handles.insert(PieceWithColor::BlackQueen.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bQ.svg"));
-    handles.insert(PieceWithColor::BlackKing.index(), Handle::from_path(String::from("pieces/") + &theme_str + "/bK.svg"));
-
-    handles
-}
-
-fn gen_square_hashmap() -> HashMap<GenericId, Square> {
-    let mut squares_map = HashMap::new();
-    for square in ALL_SQUARES {
-        squares_map.insert(GenericId::new(square.to_string()), square);
-    }
-    squares_map
-}
-
-// The chess crate has a bug on how it returns the en passant square
-// https://github.com/jordanbray/chess/issues/36
-// For communication with the engine we need to pass the correct value,
-// so this ugly solution is needed.
-fn san_correct_ep(fen: String) -> String {
-    let mut tokens_vec: Vec<&str> = fen.split_whitespace().collect::<Vec<&str>>();
-    let mut new_ep_square = String::from("-");
-    if let Some(en_passant) = tokens_vec.get(3) {
-        if en_passant != &"-" {
-            let rank = if String::from(&en_passant[1..2]).parse::<usize>().unwrap() == 4 {
-                3
-            } else {
-                6
-            };
-            new_ep_square = String::from(&en_passant[0..1]) + &rank.to_string();
-        }
-    }
-    tokens_vec[3] = &new_ep_square;
-    tokens_vec.join(" ")
-}
-
-fn get_notation_string(board: Board, promo_piece: Piece, from: Square, to: Square) -> String {
-
-    let mut move_made_notation = from.to_string() + &to.to_string();
-    let piece = board.piece_on(from);
-    let color = board.color_on(from);
-
-    // Check for promotion and adjust the notation accordingly
-    if let (Some(piece), Some(color)) = (piece, color) {
-        if piece == Piece::Pawn && ((color == Color::White && to.get_rank() == Rank::Eighth) ||
-                                   (color == Color::Black && to.get_rank() == Rank::First)) {
-            match promo_piece {
-                Piece::Rook => move_made_notation += "r",
-                Piece::Knight => move_made_notation += "n",
-                Piece::Bishop => move_made_notation += "b",
-                _ => move_made_notation += "q"
-            }
-        }
-    }
-    move_made_notation
-}
-
-impl Application for OfflinePuzzles {
-    type Executor = executor::Default;
-    type Theme = styles::Theme;
-    type Message = Message;
-    type Flags = Flags;
-
-    fn new(flags: Flags) -> (OfflinePuzzles, Command<Message>) {
+    fn init() -> (OfflinePuzzles, Task<Message>) {
+        let has_lichess_db = std::path::Path::new(&config::SETTINGS.puzzle_db_location).exists();
         (
-            Self::new(flags.has_lichess_db),
-            Command::batch([
-                iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES)).map(Message::ChessFontLoaded),
-                iced::window::maximize(window::Id::MAIN, flags.maximize),
-            ])
+            Self::new(has_lichess_db),
+            Task::discard(iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES))).chain(window::get_latest())
+            .map(Message::WindowInitialized)
         )
     }
 
-    fn title(&self) -> String {
-        String::from("Offline Chess Puzzles")
-    }
-
-    fn update(&mut self, message: self::Message) -> Command<Message> {
+    fn update(&mut self, message: self::Message) -> Task<Message> {
         match (self.from_square, message) {
             (None, Message::SelectSquare(pos)) => {
                 let side =
@@ -507,16 +499,16 @@ impl Application for OfflinePuzzles {
                     self.hint_square = None;
                     self.from_square = Some(pos);
                 }
-                Command::none()
+                Task::none()
             } (Some(from), Message::SelectSquare(to)) if from != to => {
                 self.verify_and_make_move(from, to);
-                Command::none()
+                Task::none()
             } (Some(_), Message::SelectSquare(to)) => {
                 self.from_square = Some(to);
-                Command::none()
+                Task::none()
             } (_, Message::TabSelected(selected)) => {
                 self.active_tab = selected;
-                Command::none()
+                Task::none()
             } (_, Message::Settings(message)) => {
                 self.settings_tab.update(message)
             } (_, Message::SelectMode(message)) => {
@@ -531,7 +523,7 @@ impl Application for OfflinePuzzles {
                     }
                     self.analysis_history.truncate(self.puzzle_tab.current_puzzle_move);
                 }
-                Command::none()
+                Task::none()
             } (_, Message::ShowHint) => {
                 let moves = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect::<Vec<&str>>();
                 if !moves.is_empty() && moves.len() > self.puzzle_tab.current_puzzle_move {
@@ -540,17 +532,17 @@ impl Application for OfflinePuzzles {
                     self.hint_square = None;
                 }
 
-                Command::none()
+                Task::none()
             } (_, Message::ShowNextPuzzle) => {
                 self.puzzle_tab.current_puzzle += 1;
                 self.load_puzzle(false);
-                Command::none()
+                Task::none()
             } (_, Message::ShowPreviousPuzzle) => {
                 if self.puzzle_tab.current_puzzle > 0 && self.game_mode == config::GameMode::Puzzle {
                     self.puzzle_tab.current_puzzle -= 1;
                     self.load_puzzle(false);
                 }
-                Command::none()
+                Task::none()
             } (_, Message::GoBackMove) => {
                 if self.game_mode == config::GameMode::Analysis && self.analysis_history.len() > self.puzzle_tab.current_puzzle_move {
                     self.analysis_history.pop();
@@ -561,10 +553,10 @@ impl Application for OfflinePuzzles {
                         }
                     }
                 }
-                Command::none()
+                Task::none()
             } (_, Message::RedoPuzzle) => {
                 self.load_puzzle(false);
-                Command::none()
+                Task::none()
             } (_, Message::LoadPuzzle(puzzles_vec)) => {
                 self.from_square = None;
                 self.search_tab.show_searching_msg = false;
@@ -595,7 +587,7 @@ impl Application for OfflinePuzzles {
                     self.puzzle_tab.game_status = GameStatus::NoPuzzles;
                     self.puzzle_status = lang::tr(&self.lang, "no_puzzle_found");
                 }
-                Command::none()
+                Task::none()
             } (_, Message::ChangeSettings(message)) => {
                 if let Some(settings) = message {
                     self.search_tab.piece_theme_promotion = self.settings_tab.piece_theme;
@@ -609,19 +601,19 @@ impl Application for OfflinePuzzles {
                     self.piece_imgs = get_image_handles(&self.settings_tab.piece_theme);
                     self.search_tab.promotion_piece_img = search_tab::gen_piece_vec(&self.settings_tab.piece_theme);
                 }
-                Command::none()
+                Task::none()
             }
              (_, Message::PuzzleInfo(message)) => {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
             } (_, Message::ScreenshotCreated(screenshot)) => {
-                Command::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
+                Task::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
             } (_, Message::SaveScreenshot(img_and_path)) => {
                 let (crop_height, crop_width) = if self.settings_tab.show_coordinates {
-                    (self.settings_tab.window_height - 118, self.settings_tab.window_height - 123)
+                    (self.settings_tab.window_height - 118., self.settings_tab.window_height - 123.)
                 } else {
-                    (self.settings_tab.window_height - 128, self.settings_tab.window_height - 128)
+                    (self.settings_tab.window_height - 128., self.settings_tab.window_height - 128.)
                 };
                 if let Some(img_and_path) = img_and_path {
                     let screenshot = img_and_path.0;
@@ -629,8 +621,8 @@ impl Application for OfflinePuzzles {
                     let crop = screenshot.crop(Rectangle::<u32> {
                         x: 0,
                         y: 0,
-                        width: crop_width,
-                        height: crop_height,
+                        width: crop_width as u32,
+                        height: crop_height as u32,
                     });
                     if let Ok (screenshot) = crop {
                         let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.bytes.to_vec());
@@ -639,46 +631,43 @@ impl Application for OfflinePuzzles {
                         }
                     }
                 }
-                Command::none()
+                Task::none()
             } (_, Message::ExportPDF(file_path)) => {
                 if let Some(file_path) = file_path {
                     export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang, file_path);
                 }
-                Command::none()
+                Task::none()
             } (_, Message::EventOccurred(event)) => {
-                if let Event::Window(window::Id::MAIN, window::Event::CloseRequested) = event {
+                if let Event::Window(window::Event::CloseRequested) = event {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
-                            iced::window::fetch_maximized(
-                                window::Id::MAIN,
-                                Message::SaveMaximizedStatusAndExit
-                            )
+                            iced::window::get_maximized(self.window_id.unwrap()).map(Message::SaveMaximizedStatusAndExit)
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
                             }
-                            Command::none()
+                            Task::none()
                         }
                     }
-                } else if let Event::Window(window::Id::MAIN, window::Event::Resized { width, height }) = event {
+                } else if let Event::Window(window::Event::Resized(size)) = event {
                     if !self.mini_ui {
-                        self.settings_tab.window_width = width;
-                        self.settings_tab.window_height = height;
+                        self.settings_tab.window_width = size.width;
+                        self.settings_tab.window_height = size.height;
                     }
-                    Command::none()
+                    Task::none()
                 } else {
-                    Command::none()
+                    Task::none()
                 }
             } (_, Message::SaveMaximizedStatusAndExit(is_maximized)) => {
                 self.settings_tab.maximized = is_maximized;
                 self.settings_tab.save_window_size();
-                window::close(window::Id::MAIN)
+                window::close(self.window_id.unwrap())
             } (_, Message::EngineFileChosen(engine_path)) => {
                 if let Some(engine_path) = engine_path {
                     self.settings_tab.engine_path = engine_path.clone();
                     self.engine.engine_path = engine_path;
                 }
-                Command::none()
+                Task::none()
             } (_, Message::StartEngine) => {
                 match self.engine_state {
                     EngineStatus::TurnedOff => {
@@ -694,24 +683,24 @@ impl Application for OfflinePuzzles {
                         }
                     }
                 }
-                Command::none()
+                Task::none()
             } (_, Message::EngineStopped(exit)) => {
                 self.engine_state = EngineStatus::TurnedOff;
                 if exit {
                     self.settings_tab.save_window_size();
-                    window::close(window::Id::MAIN)
+                    window::close(self.window_id.unwrap())
                 } else {
                     self.engine_eval = String::new();
                     self.engine_move = String::new();
-                    Command::none()
+                    Task::none()
                 }
             } (_, Message::EngineReady(sender)) => {
                 self.engine_sender = Some(sender);
-                Command::none()
+                Task::none()
             } (_, Message::UpdateEval(eval)) => {
                 match self.engine_state {
                     EngineStatus::TurnedOff => {
-                        Command::none()
+                        Task::none()
                     } _ => {
                         let (eval, best_move) = eval;
                         if let Some(eval_str) = eval {
@@ -724,7 +713,7 @@ impl Application for OfflinePuzzles {
                                     } 0 => {
                                         self.engine_eval = lang::tr(&self.lang, "mate");
                                         self.engine_move = String::from("");
-                                        return Command::none();
+                                        return Task::none();
                                     } _ => {
                                         self.engine_eval = lang::tr(&self.lang, "mate_in") + &(-distance_to_mate_num).to_string();
                                     }
@@ -743,38 +732,40 @@ impl Application for OfflinePuzzles {
                                 self.engine_move = best_move;
                             }
                         }
-                        Command::none()
+                        Task::none()
                     }
                 }
             } (_, Message::StartDBDownload) => {
                 self.downloading_db = true;
-                Command::none()
+                Task::none()
             } (_, Message::DBDownloadFinished) => {
                 self.downloading_db = false;
                 self.has_db = true;
-                Command::none()
+                Task::none()
             } (_, Message::DownloadProgress(progress)) => {
                 self.download_progress = progress;
-                Command::none()
+                Task::none()
             } (_, Message::FavoritePuzzle) => {
                 db::toggle_favorite(self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].clone());
-                Command::none()
-            } (_, Message::ChessFontLoaded(_)) => {
-                Command::none()
+                Task::none()
+            } (_, Message::WindowInitialized(id)) => {
+                self.window_id = id;
+                self.puzzle_tab.window_id = id;
+                iced::window::maximize(self.window_id.unwrap(), self.settings_tab.maximized)
             } (_, Message::MinimizeUI) => {
                 if self.mini_ui {
                     self.mini_ui = false;
                     let new_size = Size::new(self.settings_tab.window_width as f32, self.settings_tab.window_height as f32);
-                    iced::window::resize(window::Id::MAIN, new_size)
+                    iced::window::resize(self.window_id.unwrap(), new_size)
                 } else {
                     self.mini_ui = true;
                     let new_size =
                         // "110" accounts for the buttons below the board, since the board
                         // is a square, we make the width the same as the height,
                         // with just a bit extra for the > button
-                        Size::new(((self.settings_tab.window_height - 120) + 25) as f32,
+                        Size::new((self.settings_tab.window_height - 120.) + 25.,
                         self.settings_tab.window_height as f32);
-                    iced::window::resize(window::Id::MAIN, new_size)
+                    iced::window::resize(self.window_id.unwrap(), new_size)
                 }
             } (_, Message::DropPiece(square, cursor_pos, _bounds)) => {
                 if self.puzzle_tab.game_status == GameStatus::Playing {
@@ -785,7 +776,7 @@ impl Application for OfflinePuzzles {
                         None,
                     )
                 } else {
-                    Command::none()
+                    Task::none()
                 }
             } (_, Message::HandleDropZones(from, zones)) => {
                 if !zones.is_empty() {
@@ -794,7 +785,7 @@ impl Application for OfflinePuzzles {
                         self.verify_and_make_move(from, *to);
                     }
                 }
-                Command::none()
+                Task::none()
             }
         }
     }
@@ -815,7 +806,8 @@ impl Application for OfflinePuzzles {
                 }
             } _ => {
                 Subscription::batch(vec![
-                    Engine::run_engine(self.engine.clone()),
+                    //Engine::run_engine(&self.engine.clone()),
+                    self.engine.run_engine(),
                     event::listen().map(Message::EventOccurred)
                 ])
             }
@@ -877,45 +869,41 @@ impl Application for OfflinePuzzles {
                         Text::new(lang::tr(&self.lang, "db_not_found"))
                         .size(30)
                         .width(Length::Fill)
-                        .horizontal_alignment(alignment::Horizontal::Center))
+                        .align_x(alignment::Horizontal::Center))
                     )
                 .push(
                     Text::new(lang::tr(&self.lang, "do_you_wanna_download"))
                     .width(Length::Fill)
-                    .horizontal_alignment(alignment::Horizontal::Center))
+                    .align_x(alignment::Horizontal::Center))
                 .push(
                     Text::new(lang::tr(&self.lang, "download_size_info"))
                     .width(Length::Fill)
-                    .horizontal_alignment(alignment::Horizontal::Center));
+                    .align_x(alignment::Horizontal::Center));
             if self.downloading_db {
                 col = col
                     .push(
-                        container(button(Text::new(lang::tr(&self.lang, "downloading")))).width(Length::Fill).center_x().padding(20)
+                        container(button(Text::new(lang::tr(&self.lang, "downloading")))).width(Length::Fill).center_x(Length::Fill).padding(20)
                     )
                     .push(Text::new(&self.download_progress)
                         .size(20)
                         .width(Length::Fill)
-                        .horizontal_alignment(alignment::Horizontal::Center)
+                        .align_x(alignment::Horizontal::Center)
                     );
             } else {
                 col = col.push(
                     container(
                         button(Text::new(lang::tr(&self.lang, "download_btn"))).on_press(Message::StartDBDownload)
-                    ).width(Length::Fill).center_x().padding(20)
+                    ).width(Length::Fill).center_x(Length::Fill).padding(20)
                 );
             };
-            Container::new(col)
-                .center_x()
-                .center_y()
-                .height(Length::Fill)
-                .width(Length::Fill)
+            center(col)
                 .padding(1)
                 .into()
         }
     }
 
-    fn theme(&self) -> Self::Theme {
-        self.settings_tab.board_theme
+    fn theme(&self) -> iced::Theme {
+        iced::Theme::custom(String::from("Theme"), self.settings_tab.board_theme.palette().into())
     }
 }
 
@@ -961,8 +949,8 @@ fn gen_view<'a>(
 ) -> Element<'a, Message, Theme, iced::Renderer> {
 
     let font = piece_theme == PieceTheme::FontAlpha;
-    let mut board_col = Column::new().spacing(0).align_items(Alignment::Center);
-    let mut board_row = Row::new().spacing(0).align_items(Alignment::Center);
+    let mut board_col = Column::new().spacing(0).align_x(Alignment::Center);
+    let mut board_row = Row::new().spacing(0).align_y(Alignment::Center);
 
     let is_white = (current_puzzle_side == Color::White) ^ flip_board;
 
@@ -1017,10 +1005,10 @@ fn gen_view<'a>(
                     from_square == Some(pos)
                 };
             if font {
-                let square_style :styles::ButtonStyle = if selected {
-                    styles::ButtonStyle::SelectedPaper
+                let square_style: styles::ChessBtn = if selected {
+                    styles::btn_style_light_square
                 } else {
-                    styles::ButtonStyle::Paper
+                    styles::btn_style_paper
                 };
 
                 if let Some(piece) = piece {
@@ -1059,7 +1047,7 @@ fn gen_view<'a>(
                         .height(board_height)
                         .font(config::CHESS_ALPHA)
                         .size(board_height)
-                        .vertical_alignment(alignment::Vertical::Center)
+                        .align_y(alignment::Vertical::Center)
                         .line_height(LineHeight::Absolute(board_height.into())
                     ))
                 .padding(0)
@@ -1067,20 +1055,27 @@ fn gen_view<'a>(
                 .style(square_style)
                 );
             } else {
-                let square_style :styles::ButtonStyle = if light_square {
+                let square_style: styles::ChessBtn;
+                let container_style: styles::ChessboardContainer;
+
+                if light_square {
                     if selected {
-                        styles::ButtonStyle::SelectedLightSquare
+                        square_style = styles::btn_style_selected_light_square;
+                        container_style = styles::container_style_selected_light_square;
                     } else {
-                        styles::ButtonStyle::LightSquare
+                        square_style = styles::btn_style_light_square;
+                        container_style = styles::container_style_light_square;
                     }
                 } else {
-                    #[allow(clippy::collapsible_else_if)]
                     if selected {
-                        styles::ButtonStyle::SelectedDarkSquare
+                        square_style = styles::btn_style_selected_dark_square;
+                        container_style = styles::container_style_selected_dark_square;
                     } else {
-                        styles::ButtonStyle::DarkSquare
+                        square_style = styles::btn_style_dark_square;
+                        container_style = styles::container_style_dark_square;
                     }
-                };
+                }
+
                 if let Some(piece) = piece {
                     let piece_index = if color.unwrap() == Color::White {
                         match piece {
@@ -1108,7 +1103,7 @@ fn gen_view<'a>(
                                 Svg::new(imgs[piece_index].clone()).width(board_height)
                                 .height(board_height)
                             ).drag_hide(true).drag_center(true).on_drop(move |point, rect| Message::DropPiece(pos, point, rect)).on_click(Message::SelectSquare(pos))
-                        ).style(square_style).id(Id::new(pos.to_string()))
+                        ).style(container_style).id(Id::new(pos.to_string()))
                      );
                 } else {
                     board_row = board_row.push(container(
@@ -1134,7 +1129,7 @@ fn gen_view<'a>(
             );
         }
         board_col = board_col.push(board_row);
-        board_row = Row::new().spacing(0).align_items(Alignment::Center);
+        board_row = Row::new().spacing(0).align_y(Alignment::Center);
     }
     if show_coordinates {
         if is_white {
@@ -1166,7 +1161,7 @@ fn gen_view<'a>(
         Text::new(lang::tr(lang, "mode")),
         Radio::new(lang::tr(lang, "mode_puzzle"), config::GameMode::Puzzle, Some(game_mode), Message::SelectMode),
         Radio::new(lang::tr(lang, "mode_analysis"), config::GameMode::Analysis, Some(game_mode), Message::SelectMode)
-    ].spacing(10).padding(10).align_items(Alignment::Center);
+    ].spacing(10).padding(10).align_y(Alignment::Center);
 
     let fav_label = if is_fav {
         lang::tr(lang, "unfav")
@@ -1225,7 +1220,7 @@ fn gen_view<'a>(
     }
     if  mini_ui {
         let button_mini = Button::new(Text::new(">")).on_press(Message::MinimizeUI);
-        row![board_col,button_mini].spacing(5).align_items(Alignment::Start).into()
+        row![board_col,button_mini].spacing(5).align_y(Alignment::Start).into()
     } else {
         let button_mini = Button::new(Text::new("<")).on_press(Message::MinimizeUI);
         let tabs = Tabs::new(Message::TabSelected)
@@ -1233,9 +1228,10 @@ fn gen_view<'a>(
                 .push(TabId::Settings, settings_tab_label, settings_tab)
                 .push(TabId::CurrentPuzzle ,puzzle_tab_label, puzzle_tab)
                 .tab_bar_position(iced_aw::TabBarPosition::Top)
+                .tab_bar_style(styles::tab_style)
                 .set_active_tab(active_tab);
 
-        row![board_col,button_mini,tabs].spacing(5).align_items(Alignment::Start).into()
+        row![board_col,button_mini,tabs].spacing(5).align_y(Alignment::Start).into()
     }
 }
 
@@ -1246,7 +1242,7 @@ trait Tab {
 
     fn tab_label(&self) -> TabLabel;
 
-    fn view(&self) -> Element<Message, Theme, iced::Renderer> {
+    fn view(&self) -> Element<'_, Self::Message> {
         let column = Column::new()
             .spacing(20)
             .push(Text::new(self.title()).size(HEADER_SIZE))
@@ -1261,14 +1257,11 @@ trait Tab {
             .into()
     }
 
-    fn content(&self) -> Element<Message, Theme, iced::Renderer>;
+    fn content(&self) -> Element<'_, Self::Message>;
 }
 
 fn main() -> iced::Result {
-    let has_lichess_db = std::path::Path::new(&config::SETTINGS.puzzle_db_location).exists();
-
-    OfflinePuzzles::run(Settings {
-        window: iced::window::Settings {
+    let window_settings = iced::window::Settings {
             size: Size {
                 width: config::SETTINGS.window_width as f32, //(config::SETTINGS.square_size * 8) as u32 + 450,
                 height: config::SETTINGS.window_height as f32,//(config::SETTINGS.square_size * 8) as u32 + 120,
@@ -1276,11 +1269,11 @@ fn main() -> iced::Result {
             resizable: true,
             exit_on_close_request: false,
             ..iced::window::Settings::default()
-        },
-        flags: Flags {
-            maximize: config::SETTINGS.maximized,
-            has_lichess_db,
-        },
-        ..Settings::default()
-    })
+        };
+
+    iced::application("Offline Chess Puzzles", OfflinePuzzles::update, OfflinePuzzles::view)
+        .theme(OfflinePuzzles::theme)
+        .subscription(OfflinePuzzles::subscription)
+        .window(window_settings)
+        .run_with(OfflinePuzzles::init)
 }

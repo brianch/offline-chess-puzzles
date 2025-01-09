@@ -7,31 +7,31 @@ edition = "2021"
 [dependencies]
 #iced = {version = "0.10.0", features = ["svg", "tokio", "lazy"] }
 #iced_aw = {version = "0.7.0", default-features = false, features = ["tabs"] }
-iced = { version = "0.12.1", default-features = false, features = ["svg", "tokio", "lazy", "advanced"] }
-iced_aw = { version = "0.8.0", default-features = false, features = ["tabs"] }
-iced_drop = {git = "https://github.com/brianch/iced_drop.git"}
+iced = { version = "0.13.1", default-features = false, features = ["svg", "tokio", "lazy", "advanced"] }
+iced_aw = { version = "0.11.0", default-features = false, features = ["tabs"] }
+iced_drop = {git = "https://github.com/jhannyj/iced_drop.git", rev="d259ec4dff098852d995d3bcaa5551a88330636f"}
 
 rand = "0.8.5"
 chess = "3.2.0"
-csv = "1.3.0"
-serde = "1.0.196"
-serde_derive = "1.0.160"
-serde_json = "1.0.113"
-tokio = { version = "1.36.0", features = ["process", "io-std", "io-util", "sync"] }
-reqwest = "0.12.4"
-zstd = "0.13.1"
-rodio = { version = "0.17.3", default-features = false, features = ["vorbis"] }
-fluent-bundle = "0.15.2"
-intl-memoizer = "0.5.1"
-once_cell = "1.19.0"
-unic-langid = { version = "0.9.4", features = ["macros"] }
-diesel = { version = "2.1.4", features = ["sqlite"] }
+csv = "1.3.1"
+serde = "1.0.217"
+serde_derive = "1.0.217"
+serde_json = "1.0.135"
+tokio = { version = "1.43.0", features = ["process", "io-std", "io-util", "sync"] }
+reqwest = "0.12.12"
+zstd = "0.13.2"
+rodio = { version = "0.20.1", default-features = false, features = ["vorbis"] }
+fluent-bundle = "0.15.3"
+intl-memoizer = "0.5.2"
+once_cell = "1.20.2"
+unic-langid = { version = "0.9.5", features = ["macros"] }
+diesel = { version = "2.2.6", features = ["sqlite"] }
 dotenvy = "0.15.7"
-lopdf = "0.32.0"
-open = "5.0.1"
+lopdf = "0.34.0"
+open = "5.3.2"
 #rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
-rfd = "0.13.0"
-image = { version = "0.24.8", default-features = false, features = ["jpeg"] }
+rfd = "0.15.2"
+image = { version = "0.25.5", default-features = false, features = ["jpeg"] }
 
 [target.'cfg(windows)'.dependencies]
-libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
+libsqlite3-sys = { version = "0.30.1", features = ["bundled"] }

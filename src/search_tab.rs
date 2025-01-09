@@ -1,13 +1,13 @@
 use iced::widget::svg::Handle;
 use iced::widget::{Container, Button, column as col, Text, Radio, row, Row, Svg, PickList, Slider, Scrollable, Space};
 use iced::widget::text::LineHeight;
-use iced::{alignment, Command, Element, Alignment, Length};
+use iced::{alignment, Alignment, Element, Length, Task, Theme};
 use std::io::BufReader;
 
 use iced_aw::TabLabel;
 use chess::{Piece, PROMOTION_PIECES};
 use crate::config::load_config;
-use crate::styles::{PieceTheme, Theme};
+use crate::styles::PieceTheme;
 use crate::{Tab, Message, config, styles, lang, db, openings};
 
 use lang::{DisplayTranslated,PickListWrapper};
@@ -237,33 +237,33 @@ impl SearchTab {
         }
     }
 
-    pub fn update(&mut self, message: SearchMesssage) -> Command<Message> {//config::AppEvents {
+    pub fn update(&mut self, message: SearchMesssage) -> Task<Message> {//config::AppEvents {
         match message {
             SearchMesssage::SliderMinRatingChanged(new_value) => {
                 self.slider_min_rating_value = new_value;
-                Command::none()
+                Task::none()
             } SearchMesssage::SliderMaxRatingChanged(new_value) => {
                 self.slider_max_rating_value = new_value;
-                Command::none()
+                Task::none()
             } SearchMesssage::SliderMinPopularityChanged(new_value) => {
                 self.slider_min_popularity = new_value;
-                Command::none()
+                Task::none()
             } SearchMesssage::SelectTheme(new_theme) => {
                 self.theme = new_theme;
-                Command::none()
+                Task::none()
             } SearchMesssage::SelectOpening(new_opening) => {
                 self.opening = new_opening;
                 self.variation.item = Variation::ANY;
-                Command::none()
+                Task::none()
             } SearchMesssage::SelectVariation(new_variation) => {
                 self.variation = new_variation;
-                Command::none()
+                Task::none()
             } SearchMesssage::SelectOpeningSide(new_opening_side) => {
                 self.opening_side = Some(new_opening_side);
-                Command::none()
+                Task::none()
             } SearchMesssage::SelectPiecePromotion(piece) => {
                 self.piece_to_promote_to = piece;
-                Command::none()
+                Task::none()
             } SearchMesssage::ClickSearch => {
                 self.show_searching_msg = true;
                 SearchTab::save_search_settings(self.slider_min_rating_value,
@@ -272,13 +272,13 @@ impl SearchTab {
 
                 let config = load_config();
                 if self.base == Some(SearchBase::Favorites) {
-                    Command::perform(
+                    Task::perform(
                         SearchTab::search_favs(self.slider_min_rating_value,
                             self.slider_max_rating_value, self.slider_min_popularity,
                             self.theme.item, self.opening.item, self.variation.item.clone(),
                             self.opening_side, config.search_results_limit), Message::LoadPuzzle)
                 } else {
-                    Command::perform(
+                    Task::perform(
                         SearchTab::search(self.slider_min_rating_value,
                             self.slider_max_rating_value, self.slider_min_popularity,
                             self.theme.item, self.opening.item, self.variation.item.clone(),
@@ -286,7 +286,7 @@ impl SearchTab {
                 }
             } SearchMesssage::SelectBase(base) => {
                 self.base = Some(base);
-                Command::none()
+                Task::none()
             }
         }
     }
@@ -418,7 +418,7 @@ impl Tab for SearchTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message, Theme, iced::Renderer> {
+    fn content(&self) -> Element<Message> {
         let mut search_col = col![
             Container::new(
                 row![
@@ -458,31 +458,31 @@ impl Tab for SearchTab {
                 PickListWrapper::get_themes(self.lang),
                 Some(self.theme.clone()),
                 SearchMesssage::SelectTheme
-            ),
+            ).style(styles::pick_list_style).menu_style(styles::menu_style),
             Text::new(lang::tr(&self.lang, "in_opening")),
             PickList::new(
                 PickListWrapper::get_openings(self.lang),
                 Some(self.opening.clone()),
                 SearchMesssage::SelectOpening
-            ),
+            ).style(styles::pick_list_style).menu_style(styles::menu_style),
             Text::new(lang::tr(&self.lang, "in_the_variation")),
             PickList::new(
                 PickListWrapper::get_variations(self.lang, Some(&self.opening.item)),
                 Some(self.variation.clone()),
                 SearchMesssage::SelectVariation
-            ),
-        ].padding([0, 0, 30, 0]).spacing(10).align_items(Alignment::Center);
+            ).style(styles::pick_list_style).menu_style(styles::menu_style),
+        ].padding([0, 30]).spacing(10).align_x(Alignment::Center);
 
         if self.opening.item != Openings::Any {
             let row_color = row![
                 Radio::new(lang::tr(&self.lang, "any"), OpeningSide::Any, self.opening_side, SearchMesssage::SelectOpeningSide),
                 Radio::new(lang::tr(&self.lang, "white"), OpeningSide::White, self.opening_side, SearchMesssage::SelectOpeningSide),
                 Radio::new(lang::tr(&self.lang, "black"), OpeningSide::Black, self.opening_side, SearchMesssage::SelectOpeningSide)
-            ].spacing(5).align_items(Alignment::Center);
+            ].spacing(5).align_y(Alignment::Center);
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
         }
 
-        let mut row_promotion = Row::new().spacing(5).align_items(Alignment::Center);
+        let mut row_promotion = Row::new().spacing(5).align_y(Alignment::Center);
         if self.piece_theme_promotion == PieceTheme::FontAlpha {
             // Promotion piece selector
             for i in 0..4 {
@@ -509,26 +509,26 @@ impl Tab for SearchTab {
                 if self.piece_to_promote_to == piece {
                     text = text.to_uppercase();
                 };
-                row_promotion = row_promotion.push(Row::new().spacing(0).align_items(Alignment::Center)
+                row_promotion = row_promotion.push(Row::new().spacing(0).align_y(Alignment::Center)
                     .push(Button::new(
                         Text::new(text).font(config::CHESS_ALPHA).size(60).line_height(LineHeight::Absolute(60.into()))
                     )
                     .padding(0)
                     .width(60)
                     .height(60)
-                    .style(styles::ButtonStyle::Paper)
+                    .style(styles::btn_style_paper)
                     .on_press(SearchMesssage::SelectPiecePromotion(piece))
                 ));
             }
         } else {
             for piece in PROMOTION_PIECES {
-                let square_style =
+                let square_style: styles::ChessBtn =
                     if self.piece_to_promote_to == piece {
-                        styles::ButtonStyle::DarkSquare
+                        styles::btn_style_dark_square
                     } else {
-                        styles::ButtonStyle::LightSquare
+                        styles::btn_style_light_square
                     };
-                row_promotion = row_promotion.push(Row::new().spacing(5).align_items(Alignment::Center)
+                row_promotion = row_promotion.push(Row::new().spacing(5).align_y(Alignment::Center)
                     .push(Button::new(
                         Svg::new(self.promotion_piece_img[piece.to_index()].clone())
                     )
