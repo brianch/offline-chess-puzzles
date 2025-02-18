@@ -406,7 +406,9 @@ pub fn pick_list_style(theme: &iced::Theme, _status: iced::widget::pick_list::St
         handle_color: palette.success.strong.color,
         background: iced::Background::Color(palette.primary.base.color),
         border: Border {
-            ..Default::default()
+            color: palette.success.strong.color,
+            width: 1.,
+            radius:  0.3.into(),
         }
     }
 }
@@ -417,7 +419,9 @@ pub fn menu_style(theme: &iced::Theme) -> menu::Style {
     menu::Style {
         background: iced::Background::Color(palette.primary.base.color),
         border: Border {
-            ..Default::default()
+            color: palette.success.strong.color,
+            width: 1.,
+            radius:  0.3.into(),
         },
         selected_background: iced::Background::Color(palette.success.base.color),
         selected_text_color: iced::Color::WHITE,
