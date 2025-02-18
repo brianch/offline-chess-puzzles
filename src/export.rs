@@ -263,10 +263,10 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
         Square::from_str(&String::from(&puzzle_moves[0][..2])).unwrap(),
         Square::from_str(&String::from(&puzzle_moves[0][2..4])).unwrap(), PuzzleTab::check_promotion(puzzle_moves[0]));
 
-    let last_move = if board.side_to_move() == Color::White {
-        index.to_string() + &lang::tr(lang, "pdf_black_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap()
+    let (is_white, last_move) = if board.side_to_move() == Color::White {
+        (false, index.to_string() + &lang::tr(lang, "pdf_black_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap())
     } else {
-        index.to_string() + &lang::tr(lang, "pdf_white_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap()
+        (true, index.to_string() + &lang::tr(lang, "pdf_white_to_move") + &config::coord_to_san(&board, String::from(&puzzle_moves[0][0..4]), lang).unwrap())
     };
     board = board.make_move_new(movement);
 
@@ -284,8 +284,15 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
             Operation::new("Td", vec![start_y.into(), start_x.into()]),
             ];
 
-    let ranks = (0..8).rev().collect::<Vec<i32>>();
-    let files = (0..8).collect::<Vec<i32>>();
+    let ranks;
+    let files;
+    if is_white {
+        ranks = (0..8).rev().collect::<Vec<i32>>();
+        files = (0..8).collect::<Vec<i32>>();
+    } else {
+        ranks = (0..8).collect::<Vec<i32>>();
+        files = (0..8).rev().collect::<Vec<i32>>();
+    };
     for rank in ranks {
         let mut rank_string = String::new();
         for file in &files {
