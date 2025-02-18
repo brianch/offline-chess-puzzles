@@ -53,15 +53,16 @@ pub enum TacticalThemes {
     Opening, Middlegame, Endgame, RookEndgame, BishopEndgame, PawnEndgame, KnightEndgame, QueenEndgame, QueenRookEndgame,
     AdvancedPawn, AtackingF2F7, CapturingDefender, DiscoveredAttack, DoubleCheck, ExposedKing, Fork, HangingPiece, KingsideAttack, Pin, QueensideAttack, Sacrifice, Skewer, TrappedPiece,
     Attraction, Clearance, DefensiveMove, Deflection, Interference, Intermezzo, QuietMove, XRayAttack, Zugzwang,
-    Mate, MateIn1, MateIn2, MateIn3, MateIn4, MateIn5, AnastasiaMate, ArabianMate, BackRankMate, BodenMate, DoubleBishopMate, DovetailMate, HookMate, SmotheredMate,
-    Castling, EnPassant, Promotion, UnderPromotion, Equality, Advantage, Crushing,
+    Mate, MateIn1, MateIn2, MateIn3, MateIn4, MateIn5, AnastasiaMate, ArabianMate, BackRankMate, BodenMate, DoubleBishopMate, DovetailMate, HookMate, KillBoxMate, VukovicMate, SmotheredMate,
+    Castling, EnPassant, Promotion, UnderPromotion,
+    Equality, Advantage, Crushing,
     OneMove, Short, Long, VeryLong,
     Master, MasterVsMaster, SuperGM
 }
 
 impl TacticalThemes {
 
-    const ALL: [TacticalThemes; 61] = [
+    const ALL: [TacticalThemes; 63] = [
         TacticalThemes::All,
         TacticalThemes::Opening, TacticalThemes::Middlegame, TacticalThemes::Endgame, TacticalThemes::RookEndgame,
         TacticalThemes::BishopEndgame, TacticalThemes::PawnEndgame, TacticalThemes::KnightEndgame,
@@ -80,11 +81,13 @@ impl TacticalThemes {
         TacticalThemes::Mate, TacticalThemes::MateIn1, TacticalThemes::MateIn2, TacticalThemes::MateIn3,
         TacticalThemes::MateIn4, TacticalThemes::MateIn5, TacticalThemes::AnastasiaMate, TacticalThemes::ArabianMate,
         TacticalThemes::BackRankMate, TacticalThemes::BodenMate, TacticalThemes::DoubleBishopMate,
-        TacticalThemes::DovetailMate, TacticalThemes::HookMate, TacticalThemes::SmotheredMate,
+        TacticalThemes::DovetailMate, TacticalThemes::HookMate, TacticalThemes::KillBoxMate,
+        TacticalThemes::VukovicMate, TacticalThemes::SmotheredMate,
 
         TacticalThemes::Castling, TacticalThemes::EnPassant, TacticalThemes::Promotion,
-        TacticalThemes::UnderPromotion, TacticalThemes::Equality, TacticalThemes::Advantage,
-        TacticalThemes::Crushing,
+        TacticalThemes::UnderPromotion,
+
+        TacticalThemes::Equality, TacticalThemes::Advantage, TacticalThemes::Crushing,
 
         TacticalThemes::OneMove, TacticalThemes::Short, TacticalThemes::Long, TacticalThemes::VeryLong,
 
@@ -149,6 +152,8 @@ impl TacticalThemes {
             TacticalThemes::DoubleBishopMate => "doubleBishopMate",
             TacticalThemes::DovetailMate => "dovetailMate",
             TacticalThemes::HookMate => "hookMate",
+            TacticalThemes::KillBoxMate => "killBoxMate",
+            TacticalThemes::VukovicMate => "vukovicMate",
             TacticalThemes::SmotheredMate => "smotheredMate",
 
             TacticalThemes::Castling => "castling",
@@ -511,7 +516,7 @@ impl Tab for SearchTab {
                 };
                 row_promotion = row_promotion.push(Row::new().spacing(0).align_y(Alignment::Center)
                     .push(Button::new(
-                        Text::new(text).font(config::CHESS_ALPHA).size(60).line_height(LineHeight::Absolute(60.into()))
+                        Text::new(text).font(config::CHESS_ALPHA).size(60).align_y(Alignment::Center).line_height(LineHeight::Absolute(60.into()))
                     )
                     .padding(0)
                     .width(60)
@@ -528,16 +533,16 @@ impl Tab for SearchTab {
                     } else {
                         styles::btn_style_light_square
                     };
-                row_promotion = row_promotion.push(Row::new().spacing(5).align_y(Alignment::Center)
+                row_promotion = row_promotion.push(
+                    Row::new().width(60).height(60).align_y(Alignment::Start)
                     .push(Button::new(
                         Svg::new(self.promotion_piece_img[piece.to_index()].clone())
                     )
-                    .width(60)
-                    .height(60)
                     .on_press(SearchMesssage::SelectPiecePromotion(piece))
                     .style(square_style)
                 ));
             }
+
         }
 
         search_col = search_col.push(Space::new(Length::Fill, 10));

@@ -151,6 +151,8 @@ bodenMate = Mate de Boden
 doubleBishopMate = Mate de los dos alfiles
 dovetailMate = Mate de Cozio
 hookMate = Mate del gancho
+killBoxMate = Mate del recuadro mortal
+vukovicMate = Mate de Vukovic
 smotheredMate = Mate de la coz
 
 castling = Enroque

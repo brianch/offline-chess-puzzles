@@ -60,6 +60,7 @@ black = Noirs
 searching = Recherche en cours, veuillez patienter...
 btn_search = Rechercher
 promotion_piece = Choix de la promotion:
+
 #Settings
 #============================================================
 piece_theme = Jeu de pièces:
@@ -152,6 +153,8 @@ bodenMate = Mat de Boden
 doubleBishopMate = Mat des deux Fous
 dovetailMate = Mat de Cozio
 hookMate = Mat de l'hameçon
+killBoxMate = Mat par mise en boîte
+vukovicMate = Mat de Vuković
 smotheredMate = Mat à l'étouffée
 
 castling = Roque

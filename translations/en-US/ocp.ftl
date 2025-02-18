@@ -151,6 +151,8 @@ bodenMate = Boden's mate
 doubleBishopMate = Double bishop mate
 dovetailMate = Dovetail mate
 hookMate = Hook mate
+killBoxMate = Kill Box Mate
+vukovicMate = Vukovic Mate
 smotheredMate = Smothered mate
 
 castling = Castling

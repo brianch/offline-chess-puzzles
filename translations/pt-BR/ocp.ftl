@@ -151,6 +151,8 @@ bodenMate = Mate de Boden
 doubleBishopMate = Mate de dois bispos
 dovetailMate = Mate da causa de andorinha
 hookMate = Mate do gancho
+killBoxMate = Mate do caixão
+vukovicMate = Mate de Vukovic
 smotheredMate = Mate sufocado
 
 castling = Roque
