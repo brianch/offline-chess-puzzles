@@ -45,6 +45,7 @@ jobs:
         with:
           name: linux-release-bin
           path: zip/
+          include-hidden-files: true
 
   build-mac:
 
@@ -74,6 +75,7 @@ jobs:
         with:
           name: macos-release-bin
           path: zip/
+          include-hidden-files: true
 
   build-windows-64:
 
@@ -111,6 +113,7 @@ jobs:
         with:
           name: windows-release
           path: zip/
+          include-hidden-files: true
 
   build-windows-32:
 
@@ -148,4 +151,5 @@ jobs:
         with:
           name: windows-release-i686
           path: zip/
+          include-hidden-files: true
 
