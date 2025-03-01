@@ -13,7 +13,7 @@ use std::path::Path;
 use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
-use iced::widget::{button, center, container, responsive, row, Button, Column, Container, Radio, Row, Svg, Text};
+use iced::widget::{button, center, container, responsive, row, text, text_input, Button, Column, Container, Radio, Row, Svg, Text};
 use iced::{Element, Rectangle, Size, Subscription, Theme};
 use iced::{alignment, Task, Alignment, Length};
 use iced::window::{self, Screenshot};
@@ -120,6 +120,8 @@ pub enum Message {
     StartDBDownload,
     DBDownloadFinished,
     DownloadProgress(String),
+    PuzzleInputIndexChange(String),
+    JumpToPuzzle,
 }
 
 struct SoundPlayback {
@@ -244,6 +246,7 @@ struct OfflinePuzzles {
     last_move_to: Option<Square>,
     hint_square: Option<Square>,
     puzzle_status: String,
+    puzzle_number_ui: String,
 
     analysis: Game,
     analysis_history: Vec<Board>,
@@ -299,6 +302,7 @@ impl OfflinePuzzles {
             downloading_db: false,
             download_progress: String::new(),
             puzzle_status: lang::tr(&config::SETTINGS.lang, "use_search"),
+            puzzle_number_ui: String::from("1"),
             search_tab: SearchTab::new(),
             settings_tab: SettingsTab::new(),
             puzzle_tab: PuzzleTab::new(),
@@ -440,7 +444,7 @@ impl OfflinePuzzles {
         self.hint_square = None;
         self.puzzle_tab.current_puzzle_move = 1;
         if inc_counter {
-            self.puzzle_tab.current_puzzle += 1;
+            self.inc_puzzle_counter();
         }
         let puzzle_moves: Vec<&str> = self.puzzle_tab.puzzles[self.puzzle_tab.current_puzzle].moves.split_whitespace().collect();
 
@@ -470,8 +474,18 @@ impl OfflinePuzzles {
         self.game_mode = config::GameMode::Puzzle;
     }
 
-    // Old Iced application trait stuff
+    fn inc_puzzle_counter(&mut self) {
+        self.puzzle_tab.current_puzzle += 1;
+        self.puzzle_number_ui = (self.puzzle_tab.current_puzzle + 1).to_string();
+    }
 
+    // Redundant, but just to make the function names clear
+    fn dec_puzzle_counter(&mut self) {
+        self.puzzle_tab.current_puzzle -= 1;
+        self.puzzle_number_ui = (self.puzzle_tab.current_puzzle + 1).to_string();
+    }
+
+    // Old Iced application trait stuff
     fn init() -> (OfflinePuzzles, Task<Message>) {
         let has_lichess_db = std::path::Path::new(&config::SETTINGS.puzzle_db_location).exists();
         (
@@ -534,12 +548,12 @@ impl OfflinePuzzles {
 
                 Task::none()
             } (_, Message::ShowNextPuzzle) => {
-                self.puzzle_tab.current_puzzle += 1;
+                self.inc_puzzle_counter();
                 self.load_puzzle(false);
                 Task::none()
             } (_, Message::ShowPreviousPuzzle) => {
                 if self.puzzle_tab.current_puzzle > 0 && self.game_mode == config::GameMode::Puzzle {
-                    self.puzzle_tab.current_puzzle -= 1;
+                    self.dec_puzzle_counter();
                     self.load_puzzle(false);
                 }
                 Task::none()
@@ -571,6 +585,7 @@ impl OfflinePuzzles {
                         self.puzzle_tab.puzzles = puzzles_vec;
                         self.puzzle_tab.puzzles.shuffle(&mut thread_rng());
                         self.puzzle_tab.current_puzzle = 0;
+                        self.puzzle_number_ui = String::from("1");
                         self.load_puzzle(false);
                     } else {
                         // Just putting the default position to make it obvious the search ended.
@@ -607,6 +622,20 @@ impl OfflinePuzzles {
                 self.puzzle_tab.update(message)
             } (_, Message::Search(message)) => {
                 self.search_tab.update(message)
+            } (_, Message::PuzzleInputIndexChange(puzzle_input)) => {
+                self.puzzle_number_ui = puzzle_input;
+                Task::none()
+            } (_, Message::JumpToPuzzle) => {
+                // Test if puzzle index typed is valid
+                let puzzle_index = self.puzzle_number_ui.parse::<usize>();
+                if let Ok(index) = puzzle_index {
+                    if index > 0 && index <= self.puzzle_tab.puzzles.len() {
+                        // The user typed value starts on 1, not zero, so we subtract 1
+                        self.puzzle_tab.current_puzzle = index - 1;
+                    }
+                }
+                self.load_puzzle(false);
+                Task::none()
             } (_, Message::ScreenshotCreated(screenshot)) => {
                 Task::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
             } (_, Message::SaveScreenshot(img_and_path)) => {
@@ -841,6 +870,8 @@ impl OfflinePuzzles {
                     has_more_puzzles,
                     has_previous,
                     self.analysis_history.len(),
+                    &self.puzzle_number_ui,
+                    self.puzzle_tab.puzzles.len(),
                     self.puzzle_tab.current_puzzle_move,
                     self.puzzle_tab.game_status,
                     &self.active_tab,
@@ -929,6 +960,8 @@ fn gen_view<'a>(
     has_more_puzzles: bool,
     has_previous: bool,
     analysis_history_len: usize,
+    puzzle_number_ui: &'a str,
+    total_puzzles: usize,
     current_puzzle_move: usize,
     game_status: GameStatus,
     active_tab: &TabId,
@@ -958,14 +991,14 @@ fn gen_view<'a>(
     let board_height =
         if engine_eval.is_empty() {
             if show_coordinates {
-                ((size.height - 135.) / 8.) as u16
+                ((size.height - 145.) / 8.) as u16
             } else {
-                ((size.height - 125.) / 8.) as u16
+                ((size.height - 135.) / 8.) as u16
             }
         } else if show_coordinates {
-            ((size.height - 165.) / 8.) as u16
+            ((size.height - 175.) / 8.) as u16
         } else {
-            ((size.height - 155.) / 8.) as u16
+            ((size.height - 165.) / 8.) as u16
         };
 
     let ranks;
@@ -1209,7 +1242,23 @@ fn gen_view<'a>(
         }
     }
 
-    board_col = board_col.push(Text::new(puzzle_status)).push(game_mode_row).push(navigation_row);
+    let (input_index, btn_go) = if game_status == GameStatus::Playing {
+        (text_input(puzzle_number_ui, puzzle_number_ui).
+            on_input(Message::PuzzleInputIndexChange).width(Length::Fixed(150.)),
+        button(text(lang::tr(lang, "go"))).on_press(Message::JumpToPuzzle))
+    } else {
+        (text_input(puzzle_number_ui, puzzle_number_ui).width(Length::Fixed(150.)),
+        button(text(lang::tr(lang, "go"))))
+    };
+
+    let pagination_row = row![
+        text(lang::tr(lang, "puzzle")),
+        input_index,
+        text(String::from(lang::tr(lang, "of")) + &total_puzzles.to_string()),
+        btn_go
+    ].spacing(10).align_y(Alignment::Center);
+
+    board_col = board_col.push(Text::new(puzzle_status)).push(game_mode_row).push(navigation_row).push(pagination_row);
     if !engine_eval.is_empty() {
         board_col = board_col.push(
             row![
