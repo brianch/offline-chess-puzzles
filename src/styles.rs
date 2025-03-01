@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use iced::overlay::menu;
 
-use iced::theme::{Custom, Palette};
+use iced::theme::Palette;
 use iced::widget::{button, container, pick_list};
-use iced::{Border, Color, Theme as IcedTheme};
+use iced::{Border, Color};
 use iced_aw::style::tab_bar;
 
 macro_rules! rgb {
@@ -163,67 +161,6 @@ pub enum OCPTheme {
     PurpleDark,
     GreyDark,
     MonochromeGreyDark,
-}
-
-impl OCPTheme {
-    pub fn palette(&self) -> OCPPalette {
-        match self {
-            Self::Blue => OCPPalette::BLUE,
-            Self::Green => OCPPalette::GREEN,
-            Self::Brown => OCPPalette::BROWN,
-            Self::Purple => OCPPalette::PURPLE,
-            Self::Grey => OCPPalette::GREY,
-            Self::MonochromeGrey => OCPPalette::MONOCHROME_GREY,
-            Self::BlueDark => OCPPalette::BLUE_DARK,
-            Self::GreenDark => OCPPalette::GREEN_DARK,
-            Self::BrownDark => OCPPalette::BROWN_DARK,
-            Self::PurpleDark => OCPPalette::PURPLE_DARK,
-            Self::GreyDark => OCPPalette::GREY_DARK,
-            Self::MonochromeGreyDark => OCPPalette::MONOCHROME_GREY_DARK,
-        }
-    }
-    pub const ALL: [OCPTheme; 12] = [
-        OCPTheme::Blue,
-        OCPTheme::Green,
-        OCPTheme::Brown,
-        OCPTheme::Purple,
-        OCPTheme::Grey,
-        OCPTheme::MonochromeGrey,
-        OCPTheme::BlueDark,
-        OCPTheme::GreenDark,
-        OCPTheme::BrownDark,
-        OCPTheme::PurpleDark,
-        OCPTheme::GreyDark,
-        OCPTheme::MonochromeGreyDark,
-    ];
- /*
-     impl OCPPalette {
-
-        pub fn blue() -> Palette {
-            let mut palette = Palette::LIGHT;
-            palette.primary = FURTHERANCE_PURPLE.to_iced_color();
-            palette
-        }
-
-        pub fn dark() -> Palette {
-            let mut palette = Palette::DARK;
-            palette.primary = FURTHERANCE_PURPLE.to_iced_color();
-            palette
-        }
-    } */
-
-    pub fn to_theme(&self) -> IcedTheme {
-        match self {
-            OCPTheme::Blue => IcedTheme::Custom(Arc::new(Custom::new(
-                "Blue".to_string(),
-                OCPPalette::BLUE.into(),
-            ))),
-            _ => IcedTheme::Custom(Arc::new(Custom::new(
-                "Other".to_string(),
-                OCPPalette::BROWN.into(),
-            ))),
-        }
-    }
 }
 
 impl std::fmt::Display for OCPTheme {
