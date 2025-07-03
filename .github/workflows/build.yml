@@ -71,10 +71,17 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
+          chmod u+x mac-app.sh
+          source ./mac-app.sh
       - uses: actions/upload-artifact@v4
         with:
           name: macos-release-bin
           path: zip/
+          include-hidden-files: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-bundle
+          path: ${{ env.APP_BUNDLE }}$
           include-hidden-files: true
 
   build-windows-64:
