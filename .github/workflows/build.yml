@@ -73,6 +73,7 @@ jobs:
           cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
           chmod u+x mac-app.sh
           source ./mac-app.sh
+          echo $APP_BUNDLE >> $GITHUB_ENV
       - uses: actions/upload-artifact@v4
         with:
           name: macos-release-bin
@@ -81,7 +82,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: macos-bundle
-          path: ${{ env.APP_BUNDLE }}$
+          path: ${{ env.APP_BUNDLE }}
           include-hidden-files: true
 
   build-windows-64:
