@@ -8,7 +8,9 @@ A simple tool to view and solve puzzles from the lichess puzzle database.
 <br>I need to give a big thank you to lichess for creating the [puzzle database](https://database.lichess.org/#puzzles), the project [chess-engine](https://github.com/adam-mcdaniel/chess-engine/) which I used as a starting point for the GUI here, and the awesome [Iced GUI library](https://github.com/iced-rs/iced) in which the interface is made.
 
 ## Usage:
-Download the app in the [releases page](https://github.com/brianch/offline-chess-puzzles/releases) here.
+Download the app from either:
+- The [releases page](https://github.com/brianch/offline-chess-puzzles/releases) (may be outdated)
+- The [latest build artifacts](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml?query=branch%3Amain+is%3Asuccess) from the main branch (click on the most recent successful workflow run, then scroll down to the "Artifacts" section)
 
 You'll also need to download the file "lichess_db_puzzle.csv" (from the lichess link above) to the "puzzles" directory of the app.
 
