@@ -3,6 +3,7 @@ use std::str::FromStr;
 use lopdf::dictionary;
 use lopdf::{Document, Object, Stream};
 use lopdf::content::{Content, Operation};
+use chrono;
 use chess::{Board, ChessMove, Color, Piece, Square};
 
 use crate::{config, PuzzleTab, lang};
@@ -342,4 +343,94 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
     ops.push(Operation::new("ET", vec![]));
     ops
 }
+
+pub fn to_pgn(puzzles: &Vec<config::Puzzle>, lang: &lang::Language, path: String) {
+    let mut pgn_content = String::new();
+
+    for (puzzle_index, puzzle) in puzzles.iter().enumerate() {
+        // Start with a board from the FEN
+        let mut board = Board::from_str(&puzzle.fen).unwrap();
+
+        // Add PGN headers
+        pgn_content.push_str(&format!("[Event \"Chess Puzzle\"]\n"));
+        pgn_content.push_str(&format!("[Site \"Offline Puzzles\"]\n"));
+        pgn_content.push_str(&format!("[Date \"{}\"]\n", chrono::Local::now().format("%Y.%m.%d")));
+        pgn_content.push_str(&format!("[Round \"{}\"]\n", puzzle_index + 1));
+        pgn_content.push_str(&format!("[White \"{}\"]\n", if board.side_to_move() == Color::White { "Player" } else { "Opponent" }));
+        pgn_content.push_str(&format!("[Black \"{}\"]\n", if board.side_to_move() == Color::Black { "Player" } else { "Opponent" }));
+        pgn_content.push_str(&format!("[Result \"*\"]\n"));
+        pgn_content.push_str(&format!("[FEN \"{}\"]\n", puzzle.fen));
+        pgn_content.push_str(&format!("[SetUp \"1\"]\n"));
+
+        // Add puzzle details
+        pgn_content.push_str(&format!("[PuzzleID \"{}\"]\n", puzzle.puzzle_id));
+        pgn_content.push_str(&format!("[PuzzleRating \"{}\"]\n", puzzle.rating));
+
+        // Start the move list
+        let puzzle_moves: Vec<&str> = puzzle.moves.split_whitespace().collect();
+        let mut move_number = 1;
+        let mut is_white_to_move = board.side_to_move() == Color::White;
+
+        // Process the first move (opponent's move that sets up the puzzle)
+        let first_move = puzzle_moves[0];
+        let movement = ChessMove::new(
+            Square::from_str(&String::from(&first_move[..2])).unwrap(),
+            Square::from_str(&String::from(&first_move[2..4])).unwrap(), 
+            PuzzleTab::check_promotion(first_move)
+        );
+
+        let san_move = config::coord_to_san(&board, String::from(first_move), lang).unwrap();
+
+        if is_white_to_move {
+            pgn_content.push_str(&format!("{}. {}", move_number, san_move));
+        } else {
+            pgn_content.push_str(&format!("{}... {}", move_number, san_move));
+            move_number += 1;
+        }
+
+        // Apply the move to the board
+        board = board.make_move_new(movement);
+        is_white_to_move = !is_white_to_move;
+
+        // Process the rest of the moves (the actual puzzle solution)
+        for chess_move in puzzle_moves.iter().skip(1) {
+            if is_white_to_move {
+                pgn_content.push_str(&format!(" {}. ", move_number));
+            } else {
+                pgn_content.push_str(" ");
+            }
+
+            let san_move = config::coord_to_san(&board, String::from(*chess_move), lang).unwrap();
+            pgn_content.push_str(&san_move);
+
+            // Apply the move to the board
+            let movement = ChessMove::new(
+                Square::from_str(&String::from(&chess_move[..2])).unwrap(),
+                Square::from_str(&String::from(&chess_move[2..4])).unwrap(), 
+                PuzzleTab::check_promotion(chess_move)
+            );
+            board = board.make_move_new(movement);
+
+            if !is_white_to_move {
+                move_number += 1;
+            }
+            is_white_to_move = !is_white_to_move;
+        }
+
+        // End the game with a result
+        pgn_content.push_str(" *\n\n");
+    }
+
+    // Write to file
+    std::fs::write(path, pgn_content).expect("Unable to write PGN file");
+}
+        pgn_content.push_str(&format!("[PuzzleURL \"https://lichess.org/training/{}\"]\n", puzzle.puzzle_id));
+        pgn_content.push_str(&format!("[PuzzleRatingDeviation \"{}\"]\n", puzzle.rating_deviation));
+        pgn_content.push_str(&format!("[PuzzlePopularity \"{}\"]\n", puzzle.popularity));
+        pgn_content.push_str(&format!("[PuzzleNbPlays \"{}\"]\n", puzzle.nb_plays));
+        pgn_content.push_str(&format!("[PuzzleThemes \"{}\"]\n", puzzle.themes));
+        if !puzzle.opening.is_empty() {
+            pgn_content.push_str(&format!("[PuzzleOpening \"{}\"]\n", puzzle.opening));
+        }
+        pgn_content.push_str(&format!("[GameURL \"{}\"]\n", puzzle.game_url));
 

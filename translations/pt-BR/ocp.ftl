@@ -78,6 +78,7 @@ show_coords = Coordenadas do tabuleiro:
 pdf_number_of_pages = N. de pags. para exportar em PDF:
 get_first_puzzles1 = Obter os primeiros
 get_first_puzzles2 =  {" "}problemas
+export_pgn = Exportar problemas atuais para PGN
 engine_path = Caminho para a engine (com o .exe):
 save = Salvar Mudanças
 settings_saved = Configurações salvas!
