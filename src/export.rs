@@ -353,27 +353,23 @@ pub fn to_pgn(puzzles: &Vec<config::Puzzle>, lang: &lang::Language, path: String
 
         // Add PGN headers
         pgn_content.push_str(&format!("[Event \"Chess Puzzle\"]\n"));
-        pgn_content.push_str(&format!("[Site \"Offline Puzzles\"]\n"));
+        pgn_content.push_str(&format!("[Site \"https://lichess.org/training/{}\"]\n", puzzle.puzzle_id));
         pgn_content.push_str(&format!("[Date \"{}\"]\n", chrono::Local::now().format("%Y.%m.%d")));
-        pgn_content.push_str(&format!("[Round \"{}\"]\n", puzzle_index + 1));
         pgn_content.push_str(&format!("[White \"{}\"]\n", if board.side_to_move() == Color::White { "Player" } else { "Opponent" }));
         pgn_content.push_str(&format!("[Black \"{}\"]\n", if board.side_to_move() == Color::Black { "Player" } else { "Opponent" }));
         pgn_content.push_str(&format!("[Result \"*\"]\n"));
+        pgn_content.push_str(&format!("[GameID \"{}\"]\n", puzzle.game_url));
         pgn_content.push_str(&format!("[FEN \"{}\"]\n", puzzle.fen));
         pgn_content.push_str(&format!("[SetUp \"1\"]\n"));
-
+        if !puzzle.opening.is_empty() {
+            pgn_content.push_str(&format!("[Opening \"{}\"]\n", puzzle.opening));
+        }
         // Add puzzle details
-        pgn_content.push_str(&format!("[PuzzleID \"{}\"]\n", puzzle.puzzle_id));
         pgn_content.push_str(&format!("[PuzzleRating \"{}\"]\n", puzzle.rating));
-        pgn_content.push_str(&format!("[PuzzleURL \"https://lichess.org/training/{}\"]\n", puzzle.puzzle_id));
         pgn_content.push_str(&format!("[PuzzleRatingDeviation \"{}\"]\n", puzzle.rating_deviation));
         pgn_content.push_str(&format!("[PuzzlePopularity \"{}\"]\n", puzzle.popularity));
         pgn_content.push_str(&format!("[PuzzleNbPlays \"{}\"]\n", puzzle.nb_plays));
         pgn_content.push_str(&format!("[PuzzleThemes \"{}\"]\n", puzzle.themes));
-        if !puzzle.opening.is_empty() {
-            pgn_content.push_str(&format!("[PuzzleOpening \"{}\"]\n", puzzle.opening));
-        }
-        pgn_content.push_str(&format!("[GameURL \"{}\"]\n", puzzle.game_url));
 
         // Start the move list
         let puzzle_moves: Vec<&str> = puzzle.moves.split_whitespace().collect();
