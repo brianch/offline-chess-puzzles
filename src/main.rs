@@ -107,6 +107,7 @@ pub enum Message {
     SaveScreenshot(Option<(Screenshot, String)>),
     ExportPDF(Option<String>),
     LoadPuzzle(Option<Vec<config::Puzzle>>),
+    ExportPGN(Option<String>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
     EventOccurred(iced::Event),
     StartEngine,
@@ -664,6 +665,11 @@ impl OfflinePuzzles {
             } (_, Message::ExportPDF(file_path)) => {
                 if let Some(file_path) = file_path {
                     export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang, file_path);
+                }
+                Task::none()
+            } (_, Message::ExportPGN(file_path)) => {
+                if let Some(file_path) = file_path {
+                    export::to_pgn(&self.puzzle_tab.puzzles, &self.lang, file_path);
                 }
                 Task::none()
             } (_, Message::EventOccurred(event)) => {

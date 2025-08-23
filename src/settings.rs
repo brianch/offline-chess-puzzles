@@ -127,7 +127,8 @@ impl SettingsTab {
                     self.export_pgs = String::from("0");
                 }
                 Task::none()
-            } SettingsMessage::ChangePressed => {
+            },
+            SettingsMessage::ChangePressed => {
                 let engine_path = if self.engine_path.is_empty() {
                     None
                 } else {

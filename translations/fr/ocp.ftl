@@ -80,6 +80,7 @@ show_coords = Montrer les coordonnées:
 pdf_number_of_pages = Limite de pages pour le PDF:
 get_first_puzzles1 = Accéder aux
 get_first_puzzles2 = {" "}premiers puzzles
+export_pgn = Exporter les puzzles actuels en PGN
 engine_path = Chemin d'accès du moteur (avec le nom du fichier .exe):
 save = Enregistrer les modifications
 settings_saved = Paramètres enregistrés !

@@ -78,6 +78,7 @@ show_coords = Show coordinates:
 pdf_number_of_pages = No. of pages to export to PDF:
 get_first_puzzles1 = Get the first
 get_first_puzzles2 =  {" "}puzzles
+export_pgn = Export current puzzles as PGN
 engine_path = Engine path (with .exe name):
 save = Save Changes
 settings_saved = Settings saved!

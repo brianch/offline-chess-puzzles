@@ -14,6 +14,7 @@ pub enum PuzzleMessage {
     OpenLink(String),
     TakeScreenshot,
     ExportToPDF,
+    ExportToPGN
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -60,6 +61,8 @@ impl PuzzleTab {
                 iced::window::screenshot(self.window_id.unwrap()).map(Message::ScreenshotCreated)
             } PuzzleMessage::ExportToPDF => {
                 Task::perform(PuzzleTab::export(), Message::ExportPDF)
+            } PuzzleMessage::ExportToPGN => {
+                return Task::perform(PuzzleTab::export(), Message::ExportPGN);
             }
         }
     }
@@ -133,6 +136,7 @@ impl Tab for PuzzleTab {
                 ],
                 Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot),
                 Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
+                Button::new(Text::new(lang::tr(&self.lang, "export_pgn"))).padding(5).on_press(PuzzleMessage::ExportToPGN),
             ].padding([0, 30]).spacing(10).align_x(Alignment::Center))
         } else {
             Scrollable::new(col![

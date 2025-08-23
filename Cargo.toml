@@ -12,6 +12,7 @@ iced_aw = { version = "0.11.0", default-features = false, features = ["tabs"] }
 iced_drop = {git = "https://github.com/jhannyj/iced_drop.git", rev="d259ec4dff098852d995d3bcaa5551a88330636f"}
 
 rand = "0.8.5"
+chrono = "0.4.41"
 chess = "3.2.0"
 csv = "1.3.1"
 serde = "1.0.217"

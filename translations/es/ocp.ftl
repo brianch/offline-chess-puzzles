@@ -78,6 +78,7 @@ show_coords = Coordenadas del tablero:
 pdf_number_of_pages = N. de páginas para exportar en PDF:
 get_first_puzzles1 = Obtener los primeros
 get_first_puzzles2 =  {" "}ejercícios
+export_pgn = Exportar ejercicios actuales a PGN
 engine_path = Camino del motor de ajedrez (con el nombre del .exe):
 save = Guardar Cambios
 settings_saved = Preferencias guardadas!
