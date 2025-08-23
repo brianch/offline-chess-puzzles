@@ -20,6 +20,21 @@ If the move is a promotion you need to select the piece to promote to (in the se
 
 The search is a bit slow (especially when searching by opening, because it often needs to traverse the whole database) but I think it's important to use the cvs directly so users can easily replace the file if needed.
 
+## Building and Running from Source
+
+To build and run this project from source, you'll need to have Rust and Cargo installed. You can find instructions on how to install them at [rust-lang.org](https://www.rust-lang.org/tools/install).
+
+Once you have Rust and Cargo installed, you can clone this repository and run the project with the following command:
+```bash
+cargo run --release
+```
+
+### Running on Linux
+If you are on Linux and the application fails to launch, you might need to use the Open GL or software renderer to draw the window. Try running the application with either of the following commands:
+`WGPU_BACKEND="gl" cargo run --release` (Open GL)
+or
+`ICED_BACKEND = "tiny-skia" cargo run --release` (Software)
+
 ## Possible use cases:
 - Practice offline, it has filters by puzzle rating, theme and opening.
 - Teach the tactical motifs to students, since it's simple to select easy puzzles from a theme (it lack arrows, but there's an analysis function)
