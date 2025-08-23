@@ -365,6 +365,15 @@ pub fn to_pgn(puzzles: &Vec<config::Puzzle>, lang: &lang::Language, path: String
         // Add puzzle details
         pgn_content.push_str(&format!("[PuzzleID \"{}\"]\n", puzzle.puzzle_id));
         pgn_content.push_str(&format!("[PuzzleRating \"{}\"]\n", puzzle.rating));
+        pgn_content.push_str(&format!("[PuzzleURL \"https://lichess.org/training/{}\"]\n", puzzle.puzzle_id));
+        pgn_content.push_str(&format!("[PuzzleRatingDeviation \"{}\"]\n", puzzle.rating_deviation));
+        pgn_content.push_str(&format!("[PuzzlePopularity \"{}\"]\n", puzzle.popularity));
+        pgn_content.push_str(&format!("[PuzzleNbPlays \"{}\"]\n", puzzle.nb_plays));
+        pgn_content.push_str(&format!("[PuzzleThemes \"{}\"]\n", puzzle.themes));
+        if !puzzle.opening.is_empty() {
+            pgn_content.push_str(&format!("[PuzzleOpening \"{}\"]\n", puzzle.opening));
+        }
+        pgn_content.push_str(&format!("[GameURL \"{}\"]\n", puzzle.game_url));
 
         // Start the move list
         let puzzle_moves: Vec<&str> = puzzle.moves.split_whitespace().collect();
@@ -424,13 +433,4 @@ pub fn to_pgn(puzzles: &Vec<config::Puzzle>, lang: &lang::Language, path: String
     // Write to file
     std::fs::write(path, pgn_content).expect("Unable to write PGN file");
 }
-        pgn_content.push_str(&format!("[PuzzleURL \"https://lichess.org/training/{}\"]\n", puzzle.puzzle_id));
-        pgn_content.push_str(&format!("[PuzzleRatingDeviation \"{}\"]\n", puzzle.rating_deviation));
-        pgn_content.push_str(&format!("[PuzzlePopularity \"{}\"]\n", puzzle.popularity));
-        pgn_content.push_str(&format!("[PuzzleNbPlays \"{}\"]\n", puzzle.nb_plays));
-        pgn_content.push_str(&format!("[PuzzleThemes \"{}\"]\n", puzzle.themes));
-        if !puzzle.opening.is_empty() {
-            pgn_content.push_str(&format!("[PuzzleOpening \"{}\"]\n", puzzle.opening));
-        }
-        pgn_content.push_str(&format!("[GameURL \"{}\"]\n", puzzle.game_url));
 
