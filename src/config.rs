@@ -13,6 +13,12 @@ pub static SETTINGS: Lazy<OfflinePuzzlesConfig> = Lazy::new(|| {
 pub const CHESS_ALPHA_BYTES: &[u8] = include_bytes!("../font/Alpha.ttf");
 pub const CHESS_ALPHA: Font = iced::Font::with_name("Chess Alpha");
 
+//pub const FONT_DIRECTORY: &str = "font/";
+pub const PUZZLES_DIRECTORY: &str = "puzzles/";
+pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";
+pub const SETTINGS_FILE: &str = "settings.json";
+pub const PIECES_DIRECTORY: &str = "pieces/";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {
     Puzzle,
@@ -53,7 +59,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
             window_width: 1010.,
             window_height: 680.,
             maximized: false,
-            puzzle_db_location: String::from("puzzles/lichess_db_puzzle.csv"),
+            puzzle_db_location: String::from(PUZZLES_DIRECTORY) + "lichess_db_puzzle.csv",
             piece_theme: styles::PieceTheme::Cburnett,
             search_results_limit: 20000,
             play_sound: true,
@@ -76,7 +82,7 @@ impl ::std::default::Default for OfflinePuzzlesConfig {
 
 pub fn load_config() -> OfflinePuzzlesConfig {
     let config;
-    let file = std::fs::File::open("settings.json");
+    let file = std::fs::File::open(SETTINGS_FILE);
     match file {
         Ok(file) => {
             let reader = std::io::BufReader::new(file);

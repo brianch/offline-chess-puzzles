@@ -6,7 +6,7 @@ use std::io::BufReader;
 
 use iced_aw::TabLabel;
 use chess::{Piece, PROMOTION_PIECES};
-use crate::config::load_config;
+use crate::config::{load_config, SETTINGS_FILE, PIECES_DIRECTORY};
 use crate::styles::PieceTheme;
 use crate::{Tab, Message, config, styles, lang, db, openings};
 
@@ -197,11 +197,11 @@ pub fn gen_piece_vec(theme: &PieceTheme) -> Vec<Handle> {
     let mut handles = Vec::<Handle>::with_capacity(5);
     let theme_str = &theme.to_string();
     // this first entry won't be used, it's there just to fill the vec, so we can index by the Piece
-    handles.insert(0, Handle::from_path("pieces/cburnett/wP.svg"));
-    handles.insert(Piece::Knight.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wN.svg"));
-    handles.insert(Piece::Bishop.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wB.svg"));
-    handles.insert(Piece::Rook.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wR.svg"));
-    handles.insert(Piece::Queen.to_index(), Handle::from_path(String::from("pieces/") + &theme_str + "/wQ.svg"));
+    handles.insert(0, Handle::from_path(String::from(PIECES_DIRECTORY) + "cburnett/wP.svg"));
+    handles.insert(Piece::Knight.to_index(), Handle::from_path(String::from(PIECES_DIRECTORY) + &theme_str + "/wN.svg"));
+    handles.insert(Piece::Bishop.to_index(), Handle::from_path(String::from(PIECES_DIRECTORY) + &theme_str + "/wB.svg"));
+    handles.insert(Piece::Rook.to_index(), Handle::from_path(String::from(PIECES_DIRECTORY) + &theme_str + "/wR.svg"));
+    handles.insert(Piece::Queen.to_index(), Handle::from_path(String::from(PIECES_DIRECTORY) + &theme_str + "/wQ.svg"));
     handles
 }
 
@@ -297,7 +297,7 @@ impl SearchTab {
     }
 
     pub fn save_search_settings(min_rating: i32, max_rating: i32, min_popularity: i32, theme: TacticalThemes, opening: Openings, variation: Variation, op_side: Option<OpeningSide>) {
-        let file = std::fs::File::open("settings.json");
+        let file = std::fs::File::open(SETTINGS_FILE);
         if let Ok(file) = file {
             let buf_reader = BufReader::new(file);
             if let Ok(mut config) = serde_json::from_reader::<std::io::BufReader<std::fs::File>, config::OfflinePuzzlesConfig>(buf_reader) {
@@ -309,7 +309,7 @@ impl SearchTab {
                 config.last_variation = variation;
                 config.last_opening_side = op_side;
 
-                let file = std::fs::File::create("settings.json");
+                let file = std::fs::File::create(SETTINGS_FILE);
                 if let Ok(file) = file {
                     if serde_json::to_writer_pretty(file, &config).is_err() {
                         println!("Error saving search options.");

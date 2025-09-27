@@ -4,8 +4,10 @@ use unic_langid::langid;
 use std::io::Read;
 use once_cell::sync::Lazy;
 
+use crate::config::TRANSLATIONS_DIRECTORY;
+
 static BUNDLE_ENUS: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
-    let file = std::fs::File::open("./translations/en-US/ocp.ftl").unwrap();
+    let file = std::fs::File::open(TRANSLATIONS_DIRECTORY.to_owned() + "en-US/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
     reader.read_to_string(&mut source).expect("Failed to read en-US translation file");
@@ -16,7 +18,7 @@ static BUNDLE_ENUS: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent:
 });
 
 static BUNDLE_PTBR: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
-    let file = std::fs::File::open("./translations/pt-BR/ocp.ftl").unwrap();
+    let file = std::fs::File::open(TRANSLATIONS_DIRECTORY.to_owned() + "pt-BR/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
     reader.read_to_string(&mut source).expect("Failed to read pt-BR translation file");
@@ -27,7 +29,7 @@ static BUNDLE_PTBR: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent:
 });
 
 static BUNDLE_ES: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
-    let file = std::fs::File::open("./translations/es/ocp.ftl").unwrap();
+    let file = std::fs::File::open(TRANSLATIONS_DIRECTORY.to_owned() + "es/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
     reader.read_to_string(&mut source).expect("Failed to read ES translation file");
@@ -38,7 +40,7 @@ static BUNDLE_ES: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::I
 });
 
 static BUNDLE_FR: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
-    let file = std::fs::File::open("./translations/fr/ocp.ftl").unwrap();
+    let file = std::fs::File::open(TRANSLATIONS_DIRECTORY.to_owned() + "fr/ocp.ftl").unwrap();
     let mut reader = std::io::BufReader::new(file);
     let mut source = String::new();
     reader.read_to_string(&mut source).expect("Failed to read FR translation file");
