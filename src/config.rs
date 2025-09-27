@@ -16,8 +16,10 @@ pub const CHESS_ALPHA: Font = iced::Font::with_name("Chess Alpha");
 //pub const FONT_DIRECTORY: &str = "font/";
 pub const PUZZLES_DIRECTORY: &str = "puzzles/";
 pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";
-pub const SETTINGS_FILE: &str = "settings.json";
 pub const PIECES_DIRECTORY: &str = "pieces/";
+pub const SETTINGS_FILE: &str = "settings.json";
+pub const ONE_PIECE_SOUND_FILE: &str = "1piece.ogg";
+pub const TWO_PIECES_SOUND_FILE: &str = "2piece.ogg";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {
