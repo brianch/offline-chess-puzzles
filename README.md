@@ -8,7 +8,9 @@ A simple tool to view and solve puzzles from the lichess puzzle database.
 <br>I need to give a big thank you to lichess for creating the [puzzle database](https://database.lichess.org/#puzzles), the project [chess-engine](https://github.com/adam-mcdaniel/chess-engine/) which I used as a starting point for the GUI here, and the awesome [Iced GUI library](https://github.com/iced-rs/iced) in which the interface is made.
 
 ## Usage:
-Download the app in the [releases page](https://github.com/brianch/offline-chess-puzzles/releases) here.
+Download the app from either:
+- The [releases page](https://github.com/brianch/offline-chess-puzzles/releases) (may be outdated)
+- The [latest build artifacts](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml?query=branch%3Amain+is%3Asuccess) from the main branch (click on the most recent successful workflow run, then scroll down to the "Artifacts" section)
 
 You'll also need to download the file "lichess_db_puzzle.csv" (from the lichess link above) to the "puzzles" directory of the app.
 
@@ -17,6 +19,21 @@ To play you simply adjust the search to your needs, press "search" and a puzzle 
 If the move is a promotion you need to select the piece to promote to (in the search tab) before moving the pawn.
 
 The search is a bit slow (especially when searching by opening, because it often needs to traverse the whole database) but I think it's important to use the cvs directly so users can easily replace the file if needed.
+
+## Building and Running from Source
+
+To build and run this project from source, you'll need to have Rust and Cargo installed. You can find instructions on how to install them at [rust-lang.org](https://www.rust-lang.org/tools/install).
+
+Once you have Rust and Cargo installed, you can clone this repository and run the project with the following command:
+```bash
+cargo run --release
+```
+
+### Running on Linux
+If you are on Linux and the application fails to launch, you might need to use the Open GL or software renderer to draw the window. Try running the application with either of the following commands:
+`WGPU_BACKEND="gl" cargo run --release` (Open GL)
+or
+`ICED_BACKEND = "tiny-skia" cargo run --release` (Software)
 
 ## Possible use cases:
 - Practice offline, it has filters by puzzle rating, theme and opening.

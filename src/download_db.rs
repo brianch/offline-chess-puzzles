@@ -9,8 +9,7 @@ use std::fs::OpenOptions;
 use zstd;
 
 use crate::Message;
-
-pub const LICHESS_ZST_FILE : &str = "puzzles/lichess_db_puzzle.csv.zst";
+use crate::config::PUZZLES_DIRECTORY;
 
 pub enum DownloadState {
     StartDownload {
@@ -31,7 +30,7 @@ pub fn download_lichess_db(url: String, path: String) -> Subscription<Message> {
 }
 
 fn download_stream(url: String, path: String) -> impl Stream<Item = Message> {
-
+    let lichess_zst_file = String::from(PUZZLES_DIRECTORY) + "lichess_db_puzzle.csv.zst";
     stream::channel(100,
         |mut output| async move  {
             let mut state = DownloadState::StartDownload{ url , path: path.clone()};
@@ -43,7 +42,7 @@ fn download_stream(url: String, path: String) -> impl Stream<Item = Message> {
                         match response {
                             Ok(response) => {
                                 if let Some(total) = response.content_length() {
-                                    let file = OpenOptions::new().append(true).read(true).create(true).open(LICHESS_ZST_FILE).expect("Unable to create lichess db archive.");
+                                    let file = OpenOptions::new().append(true).read(true).create(true).open(&lichess_zst_file).expect("Unable to create lichess db archive.");
                                     state = DownloadState::DownloadInProgress {
                                         response,
                                         file,
@@ -80,7 +79,7 @@ fn download_stream(url: String, path: String) -> impl Stream<Item = Message> {
                                 let target = std::fs::File::create(path.clone()).expect(&("Error creating file ".to_owned() + &path));
                                 zstd::stream::copy_decode(file, target).unwrap();
 
-                                let _ = std::fs::remove_file(LICHESS_ZST_FILE);
+                                let _ = std::fs::remove_file(&lichess_zst_file);
                                 let _ = output.send(Message::DBDownloadFinished).await;
 
                                 state = DownloadState::Finished;

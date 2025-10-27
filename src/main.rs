@@ -32,6 +32,8 @@ use rand::thread_rng;
 use rand::seq::SliceRandom;
 
 mod config;
+use config::{ONE_PIECE_SOUND_FILE, TWO_PIECES_SOUND_FILE};
+
 mod styles;
 mod search_tab;
 pub mod download_db;
@@ -107,6 +109,7 @@ pub enum Message {
     SaveScreenshot(Option<(Screenshot, String)>),
     ExportPDF(Option<String>),
     LoadPuzzle(Option<Vec<config::Puzzle>>),
+    ExportPGN(Option<String>),
     ChangeSettings(Option<config::OfflinePuzzlesConfig>),
     EventOccurred(iced::Event),
     StartEngine,
@@ -138,8 +141,8 @@ impl SoundPlayback {
     pub fn init_sound() -> Option<Self> {
         let mut sound_playback = None;
         if let Ok((stream, handle)) = OutputStream::try_default() {
-            let one_pieces_sound = StdFile::open("1piece.ogg");
-            let two_pieces_sound = StdFile::open("2pieces.ogg");
+            let one_pieces_sound = StdFile::open(ONE_PIECE_SOUND_FILE);
+            let two_pieces_sound = StdFile::open(TWO_PIECES_SOUND_FILE);
 
             if let (Ok(one_piece), Ok(two_piece)) = (one_pieces_sound, two_pieces_sound) {
                 sound_playback = Some(
@@ -664,6 +667,11 @@ impl OfflinePuzzles {
             } (_, Message::ExportPDF(file_path)) => {
                 if let Some(file_path) = file_path {
                     export::to_pdf(&self.puzzle_tab.puzzles, self.settings_tab.export_pgs.parse::<i32>().unwrap(), &self.lang, file_path);
+                }
+                Task::none()
+            } (_, Message::ExportPGN(file_path)) => {
+                if let Some(file_path) = file_path {
+                    export::to_pgn(&self.puzzle_tab.puzzles, &self.lang, file_path);
                 }
                 Task::none()
             } (_, Message::EventOccurred(event)) => {

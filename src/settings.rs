@@ -6,6 +6,7 @@ use iced_aw::TabLabel;
 use rfd::AsyncFileDialog;
 
 use crate::{Message, Tab, config, styles, lang, lang::PickListWrapper};
+use crate::config::SETTINGS_FILE;
 
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {
@@ -127,7 +128,8 @@ impl SettingsTab {
                     self.export_pgs = String::from("0");
                 }
                 Task::none()
-            } SettingsMessage::ChangePressed => {
+            },
+            SettingsMessage::ChangePressed => {
                 let engine_path = if self.engine_path.is_empty() {
                     None
                 } else {
@@ -157,7 +159,7 @@ impl SettingsTab {
                     last_variation: self.saved_configs.last_variation.clone(),
                     last_opening_side: self.saved_configs.last_opening_side,
                 };
-                let file = std::fs::File::create("settings.json");
+                let file = std::fs::File::create(SETTINGS_FILE);
                 match file {
                     Ok(file) => {
                         if serde_json::to_writer_pretty(file, &config).is_ok() {
@@ -182,7 +184,7 @@ impl SettingsTab {
         config.window_width = self.window_width;
         config.window_height = self.window_height;
         config.maximized = self.maximized;
-        let file = std::fs::File::create("settings.json");
+        let file = std::fs::File::create(SETTINGS_FILE);
         match file {
             Ok(file) => {
                 if serde_json::to_writer_pretty(file, &config).is_err() {
