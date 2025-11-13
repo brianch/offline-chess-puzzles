@@ -58,22 +58,84 @@ jobs:
       - run: cargo build --release --verbose
       - name: Prepare directory to upload as an artifact
         run: |
-          mkdir zip
-          mkdir zip/offline-chess-puzzles
-          cp -R pieces zip/offline-chess-puzzles/
-          cp -R puzzles zip/offline-chess-puzzles/
-          cp -R translations zip/offline-chess-puzzles/
-          cp -R font zip/offline-chess-puzzles/
-          cp .env zip/offline-chess-puzzles/
-          cp ocp.db zip/offline-chess-puzzles/
-          cp *.ogg zip/offline-chess-puzzles/
-          cp settings.json zip/offline-chess-puzzles/
-          cp LICENSE zip/offline-chess-puzzles/
-          cp README.md zip/offline-chess-puzzles/
-          cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
-          chmod u+x mac-app.sh
-          source ./mac-app.sh
-          echo "APP_BUNDLE=$APP_BUNDLE" >> $GITHUB_ENV
+          echo "APP_NAME='Offline-Chess-Puzzles'" >> $GITHUB_ENV
+          echo "ZIP_PATH=$PWD/offline-chess-puzzles" >> $GITHUB_ENV
+          echo "EXECUTABLE_PATH=$PWD/target/release/offline-chess-puzzles" >> $GITHUB_ENV
+          echo "ICON_IMAGE=$PWD/icon.png" >> $GITHUB_ENV
+          echo "ICONSET_DIR=$PWD/target/offline-chess-puzzles.iconset" >> $GITHUB_ENV
+          echo "ICNS_FILE_NAME=offline-chess-puzzles.icns" >> $GITHUB_ENV
+          echo "ICNS_PATH=$PWD/target/$ICNS_FILE_NAME" >> $GITHUB_ENV
+          echo "APP_BUNDLE=$ZIP_PATH/$APP_NAME.app" >> $GITHUB_ENV
+          echo "MACOS_DIR=$APP_BUNDLE/Contents/MacOS" >> $GITHUB_ENV
+          echo "RESOURCES_DIR=$APP_BUNDLE/Contents/Resources" >> $GITHUB_ENV
+          echo "PLIST_PATH=$APP_BUNDLE/Contents/Info.plist" >> $GITHUB_ENV
+
+          # 0. Create app bundle structure
+          mkdir ${{ZIP_PATH}}
+          mkdir -p "${{MACOS_DIR}}"
+          mkdir -p "${{RESOURCES_DIR}}"
+          cp -R pieces ${{ZIP_PATH}}/${{RESOURCES_DIR}}/offline-chess-puzzles/
+          cp -R puzzles ${{ZIP_PATH}}/offline-chess-puzzles/
+          cp -R translations ${{ZIP_PATH}}/${{RESOURCES_DIR}}/offline-chess-puzzles/
+          cp .env ${{ZIP_PATH}}/
+          cp ocp.db ${{ZIP_PATH}}/
+          cp *.ogg ${{RESOURCES_DIR}}/offline-chess-puzzles/
+          cp settings.json ${{ZIP_PATH}}/
+          cp LICENSE ${{ZIP_PATH}}/
+          cp README.md ${{ZIP_PATH}}/
+          cp ${{EXECUTABLE_PATH}} ${{MACOS_DIR}}/
+
+          # 1. Generate .icns from PNG
+          mkdir -p "$ICONSET_DIR"
+          sips -z 16 16     "$ICON_IMAGE" --out "$ICONSET_DIR/icon_16x16.png"
+          sips -z 32 32     "$ICON_IMAGE" --out "$ICONSET_DIR/icon_16x16@2x.png"
+          sips -z 32 32     "$ICON_IMAGE" --out "$ICONSET_DIR/icon_32x32.png"
+          sips -z 64 64     "$ICON_IMAGE" --out "$ICONSET_DIR/icon_32x32@2x.png"
+          sips -z 128 128   "$ICON_IMAGE" --out "$ICONSET_DIR/icon_128x128.png"
+          sips -z 256 256   "$ICON_IMAGE" --out "$ICONSET_DIR/icon_128x128@2x.png"
+          sips -z 256 256   "$ICON_IMAGE" --out "$ICONSET_DIR/icon_256x256.png"
+          sips -z 512 512   "$ICON_IMAGE" --out "$ICONSET_DIR/icon_256x256@2x.png"
+          sips -z 512 512   "$ICON_IMAGE" --out "$ICONSET_DIR/icon_512x512.png"
+          cp "$ICON_IMAGE" "$ICONSET_DIR/icon_512x512@2x.png"
+          iconutil -c icns "$ICONSET_DIR" -o "$ICNS_PATH"
+
+          # 2. Copy the icon
+          cp "$ICNS_PATH" "$RESOURCES_DIR"
+
+          # 3. Create launcher script inside the app bundle
+          cat > "$MACOS_DIR/$APP_NAME" <<EOF
+          #!/bin/bash
+          cd "$PROJECT_DIR"
+          exec "$EXECUTABLE_PATH"
+          EOF
+
+          chmod +x "$MACOS_DIR/$APP_NAME"
+
+          # 4. Create Info.plist
+          cat > "$PLIST_PATH" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>$APP_NAME</string>
+            <key>CFBundleIdentifier</key>
+            <string>brianch.offlinechesspuzzles</string>
+            <key>CFBundleName</key>
+            <string>Offline Chess Puzzles</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleIconFile</key>
+            <string>$ICNS_FILE_NAME</string>
+          </dict>
+          </plist>
+          EOF
+
+          # 5. Refresh the app bundle so Spotlight recognizes it
+          touch "$APP_BUNDLE"
       - uses: actions/upload-artifact@v4
         with:
           name: macos-release-bin
@@ -82,7 +144,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: macos-bundle
-          path: ${{ env.APP_BUNDLE }}
+          path: ${{ env.ZIP_PATH }}
           include-hidden-files: true
 
   build-windows-64:
