@@ -1,10 +1,10 @@
 #!/bin/bash
 
-PROJECT_DIR="$(pwd)"
+#PROJECT_DIR="$(pwd)"
 
 # CONFIGURATION
 APP_NAME="Offline Chess Puzzles"
-ZIP_PATH=./offline-chess-puzzles
+ZIP_PATH=./offline-chess-puzzles-release
 EXECUTABLE_PATH=./target/release/offline-chess-puzzles
 ICON_IMAGE=./icon.png
 ICONSET_DIR=./target/offline-chess-puzzles.iconset
@@ -30,35 +30,32 @@ cp "$ICON_IMAGE" "$ICONSET_DIR/icon_512x512@2x.png"
 iconutil -c icns "$ICONSET_DIR" -o "$ICNS_PATH"
 
 # 1. Create app bundle structure
+mkdir -p $ZIP_PATH
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 
-# 0. Create app bundle structure
-mkdir $ZIP_PATH
-mkdir -p "$MACOS_DIR"
-mkdir -p "$RESOURCES_DIR"
-cp -R pieces $RESOURCES_DIR/
-cp -R puzzles $ZIP_PATH/
-cp -R translations $RESOURCES_DIR/
-cp .env $ZIP_PATH/
-cp ocp.db $ZIP_PATH/
-cp *.ogg $RESOURCES_DIR/
-cp settings.json $ZIP_PATH/
-cp LICENSE $ZIP_PATH/
-cp README.md $ZIP_PATH/
-cp $EXECUTABLE_PATH $MACOS_DIR/
+cp -R pieces "$RESOURCES_DIR/"
+cp -R puzzles "$ZIP_PATH/"
+cp -R translations "$RESOURCES_DIR/"
+cp .env "$ZIP_PATH/"
+cp ocp.db "$ZIP_PATH/"
+cp *.ogg "$RESOURCES_DIR/"
+cp settings.json "$ZIP_PATH/"
+cp LICENSE "$ZIP_PATH/"
+cp README.md "$ZIP_PATH/"
+cp $EXECUTABLE_PATH "$MACOS_DIR/"
 
 # 2. Copy the icon
 cp "$ICNS_PATH" "$RESOURCES_DIR"
 
 # 3. Create launcher script inside the app bundle
-cat > "$MACOS_DIR/$APP_NAME" <<EOF
+#cat > "$MACOS_DIR/$APP_NAME" <<EOF
 #!/bin/bash
-cd "$PROJECT_DIR"
-exec "$EXECUTABLE_PATH"
-EOF
+#cd "$PROJECT_DIR"
+#exec "$EXECUTABLE_PATH"
+#EOF
 
-chmod +x "$MACOS_DIR/$APP_NAME"
+#chmod +x "$MACOS_DIR/$APP_NAME"
 
 # 4. Create Info.plist
 cat > "$PLIST_PATH" <<EOF
