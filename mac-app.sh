@@ -4,15 +4,16 @@ PROJECT_DIR="$(pwd)"
 
 # CONFIGURATION
 APP_NAME="Offline Chess Puzzles"
-EXECUTABLE_PATH="$PROJECT_DIR/target/release/offline-chess-puzzles"
-ICON_IMAGE="$PROJECT_DIR/icon.png"
-ICONSET_DIR="$PROJECT_DIR/target/offline-chess-puzzles.iconset"
-ICNS_FILE_NAME="offline-chess-puzzles.icns"
-ICNS_PATH="$PROJECT_DIR/target/$ICNS_FILE_NAME"
-export APP_BUNDLE="$HOME/Applications/$APP_NAME.app"
-MACOS_DIR="$APP_BUNDLE/Contents/MacOS"
-RESOURCES_DIR="$APP_BUNDLE/Contents/Resources"
-PLIST_PATH="$APP_BUNDLE/Contents/Info.plist"
+ZIP_PATH=./offline-chess-puzzles
+EXECUTABLE_PATH=./target/release/offline-chess-puzzles
+ICON_IMAGE=./icon.png
+ICONSET_DIR=./target/offline-chess-puzzles.iconset
+ICNS_FILE_NAME=offline-chess-puzzles.icns
+ICNS_PATH=./target/$ICNS_FILE_NAME
+export APP_BUNDLE=$ZIP_PATH/$APP_NAME.app
+MACOS_DIR=$APP_BUNDLE/Contents/MacOS
+RESOURCES_DIR=$APP_BUNDLE/Contents/Resources
+PLIST_PATH=$APP_BUNDLE/Contents/Info.plist
 
 # 0. Generate .icns from PNG
 mkdir -p "$ICONSET_DIR"
@@ -31,6 +32,21 @@ iconutil -c icns "$ICONSET_DIR" -o "$ICNS_PATH"
 # 1. Create app bundle structure
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
+
+# 0. Create app bundle structure
+mkdir $ZIP_PATH
+mkdir -p "$MACOS_DIR"
+mkdir -p "$RESOURCES_DIR"
+cp -R pieces $RESOURCES_DIR/
+cp -R puzzles $ZIP_PATH/
+cp -R translations $RESOURCES_DIR/
+cp .env $ZIP_PATH/
+cp ocp.db $ZIP_PATH/
+cp *.ogg $RESOURCES_DIR/
+cp settings.json $ZIP_PATH/
+cp LICENSE $ZIP_PATH/
+cp README.md $ZIP_PATH/
+cp $EXECUTABLE_PATH $MACOS_DIR/
 
 # 2. Copy the icon
 cp "$ICNS_PATH" "$RESOURCES_DIR"
@@ -69,6 +85,7 @@ EOF
 
 # 5. Refresh the app bundle so Spotlight recognizes it
 touch "$APP_BUNDLE"
+tree
 
 echo "✅ App bundle created at: $APP_BUNDLE"
 echo "🎨 Icon added from: $ICON_IMAGE"
