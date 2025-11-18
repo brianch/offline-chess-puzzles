@@ -18,12 +18,12 @@ pub const CHESS_ALPHA: Font = iced::Font::with_name("Chess Alpha");
 #[cfg(not(macbundle))]
 pub const PUZZLES_DIRECTORY: &str = "puzzles/";
 #[cfg(macbundle)]
-pub const PUZZLES_DIRECTORY: &str = "../../puzzles/";
+pub const PUZZLES_DIRECTORY: &str = "../../../puzzles/";
 
 #[cfg(not(macbundle))]
 pub const SETTINGS_FILE: &str = "settings.json";
 #[cfg(macbundle)]
-pub const SETTINGS_FILE: &str = "../../settings.json";
+pub const SETTINGS_FILE: &str = "../../../settings.json";
 
 #[cfg(not(macbundle))]
 pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";

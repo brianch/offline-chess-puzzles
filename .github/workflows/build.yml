@@ -55,13 +55,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release --verbose
+      - run: RUSTFLAGS='--cfg macbundle' cargo build --release --verbose
       - run: bash mac-app.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-release-bin
-          path: zip/
-          include-hidden-files: true
       - uses: actions/upload-artifact@v4
         with:
           name: macos-bundle
