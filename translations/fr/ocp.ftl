@@ -153,11 +153,17 @@ mateIn5 = Mat en 5 ou plus
 anastasiaMate = Mat d'Anastasie
 arabianMate = Mat des Arabes
 backRankMate = Mat de couloir
+balestraMate = Mat de l'arbalète
+blindSwineMate = Mat des deux Tours
 bodenMate = Mat de Boden
+cornerMate = Mat en coin
 doubleBishopMate = Mat des deux Fous
 dovetailMate = Mat de Cozio
 hookMate = Mat de l'hameçon
 killBoxMate = Mat par mise en boîte
+morphysMate = Mat de Morphy
+operaMate = Mat de l'opéra
+triangleMate = Mat du triangle
 vukovicMate = Mat de Vuković
 smotheredMate = Mat à l'étouffée
 

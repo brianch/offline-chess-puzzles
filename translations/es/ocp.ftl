@@ -151,11 +151,17 @@ mateIn5 = Mate en 5 o más
 anastasiaMate = Mate de Anastasia
 arabianMate = Mate Árabe
 backRankMate = Mate del pasillo
+balestraMate = Mate de alfil y dama
+blindSwineMate = Mate del cerdo ciego
 bodenMate = Mate de Boden
+cornerMate = Mate de la esquina
 doubleBishopMate = Mate de los dos alfiles
 dovetailMate = Mate de Cozio
 hookMate = Mate del gancho
 killBoxMate = Mate del recuadro mortal
+morphysMate = Mate de Morphy
+operaMate = Mate de la ópera
+triangleMate = Mate del triángulo
 vukovicMate = Mate de Vukovic
 smotheredMate = Mate de la coz
 
