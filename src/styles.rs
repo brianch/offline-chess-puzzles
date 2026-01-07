@@ -363,6 +363,7 @@ pub fn menu_style(theme: &iced::Theme) -> menu::Style {
         selected_background: iced::Background::Color(palette.success.base.color),
         selected_text_color: iced::Color::WHITE,
         text_color: rgb!(45., 45., 45.),
+        shadow: iced::Shadow::default(),
     }
 }
 
@@ -386,7 +387,8 @@ impl Into<Palette> for OCPPalette {
             text: self.simple_text,
             primary: self.light_square,
             success: self.dark_square,
-            danger: self.tab_label
+            danger: self.tab_label,
+            warning: self.tab_label,
         }
     }
 }
