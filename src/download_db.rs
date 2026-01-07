@@ -8,7 +8,7 @@ use std::io::Cursor;
 use std::fs::OpenOptions;
 use zstd;
 
-use crate::Message;
+use crate::{LICHESS_DB_URL, Message, config};
 use crate::config::PUZZLES_DIRECTORY;
 
 pub enum DownloadState {
@@ -25,14 +25,16 @@ pub enum DownloadState {
     Finished,
 }
 
-pub fn download_lichess_db(url: String, path: String) -> Subscription<Message> {
-    Subscription::run_with_id(std::any::TypeId::of::<DownloadState>(), download_stream(url, path))
+pub fn download_lichess_db() -> Subscription<Message> {
+    Subscription::run(download_stream)
 }
 
-fn download_stream(url: String, path: String) -> impl Stream<Item = Message> {
+fn download_stream() -> impl Stream<Item = Message> {
+    let url = String::from(LICHESS_DB_URL);
+    let path = config::SETTINGS.puzzle_db_location.clone();
     let lichess_zst_file = String::from(PUZZLES_DIRECTORY) + "lichess_db_puzzle.csv.zst";
-    stream::channel(100,
-        |mut output| async move  {
+    stream::channel(100, async move
+        |mut output| {
             let mut state = DownloadState::StartDownload{ url , path: path.clone()};
             loop {
                 match state {

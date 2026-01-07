@@ -17,7 +17,7 @@ pub const STOP_COMMAND: &str = "STOP";
 pub const EXIT_APP_COMMAND: &str = "EXIT";
 
 pub enum EngineState {
-    Start(Engine),
+    Start,
     Thinking(Child, String, Receiver<String>),
     TurnedOff,
 }
@@ -45,24 +45,26 @@ impl Engine {
         }
     }
 
-    pub fn run_engine(&self) -> Subscription<Message> {
-        Subscription::run_with_id(
-            std::any::TypeId::of::<Engine>(),
-            engine_stream(self.clone())
+    pub fn run_engine(self) -> Subscription<Message> {
+        Subscription::run_with(
+            self,
+            Engine::engine_stream,
         )
     }
-}
+    
+    fn engine_stream(engine: &Engine) -> impl Stream<Item = Message> {
+        let engine = engine.clone();
+        stream::channel(100,
 
-fn engine_stream(engine: Engine) -> impl Stream<Item = Message> {
-    stream::channel(100,
-        move |mut output| {
-            //let engine = engine.clone();
+            async move |mut output| {
 
-            async move  {
-                let mut state = EngineState::Start(engine);
+                let mut state = EngineState::Start;
+
                 loop {
                     match &mut state {
-                        EngineState::Start(engine) => {
+
+                        EngineState::Start => {
+
                             let (sender, receiver) = mpsc::channel(100);
                             let mut cmd = Command::new(engine.engine_path.clone());
                             cmd.kill_on_drop(true).stdin(Stdio::piped()).stdout(Stdio::piped());
@@ -71,12 +73,10 @@ fn engine_stream(engine: Engine) -> impl Stream<Item = Message> {
                             // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
                             cmd.creation_flags(0x08000000);
                             let mut child = cmd.spawn().expect("Error calling engine");
-
                             let pos = String::from("position fen ") + &engine.position + &String::from("\n");
                             let limit = String::from("go ") + &engine.search_up_to + "\n";
                             let mut uciok = false;
                             let mut readyok = false;
-
                             child.stdin.as_mut().unwrap().write_all(b"uci\n").await.expect("Error communicating with engine");
                             let mut reader = BufReader::new(child.stdout.as_mut().unwrap());
                             let mut buf_str = String::new();
@@ -216,6 +216,7 @@ fn engine_stream(engine: Engine) -> impl Stream<Item = Message> {
                     }
                 }
             }
-        }
-    )
+        )
+    }
 }
+ 

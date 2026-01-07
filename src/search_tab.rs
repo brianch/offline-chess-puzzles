@@ -552,7 +552,7 @@ impl Tab for SearchTab {
 
         }
 
-        search_col = search_col.push(Space::new(Length::Fill, 10));
+        search_col = search_col.push(Space::new().height(10));
         if self.show_searching_msg {
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "searching")));
         }

@@ -2,7 +2,7 @@
 
 use download_db::download_lichess_db;
 use eval::{Engine, EngineStatus};
-use iced::widget::container::Id;
+use iced::widget::Id;
 use iced::advanced::widget::Id as GenericId;
 use iced::widget::svg::Handle;
 use iced::widget::text::LineHeight;
@@ -14,7 +14,7 @@ use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
 use iced::widget::{button, center, container, responsive, row, text, text_input, Button, Column, Container, Radio, Row, Svg, Text};
-use iced::{Element, Rectangle, Size, Subscription, Theme};
+use iced::{Application, Element, Rectangle, Size, Subscription, Theme};
 use iced::{alignment, Task, Alignment, Length};
 use iced::window::{self, Screenshot};
 use iced::event::{self, Event};
@@ -60,7 +60,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-const HEADER_SIZE: u16 = 32;
+const HEADER_SIZE: f32 = 32.0;
 const TAB_PADDING: u16 = 16;
 const LICHESS_DB_URL: &str = "https://database.lichess.org/lichess_db_puzzle.csv.zst";
 
@@ -189,10 +189,18 @@ fn get_image_handles(theme: &PieceTheme) -> Vec<Handle> {
     handles
 }
 
+fn gen_board_button_ids() -> Vec<GenericId> {
+    let mut ids = Vec::new();
+    for id in config::BTN_IDS {
+        ids.push(GenericId::new(id));
+    }
+    ids
+}
+
 fn gen_square_hashmap() -> HashMap<GenericId, Square> {
     let mut squares_map = HashMap::new();
     for square in ALL_SQUARES {
-        squares_map.insert(GenericId::new(square.to_string()), square);
+        squares_map.insert(GenericId::unique(), square);
     }
     squares_map
 }
@@ -270,6 +278,7 @@ struct OfflinePuzzles {
     lang: lang::Language,
     mini_ui: bool,
     square_ids: HashMap<GenericId, Square>,
+    board_btn_ids: Vec<GenericId>,
     piece_imgs: Vec<Handle>,
 }
 
@@ -280,6 +289,7 @@ impl Default for OfflinePuzzles {
 }
 
 impl OfflinePuzzles {
+
     pub fn new(has_lichess_db: bool) -> Self {
         Self {
             window_id: None,
@@ -316,6 +326,7 @@ impl OfflinePuzzles {
             lang: config::SETTINGS.lang,
             mini_ui: false,
             square_ids: gen_square_hashmap(),
+            board_btn_ids: gen_board_button_ids(),
             piece_imgs: get_image_handles(&config::SETTINGS.piece_theme),
         }
     }
@@ -489,11 +500,11 @@ impl OfflinePuzzles {
     }
 
     // Old Iced application trait stuff
-    fn init() -> (OfflinePuzzles, Task<Message>) {
+    fn init() -> (Self, Task<Message>) {
         let has_lichess_db = std::path::Path::new(&config::SETTINGS.puzzle_db_location).exists();
         (
             Self::new(has_lichess_db),
-            Task::discard(iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES))).chain(window::get_latest())
+            Task::discard(iced::font::load(Cow::from(config::CHESS_ALPHA_BYTES))).chain(window::latest())
             .map(Message::WindowInitialized)
         )
     }
@@ -657,7 +668,7 @@ impl OfflinePuzzles {
                         height: crop_height as u32,
                     });
                     if let Ok (screenshot) = crop {
-                        let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.bytes.to_vec());
+                        let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.rgba.to_vec());
                         if let Some(image) = img {
                             let _ = image.save_with_format(path, image::ImageFormat::Jpeg);
                         }
@@ -678,7 +689,7 @@ impl OfflinePuzzles {
                 if let Event::Window(window::Event::CloseRequested) = event {
                     match self.engine_state {
                         EngineStatus::TurnedOff => {
-                            iced::window::get_maximized(self.window_id.unwrap()).map(Message::SaveMaximizedStatusAndExit)
+                            iced::window::is_maximized(self.window_id.unwrap()).map(Message::SaveMaximizedStatusAndExit)
                         } _ => {
                             if let Some(sender) = &self.engine_sender {
                                 sender.blocking_send(String::from(eval::EXIT_APP_COMMAND)).expect("Error stopping engine.");
@@ -832,10 +843,7 @@ impl OfflinePuzzles {
             EngineStatus::TurnedOff => {
                 if self.downloading_db {
                     Subscription::batch(vec![
-                        download_lichess_db(
-                            String::from(LICHESS_DB_URL),
-                            config::SETTINGS.puzzle_db_location.clone()
-                        ),
+                        download_lichess_db(),
                         event::listen().map(Message::EventOccurred)
                     ])
                 } else {
@@ -843,8 +851,7 @@ impl OfflinePuzzles {
                 }
             } _ => {
                 Subscription::batch(vec![
-                    //Engine::run_engine(&self.engine.clone()),
-                    self.engine.run_engine(),
+                    Engine::run_engine(self.engine.clone()),
                     event::listen().map(Message::EventOccurred)
                 ])
             }
@@ -896,6 +903,7 @@ impl OfflinePuzzles {
                     &self.lang,
                     size,
                     self.mini_ui,
+                    &self.board_btn_ids,
                     &self.piece_imgs,
                 )});
             Container::new(resp)
@@ -986,6 +994,7 @@ fn gen_view<'a>(
     lang: &lang::Language,
     size: Size,
     mini_ui: bool,
+    board_ids: &Vec<GenericId>,
     imgs: &Vec<Handle>,
 ) -> Element<'a, Message, Theme, iced::Renderer> {
 
@@ -999,14 +1008,14 @@ fn gen_view<'a>(
     let board_height =
         if engine_eval.is_empty() {
             if show_coordinates {
-                ((size.height - 145.) / 8.) as u16
+                (size.height - 145.) / 8.
             } else {
-                ((size.height - 135.) / 8.) as u16
+                (size.height - 135.) / 8.
             }
         } else if show_coordinates {
-            ((size.height - 175.) / 8.) as u16
+            (size.height - 175.) / 8.
         } else {
-            ((size.height - 165.) / 8.) as u16
+            (size.height - 165.) / 8.
         };
 
     let ranks;
@@ -1144,7 +1153,7 @@ fn gen_view<'a>(
                                 Svg::new(imgs[piece_index].clone()).width(board_height)
                                 .height(board_height)
                             ).drag_hide(true).drag_center(true).on_drop(move |point, rect| Message::DropPiece(pos, point, rect)).on_click(Message::SelectSquare(pos))
-                        ).style(container_style).id(Id::new(pos.to_string()))
+                        ).style(container_style).id(board_ids[pos.to_index()].clone())
                      );
                 } else {
                     board_row = board_row.push(container(
@@ -1153,7 +1162,7 @@ fn gen_view<'a>(
                             .height(board_height)
                             .on_press(Message::SelectSquare(pos))
                             .style(square_style)
-                        ).id(Id::new(pos.to_string()))
+                        ).id(board_ids[pos.to_index()].clone())
                     );
                 }
             }
@@ -1328,9 +1337,10 @@ fn main() -> iced::Result {
             ..iced::window::Settings::default()
         };
 
-    iced::application("Offline Chess Puzzles", OfflinePuzzles::update, OfflinePuzzles::view)
+    iced::application(OfflinePuzzles::init, OfflinePuzzles::update, OfflinePuzzles::view)
         .theme(OfflinePuzzles::theme)
         .subscription(OfflinePuzzles::subscription)
         .window(window_settings)
-        .run_with(OfflinePuzzles::init)
+        .title("Offline Chess Puzzles")
+        .run()
 }

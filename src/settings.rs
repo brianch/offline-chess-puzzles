@@ -252,19 +252,19 @@ impl Tab for SettingsTab {
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "play_sound")),
-                Checkbox::new("",self.play_sound).on_toggle(SettingsMessage::CheckPlaySound).size(20),
+                Checkbox::new(self.play_sound).on_toggle(SettingsMessage::CheckPlaySound).size(20),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "auto_load")),
-                Checkbox::new("",self.auto_load_next).on_toggle(SettingsMessage::CheckAutoLoad).size(20),
+                Checkbox::new(self.auto_load_next).on_toggle(SettingsMessage::CheckAutoLoad).size(20),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "flip_board")),
-                Checkbox::new("",self.flip_board).on_toggle(SettingsMessage::CheckFlipBoard).size(20),
+                Checkbox::new(self.flip_board).on_toggle(SettingsMessage::CheckFlipBoard).size(20),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "show_coords")),
-                Checkbox::new("", self.show_coordinates).on_toggle(SettingsMessage::CheckShowCoords).size(20),
+                Checkbox::new(self.show_coordinates).on_toggle(SettingsMessage::CheckShowCoords).size(20),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "pdf_number_of_pages")),
