@@ -71,6 +71,7 @@ english = English
 french = French
 portuguese = Portuguese
 spanish = Spanish
+chinese = Chinese
 play_sound = Play sound on moves:
 auto_load = Auto load next puzzle:
 flip_board = Flip board:

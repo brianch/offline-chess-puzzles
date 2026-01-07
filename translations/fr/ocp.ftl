@@ -73,6 +73,7 @@ english = Anglais
 french = Français
 portuguese = Portugais
 spanish = Espagnol
+chinese = Chinoise
 play_sound = Activer le son sur les déplacements:
 auto_load = Passer immédiatement au puzzle suivant:
 flip_board = Tourner l'échiquier:
