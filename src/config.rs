@@ -14,12 +14,37 @@ pub const CHESS_ALPHA_BYTES: &[u8] = include_bytes!("../font/Alpha.ttf");
 pub const CHESS_ALPHA: Font = iced::Font::with_name("Chess Alpha");
 
 //pub const FONT_DIRECTORY: &str = "font/";
+
+#[cfg(not(macbundle))]
 pub const PUZZLES_DIRECTORY: &str = "puzzles/";
-pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";
-pub const PIECES_DIRECTORY: &str = "pieces/";
+#[cfg(macbundle)]
+pub const PUZZLES_DIRECTORY: &str = "../../../puzzles/";
+
+#[cfg(not(macbundle))]
 pub const SETTINGS_FILE: &str = "settings.json";
+#[cfg(macbundle)]
+pub const SETTINGS_FILE: &str = "../../../settings.json";
+
+#[cfg(not(macbundle))]
+pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";
+#[cfg(macbundle)]
+pub const TRANSLATIONS_DIRECTORY: &str = "../Resources/translations/";
+
+#[cfg(not(macbundle))]
+pub const PIECES_DIRECTORY: &str = "pieces/";
+#[cfg(macbundle)]
+pub const PIECES_DIRECTORY: &str = "../Resources/pieces/";
+
+#[cfg(not(macbundle))]
 pub const ONE_PIECE_SOUND_FILE: &str = "1piece.ogg";
+#[cfg(macbundle)]
+pub const ONE_PIECE_SOUND_FILE: &str = "../Resources/1piece.ogg";
+
+#[cfg(not(macbundle))]
 pub const TWO_PIECES_SOUND_FILE: &str = "2piece.ogg";
+#[cfg(macbundle)]
+pub const TWO_PIECES_SOUND_FILE: &str = "../Resources/2piece.ogg";
+
 
 // Iced widget IDs need to be static
 pub static BTN_IDS: [&'static str; 64] = [
