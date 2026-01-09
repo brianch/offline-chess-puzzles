@@ -200,7 +200,7 @@ fn gen_board_button_ids() -> Vec<GenericId> {
 fn gen_square_hashmap() -> HashMap<GenericId, Square> {
     let mut squares_map = HashMap::new();
     for square in ALL_SQUARES {
-        squares_map.insert(GenericId::unique(), square);
+        squares_map.insert(GenericId::new(config::BTN_IDS[square.to_index()]), square);
     }
     squares_map
 }
