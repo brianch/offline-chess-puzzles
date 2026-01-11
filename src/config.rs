@@ -19,7 +19,7 @@ pub const TRANSLATIONS_DIRECTORY: &str = "./translations/";
 pub const PIECES_DIRECTORY: &str = "pieces/";
 pub const SETTINGS_FILE: &str = "settings.json";
 pub const ONE_PIECE_SOUND_FILE: &str = "1piece.ogg";
-pub const TWO_PIECES_SOUND_FILE: &str = "2piece.ogg";
+pub const TWO_PIECES_SOUND_FILE: &str = "2pieces.ogg";
 
 // Iced widget IDs need to be static
 pub static BTN_IDS: [&'static str; 64] = [

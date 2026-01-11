@@ -2,7 +2,6 @@
 
 use download_db::download_lichess_db;
 use eval::{Engine, EngineStatus};
-use iced::widget::Id;
 use iced::advanced::widget::Id as GenericId;
 use iced::widget::svg::Handle;
 use iced::widget::text::LineHeight;
@@ -25,10 +24,9 @@ use rfd::AsyncFileDialog;
 use iced_aw::{TabLabel, Tabs};
 use chess::{Board, BoardStatus, ChessMove, Color, File, Game, Piece, Rank, Square, ALL_SQUARES};
 
-use rodio::{Decoder, OutputStream, OutputStreamHandle};
-use rodio::source::{Source, Buffered};
+use rodio::{OutputStream, OutputStreamBuilder};
 
-use rand::thread_rng;
+use rand::rng;
 use rand::seq::SliceRandom;
 
 mod config;
@@ -128,11 +126,7 @@ pub enum Message {
 }
 
 struct SoundPlayback {
-    // it's not directly used, but we need to keep it: https://github.com/RustAudio/rodio/issues/330
-    stream: OutputStream,
-    handle: OutputStreamHandle,
-    one_piece_sound: Buffered<Decoder<BufReader<StdFile>>>,
-    two_pieces_sound: Buffered<Decoder<BufReader<StdFile>>>,
+    handle: OutputStream,
 }
 
 impl SoundPlayback {
@@ -140,31 +134,33 @@ impl SoundPlayback {
     pub const TWO_PIECE_SOUND: u8 = 1;
     pub fn init_sound() -> Option<Self> {
         let mut sound_playback = None;
-        if let Ok((stream, handle)) = OutputStream::try_default() {
-            let one_pieces_sound = StdFile::open(ONE_PIECE_SOUND_FILE);
-            let two_pieces_sound = StdFile::open(TWO_PIECES_SOUND_FILE);
-
-            if let (Ok(one_piece), Ok(two_piece)) = (one_pieces_sound, two_pieces_sound) {
-                sound_playback = Some(
-                    SoundPlayback {
-                        stream: stream,
-                        handle: handle,
-                        one_piece_sound: Decoder::new(BufReader::new(one_piece)).unwrap().buffered(),
-                        two_pieces_sound: Decoder::new(BufReader::new(two_piece)).unwrap().buffered()
-                    }
-                );
-            }
-        }
+        if let Ok(handle) = OutputStreamBuilder::open_default_stream() {
+            sound_playback = Some (
+                SoundPlayback {
+                    handle: handle,
+            });
+    }
         sound_playback
     }
     pub fn play_audio(&self, audio: u8) {
-        let audio = match audio {
-            SoundPlayback::ONE_PIECE_SOUND => self.one_piece_sound.clone(),
-            _ => self.two_pieces_sound.clone(),
+        let sink = match audio {
+            SoundPlayback::ONE_PIECE_SOUND => {
+                rodio::play(
+                    &self.handle.mixer(),
+                    BufReader::new(
+                        StdFile::open(ONE_PIECE_SOUND_FILE).unwrap()
+                    )).unwrap()
+            },
+            _ => {
+                rodio::play(
+                    &self.handle.mixer(),
+                    BufReader::new(
+                        StdFile::open(TWO_PIECES_SOUND_FILE).unwrap()
+                    )).unwrap()
+            },
         };
-        if let Err(e) = self.handle.play_raw(audio.convert_samples()) {
-            eprintln!("{e}");
-        }
+        sink.play();
+        sink.detach();
     }
 }
 
@@ -597,7 +593,7 @@ impl OfflinePuzzles {
                 if let Some(puzzles_vec) = puzzles_vec {
                     if !puzzles_vec.is_empty() {
                         self.puzzle_tab.puzzles = puzzles_vec;
-                        self.puzzle_tab.puzzles.shuffle(&mut thread_rng());
+                        self.puzzle_tab.puzzles.shuffle(&mut rng());
                         self.puzzle_tab.current_puzzle = 0;
                         self.puzzle_number_ui = String::from("1");
                         self.load_puzzle(false);

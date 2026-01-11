@@ -11,28 +11,28 @@ iced = { version = "0.14", default-features = false, features = ["svg", "tokio",
 iced_aw = { version = "0.13", default-features = false, features = ["tabs"] }
 iced_drop = {git = "https://github.com/pml68/iced_drop.git", branch="0.14"}
 
-rand = "0.8.5"
-chrono = "0.4.41"
+rand = "0.9.2"
+chrono = "0.4.42"
 chess = "3.2.0"
-csv = "1.3.1"
-serde = "1.0.217"
-serde_derive = "1.0.217"
-serde_json = "1.0.135"
-tokio = { version = "1.43.0", features = ["process", "io-std", "io-util", "sync"] }
-reqwest = "0.12.12"
-zstd = "0.13.2"
-rodio = { version = "0.20.1", default-features = false, features = ["vorbis"] }
-fluent-bundle = "0.15.3"
-intl-memoizer = "0.5.2"
-once_cell = "1.20.2"
-unic-langid = { version = "0.9.5", features = ["macros"] }
-diesel = { version = "2.2.6", features = ["sqlite"] }
+csv = "1.4.0"
+serde = "1.0.228"
+serde_derive = "1.0.228"
+serde_json = "1.0.149"
+tokio = { version = "1.49.0", features = ["process", "io-std", "io-util", "sync"] }
+reqwest = "0.13.1"
+zstd = "0.13.3"
+rodio = { version = "0.21.1",  default-features = false, features = ["playback", "symphonia-all"] }
+fluent-bundle = "0.16.0"
+intl-memoizer = "0.5.3"
+once_cell = "1.21.3"
+unic-langid = { version = "0.9.6", features = ["macros"] }
+diesel = { version = "2.3.5", features = ["sqlite"] }
 dotenvy = "0.15.7"
-lopdf = "0.34.0"
-open = "5.3.2"
+lopdf = "0.38.0"
+open = "5.3.3"
 #rfd = { version = "0.13.0", default-features = false, features = ["xdg-portal", "tokio"] }
-rfd = "0.15.2"
-image = { version = "0.25.5", default-features = false, features = ["jpeg"] }
+rfd = "0.17.1"
+image = { version = "0.25.9", default-features = false, features = ["jpeg"] }
 
 [target.'cfg(windows)'.dependencies]
-libsqlite3-sys = { version = "0.30.1", features = ["bundled"] }
+libsqlite3-sys = { version = "0.35.0", features = ["bundled"] }
