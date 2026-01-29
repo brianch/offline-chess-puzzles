@@ -812,7 +812,7 @@ impl OfflinePuzzles {
                     iced::window::resize(self.window_id.unwrap(), new_size)
                 }
             } (_, Message::DropPiece(square, cursor_pos, _bounds)) => {
-                if self.puzzle_tab.game_status == GameStatus::Playing {
+                if self.puzzle_tab.game_status == GameStatus::Playing || self.game_mode == config::GameMode::Analysis {
                     iced_drop::zones_on_point(
                         move |zones| Message::HandleDropZones(square, zones),
                         cursor_pos,
