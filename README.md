@@ -9,10 +9,10 @@ A simple tool to view and solve puzzles from the lichess puzzle database.
 
 ## Usage:
 Download the app from either:
-- The [releases page](https://github.com/brianch/offline-chess-puzzles/releases) (may be outdated)
+- The [releases page](https://github.com/brianch/offline-chess-puzzles/releases)
 - The [latest build artifacts](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml?query=branch%3Amain+is%3Asuccess) from the main branch (click on the most recent successful workflow run, then scroll down to the "Artifacts" section)
 
-You'll also need to download the file "lichess_db_puzzle.csv" (from the lichess link above) to the "puzzles" directory of the app.
+The app can download and extract the puzzles database automatically if you have an internet connection, but if you don't, you can manually extract and copy the database file ("lichess_db_puzzle.csv" from the lichess link above) to the "puzzles" directory.
 
 To play you simply adjust the search to your needs, press "search" and a puzzle will be loaded, when you get it right, the next one will be immediatly displayed (you can disable this auto load in the settings).
 
