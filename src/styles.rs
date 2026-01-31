@@ -162,48 +162,6 @@ impl std::fmt::Display for BoardTheme {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub enum OCPTheme {
-    #[default]
-    Blue,
-    Green,
-    Brown,
-    Purple,
-    Grey,
-    MonochromeGrey,
-    BlueDark,
-    GreenDark,
-    BrownDark,
-    PurpleDark,
-    GreyDark,
-    MonochromeGreyDark,
-    Trans,
-}
-
-impl std::fmt::Display for OCPTheme {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                OCPTheme::Blue => "Blue",
-                OCPTheme::Green => "Green",
-                OCPTheme::Brown => "Brown",
-                OCPTheme::Purple => "Purple",
-                OCPTheme::Grey => "Grey",
-                OCPTheme::MonochromeGrey => "Monochrome Grey",
-                OCPTheme::BlueDark => "Blue - Dark Mode",
-                OCPTheme::GreenDark => "Green - Dark Mode",
-                OCPTheme::BrownDark => "Brown - Dark Mode",
-                OCPTheme::PurpleDark => "Purple - Dark Mode",
-                OCPTheme::GreyDark => "Grey - Dark Mode",
-                OCPTheme::MonochromeGreyDark => "Monochrome Grey - Dark",
-                OCPTheme::Trans => "Trans",
-            }
-        )
-    }
-}
-
 pub type ChessBtn = fn(&iced::Theme, iced::widget::button::Status) -> button::Style;
 pub fn btn_style_light_square(theme: &iced::Theme, _status: iced::widget::button::Status) -> button::Style {
     let palette = theme.palette();
