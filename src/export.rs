@@ -347,7 +347,7 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
 pub fn to_pgn(puzzles: &Vec<config::Puzzle>, lang: &lang::Language, path: String) {
     let mut pgn_content = String::new();
 
-    for (puzzle_index, puzzle) in puzzles.iter().enumerate() {
+    for (_puzzle_index, puzzle) in puzzles.iter().enumerate() {
         // Start with a board from the FEN
         let mut board = Board::from_str(&puzzle.fen).unwrap();
 

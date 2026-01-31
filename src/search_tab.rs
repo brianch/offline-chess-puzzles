@@ -430,7 +430,7 @@ impl Tab for SearchTab {
         TabLabel::Text(self.title())
     }
 
-    fn content(&self) -> Element<Message> {
+    fn content(&self) -> Element<'_, Message> {
         let mut search_col = col![
             Container::new(
                 row![

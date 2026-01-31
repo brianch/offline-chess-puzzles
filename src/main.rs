@@ -13,7 +13,7 @@ use std::fs::File as StdFile;
 use std::str::FromStr;
 use tokio::sync::mpsc::{self, Sender};
 use iced::widget::{button, center, container, responsive, row, text, text_input, Button, Column, Container, Radio, Row, Svg, Text};
-use iced::{Application, Element, Rectangle, Size, Subscription, Theme};
+use iced::{Element, Rectangle, Size, Subscription, Theme};
 use iced::{alignment, Task, Alignment, Length};
 use iced::window::{self, Screenshot};
 use iced::event::{self, Event};
@@ -854,7 +854,7 @@ impl OfflinePuzzles {
         }
     }
 
-    fn view(&self) -> Element<Message, Theme, iced::Renderer> {
+    fn view(&self) -> Element<'_, Message, Theme, iced::Renderer> {
         if self.has_db {
             let has_previous = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle > 0;
             let has_more_puzzles = !self.puzzle_tab.puzzles.is_empty() && self.puzzle_tab.current_puzzle < self.puzzle_tab.puzzles.len() - 1;
