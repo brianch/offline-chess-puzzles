@@ -160,6 +160,7 @@ doubleBishopMate = Double bishop mate
 dovetailMate = Dovetail mate
 hookMate = Hook mate
 killBoxMate = Kill Box mate
+pillsburysMate = Pillsbury's mate
 morphysMate = Morphy's mate
 operaMate = Opera mate
 triangleMate = Triangle mate

@@ -160,6 +160,7 @@ doubleBishopMate = Mate de los dos alfiles
 dovetailMate = Mate de Cozio
 hookMate = Mate del gancho
 killBoxMate = Mate del recuadro mortal
+pillsburysMate = Mate de Pillsbury
 morphysMate = Mate de Morphy
 operaMate = Mate de la ópera
 triangleMate = Mate del triángulo

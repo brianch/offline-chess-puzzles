@@ -162,6 +162,7 @@ doubleBishopMate = Mat des deux Fous
 dovetailMate = Mat de Cozio
 hookMate = Mat de l'hameçon
 killBoxMate = Mat par mise en boîte
+pillsburysMate = Mat de Pillsbury
 morphysMate = Mat de Morphy
 operaMate = Mat de l'opéra
 triangleMate = Mat du triangle

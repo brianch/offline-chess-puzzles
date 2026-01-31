@@ -163,10 +163,11 @@ cornerMate = Corner mate
 doubleBishopMate = 双象杀
 dovetailMate = 燕尾杀
 hookMate = 钩子杀
+killBoxMate = 绝杀盒
+pillsburysMate = Pillsbury's mate
 morphysMate = Morphy's mate
 operaMate = Opera mate
 triangleMate = Triangle mate
-killBoxMate = 绝杀盒
 vukovicMate = 武科维奇杀
 smotheredMate = 闷杀
 
