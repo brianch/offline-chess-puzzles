@@ -525,7 +525,7 @@ impl OCPPalette {
     pub const ENBY: Self = Self {
         container_bg: rgb!(142.0, 101.0, 161.0),
         light_square: rgb!(246.0, 246.0, 246.0),
-        dark_square: rgb!(219.0, 190.0, 53.0),
+        dark_square: rgb!(211.0, 192.0, 80.0),
         selected_light_square: rgb!(172.0, 131.0, 191.0),
         selected_dark_square: rgb!(132.0, 91.0, 151.0),
         simple_text: Color::BLACK,
