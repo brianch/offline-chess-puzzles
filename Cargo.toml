@@ -1,6 +1,6 @@
 [package]
 name = "offline-chess-puzzles"
-version = "2.4.1"
+version = "2.5.0"
 authors = ["brianch <brianch@users.noreply.github.com>"]
 edition = "2021"
 
