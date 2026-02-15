@@ -1,6 +1,6 @@
 [package]
 name = "offline-chess-puzzles"
-version = "2.10.0"
+version = "2.5.0"
 authors = ["brianch <brianch@users.noreply.github.com>"]
 description = "A simple tool to view and solve puzzles from the lichess puzzle database"
 edition = "2021"
