@@ -442,7 +442,7 @@ impl Tab for SearchTab {
             row![
                 Text::new(lang::tr(&self.lang, "min_rating")),
                 Slider::new(
-                    0..=3000,
+                    0..=config::MAX_RATING,
                     self.slider_min_rating_value,
                     SearchMesssage::SliderMinRatingChanged,
                 ),
@@ -451,7 +451,7 @@ impl Tab for SearchTab {
             row![
                 Text::new(lang::tr(&self.lang, "max_rating")),
                 Slider::new(
-                    0..=3000,
+                    0..=config::MAX_RATING,
                     self.slider_max_rating_value,
                     SearchMesssage::SliderMaxRatingChanged,
                 ),
