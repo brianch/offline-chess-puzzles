@@ -72,6 +72,7 @@ french = Francés
 portuguese = Portugués
 spanish = Español
 chinese = Chino
+dutch = Holandesa
 play_sound = Sonido en los movimientos:
 auto_load = Cargar automaticamente el próx. ejercício:
 flip_board = Girar el tablero:

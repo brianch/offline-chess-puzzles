@@ -76,6 +76,7 @@ french = 法语
 portuguese = 葡萄牙语
 spanish = 西班牙语
 chinese = 中文
+dutch = 荷蘭語
 play_sound = 走棋时播放声音:
 auto_load = 自动加载下一个谜题:
 flip_board = 翻转棋盘:

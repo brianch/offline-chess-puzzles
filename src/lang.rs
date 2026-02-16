@@ -56,7 +56,18 @@ static BUNDLE_CN: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::I
     let mut source = String::new();
     reader.read_to_string(&mut source).expect("Failed to read CN translation file");
     let res = FluentResource::try_new(source).expect("Could not parse the FTL file.");
-    let mut bundle = FluentBundle::new_concurrent(vec![langid!("fr")]);
+    let mut bundle = FluentBundle::new_concurrent(vec![langid!("cn")]);
+    bundle.add_resource(res).expect("Failed to add FTL resources to the bundle.");
+    bundle
+});
+
+static BUNDLE_NL: Lazy<FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = Lazy::new(|| {
+    let file = std::fs::File::open(TRANSLATIONS_DIRECTORY.to_owned() + "nl/ocp.ftl").unwrap();
+    let mut reader = std::io::BufReader::new(file);
+    let mut source = String::new();
+    reader.read_to_string(&mut source).expect("Failed to read NL translation file");
+    let res = FluentResource::try_new(source).expect("Could not parse the FTL file.");
+    let mut bundle = FluentBundle::new_concurrent(vec![langid!("nl")]);
     bundle.add_resource(res).expect("Failed to add FTL resources to the bundle.");
     bundle
 });
@@ -68,6 +79,7 @@ pub fn tr(lang: &Language, key: &str) -> String {
         Language::Spanish => &BUNDLE_ES,
         Language::French => &BUNDLE_FR,
         Language::Chinese => &BUNDLE_CN,
+        Language::Dutch => &BUNDLE_NL,
     };
     let msg = bundle.get_message(key).expect(&("Missing translation key ".to_owned() + key));
     let mut errors = vec![];
@@ -77,12 +89,12 @@ pub fn tr(lang: &Language, key: &str) -> String {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
-    English, Portuguese, Spanish, French, Chinese
+    English, Portuguese, Spanish, French, Chinese, Dutch
 }
 
 impl Language {
-    pub const ALL: [Language; 5] = [
-        Language::English, Language::Portuguese, Language::Spanish, Language::French, Language::Chinese
+    pub const ALL: [Language; 6] = [
+        Language::English, Language::Portuguese, Language::Spanish, Language::French, Language::Chinese, Language::Dutch
     ];
 }
 
@@ -94,6 +106,7 @@ impl DisplayTranslated for Language {
             Language::Spanish => "spanish",
             Language::French => "french",
             Language::Chinese => "chinese",
+            Language::Dutch => "dutch",
         }
     }
 }
