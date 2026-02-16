@@ -72,6 +72,7 @@ french = French
 portuguese = Portuguese
 spanish = Spanish
 chinese = Chinese
+dutch = Dutch
 play_sound = Play sound on moves:
 auto_load = Auto load next puzzle:
 flip_board = Flip board:
