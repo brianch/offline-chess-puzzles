@@ -18,7 +18,7 @@ use iced::{alignment, Task, Alignment, Length};
 use iced::window::{self, Screenshot};
 use iced::event::{self, Event};
 use std::borrow::Cow;
-use image::RgbaImage;
+use image::{DynamicImage, RgbaImage};
 use rfd::AsyncFileDialog;
 
 use iced_aw::{TabLabel, Tabs};
@@ -650,9 +650,9 @@ impl OfflinePuzzles {
                 Task::perform(screenshot_save_dialog(screenshot), Message::SaveScreenshot)
             } (_, Message::SaveScreenshot(img_and_path)) => {
                 let (crop_height, crop_width) = if self.settings_tab.show_coordinates {
-                    (self.settings_tab.window_height - 118., self.settings_tab.window_height - 123.)
+                    (self.settings_tab.window_height - 125., self.settings_tab.window_height - 130.)
                 } else {
-                    (self.settings_tab.window_height - 128., self.settings_tab.window_height - 128.)
+                    (self.settings_tab.window_height - 135., self.settings_tab.window_height - 135.)
                 };
                 if let Some(img_and_path) = img_and_path {
                     let screenshot = img_and_path.0;
@@ -666,7 +666,8 @@ impl OfflinePuzzles {
                     if let Ok (screenshot) = crop {
                         let img = RgbaImage::from_raw(screenshot.size.width, screenshot.size.height, screenshot.rgba.to_vec());
                         if let Some(image) = img {
-                            let _ = image.save_with_format(path, image::ImageFormat::Jpeg);
+                            let rgb_img = DynamicImage::ImageRgba8(image).into_rgb8();
+                            let _ = rgb_img.save_with_format(path, image::ImageFormat::Jpeg);
                         }
                     }
                 }
