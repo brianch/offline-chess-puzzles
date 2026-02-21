@@ -43,7 +43,7 @@ king = R
 #Downloader
 db_not_found = La base de données Lichess n’est pas installée
 do_you_wanna_download = Voulez-vous la télécharger maintenant ?
-download_size_info = Le fichier à télécharger a une taille d’environ 200 Mo et sera décompressé (taille supérieure à 650 Mo).
+download_size_info = Le fichier à télécharger a une taille d’environ 300 Mo et sera décompressé (taille supérieure à 990 Mo).
 downloading = Téléchargement en cours...
 download_btn = Télécharger
 

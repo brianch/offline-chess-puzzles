@@ -44,7 +44,7 @@ king = K
 
 db_not_found = 未找到Lichess数据库
 do_you_wanna_download = 您要现在下载吗？
-download_size_info = 下载文件约200MB，解压后超过650MB。
+download_size_info = 下载文件约300MB，解压后超过990MB。
 downloading = 下载中...
 download_btn = 下载
 

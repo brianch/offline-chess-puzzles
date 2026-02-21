@@ -41,7 +41,7 @@ king = K
 #Downloader
 db_not_found = Lichess Database niet aanwezig
 do_you_wanna_download = Wil je deze nu downloaden?
-download_size_info = de download is ongeveer 250 MB, and ruim 900 MB ongecomprimeerd
+download_size_info = de download is ongeveer 300 MB, and ruim 990 MB ongecomprimeerd
 downloading = Downloaden...
 download_btn = Downloaden
 
