@@ -7,7 +7,7 @@ use std::io::BufReader;
 use iced_aw::TabLabel;
 use chess::{Piece, PROMOTION_PIECES};
 use crate::config::{load_config, SETTINGS_FILE, PIECES_DIRECTORY};
-use crate::styles::PieceTheme;
+use crate::styles::{PieceTheme, btn_style_simple};
 use crate::{Tab, Message, config, styles, lang, db, openings};
 
 use lang::{DisplayTranslated,PickListWrapper};
@@ -435,8 +435,8 @@ impl Tab for SearchTab {
         let mut search_col = col![
             Container::new(
                 row![
-                    Radio::new(lang::tr(&self.lang, "lichess_db"), SearchBase::Lichess, self.base, SearchMesssage::SelectBase),
-                    Radio::new(lang::tr(&self.lang, "my_favories"), SearchBase::Favorites, self.base, SearchMesssage::SelectBase),
+                    Radio::new(lang::tr(&self.lang, "lichess_db"), SearchBase::Lichess, self.base, SearchMesssage::SelectBase).style(styles::radio_style),
+                    Radio::new(lang::tr(&self.lang, "my_favories"), SearchBase::Favorites, self.base, SearchMesssage::SelectBase).style(styles::radio_style),
                 ].spacing(10)
             ).align_x(alignment::Horizontal::Center).width(Length::Fill),
             row![
@@ -445,7 +445,7 @@ impl Tab for SearchTab {
                     0..=config::MAX_RATING,
                     self.slider_min_rating_value,
                     SearchMesssage::SliderMinRatingChanged,
-                ),
+                ).style(styles::slider_style),
                 Text::new(self.slider_min_rating_value.to_string())
             ].width(Length::Fill),
             row![
@@ -454,7 +454,7 @@ impl Tab for SearchTab {
                     0..=config::MAX_RATING,
                     self.slider_max_rating_value,
                     SearchMesssage::SliderMaxRatingChanged,
-                ),
+                ).style(styles::slider_style),
                 Text::new(self.slider_max_rating_value.to_string())
                 ].width(Length::Fill),
             row![
@@ -463,7 +463,7 @@ impl Tab for SearchTab {
                     -100..=100,
                     self.slider_min_popularity,
                     SearchMesssage::SliderMinPopularityChanged,
-                ),
+                ).style(styles::slider_style),
                 Text::new(self.slider_min_popularity.to_string())
                 ].width(Length::Fill),
             Text::new(lang::tr(&self.lang, "theme_label")),
@@ -488,9 +488,9 @@ impl Tab for SearchTab {
 
         if self.opening.item != Openings::Any {
             let row_color = row![
-                Radio::new(lang::tr(&self.lang, "any"), OpeningSide::Any, self.opening_side, SearchMesssage::SelectOpeningSide),
-                Radio::new(lang::tr(&self.lang, "white"), OpeningSide::White, self.opening_side, SearchMesssage::SelectOpeningSide),
-                Radio::new(lang::tr(&self.lang, "black"), OpeningSide::Black, self.opening_side, SearchMesssage::SelectOpeningSide)
+                Radio::new(lang::tr(&self.lang, "any"), OpeningSide::Any, self.opening_side, SearchMesssage::SelectOpeningSide).style(styles::radio_style),
+                Radio::new(lang::tr(&self.lang, "white"), OpeningSide::White, self.opening_side, SearchMesssage::SelectOpeningSide).style(styles::radio_style),
+                Radio::new(lang::tr(&self.lang, "black"), OpeningSide::Black, self.opening_side, SearchMesssage::SelectOpeningSide).style(styles::radio_style)
             ].spacing(5).align_y(Alignment::Center);
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "side"))).push(row_color);
         }
@@ -558,7 +558,7 @@ impl Tab for SearchTab {
             search_col = search_col.push(Text::new(lang::tr(&self.lang, "searching")));
         }
         search_col = search_col
-            .push(Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch))
+            .push(Button::new(Text::new(lang::tr(&self.lang, "btn_search"))).padding(5).on_press(SearchMesssage::ClickSearch).style(btn_style_simple))
             .push(Text::new(lang::tr(&self.lang, "promotion_piece")))
             .push(row_promotion);
 

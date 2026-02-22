@@ -5,6 +5,7 @@ use iced_aw::TabLabel;
 
 use rfd::AsyncFileDialog;
 
+use crate::styles::btn_style_simple;
 use crate::{Message, Tab, config, styles, lang, lang::PickListWrapper};
 use crate::config::SETTINGS_FILE;
 
@@ -252,19 +253,19 @@ impl Tab for SettingsTab {
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "play_sound")),
-                Checkbox::new(self.play_sound).on_toggle(SettingsMessage::CheckPlaySound).size(20),
+                Checkbox::new(self.play_sound).on_toggle(SettingsMessage::CheckPlaySound).size(20).style(styles::checkbox_style),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "auto_load")),
-                Checkbox::new(self.auto_load_next).on_toggle(SettingsMessage::CheckAutoLoad).size(20),
+                Checkbox::new(self.auto_load_next).on_toggle(SettingsMessage::CheckAutoLoad).size(20).style(styles::checkbox_style),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "flip_board")),
-                Checkbox::new(self.flip_board).on_toggle(SettingsMessage::CheckFlipBoard).size(20),
+                Checkbox::new(self.flip_board).on_toggle(SettingsMessage::CheckFlipBoard).size(20).style(styles::checkbox_style),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "show_coords")),
-                Checkbox::new(self.show_coordinates).on_toggle(SettingsMessage::CheckShowCoords).size(20),
+                Checkbox::new(self.show_coordinates).on_toggle(SettingsMessage::CheckShowCoords).size(20).style(styles::checkbox_style),
             ].spacing(5).align_y(Alignment::Center),
             row![
                 Text::new(lang::tr(&self.lang.lang, "pdf_number_of_pages")),
@@ -287,9 +288,9 @@ impl Tab for SettingsTab {
                     &self.engine_path,
                     &self.engine_path,
                 ).on_input(SettingsMessage::ChangeEnginePath).width(200),
-                Button::new(Text::new("Select")).on_press(SettingsMessage::SearchEnginePressed),
+                Button::new(Text::new("Select")).on_press(SettingsMessage::SearchEnginePressed).style(btn_style_simple),
             ],
-            Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed),
+            Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed).style(btn_style_simple),
             Text::new(&self.settings_status).align_y(alignment::Vertical::Bottom),
 
         ].spacing(10).align_x(Alignment::Center);

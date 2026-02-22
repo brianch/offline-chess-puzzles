@@ -1,7 +1,7 @@
 use iced::overlay::menu;
 
 use iced::theme::Palette;
-use iced::widget::{button, container, pick_list};
+use iced::widget::{button, checkbox, container, pick_list, radio, slider};
 use iced::{Border, Color};
 use iced_aw::style::tab_bar;
 
@@ -163,6 +163,46 @@ impl std::fmt::Display for BoardTheme {
 }
 
 pub type ChessBtn = fn(&iced::Theme, iced::widget::button::Status) -> button::Style;
+pub fn btn_style_simple(theme: &iced::Theme, status: button::Status) -> button::Style {
+    let palette = theme.extended_palette();
+    match status {          
+        button::Status::Disabled => {
+            button::Style {
+                background: Some(iced::Background::Color(palette.background.stronger.color)),
+                text_color: rgb!(45., 45., 45.),
+                border: Border {
+                    color: palette.primary.base.color,
+                    width: 1.,
+                    radius: 0.3.into(),
+                },
+                ..Default::default()
+            }
+        } button::Status::Hovered => {
+            button::Style {
+                background: Some(iced::Background::Color(palette.success.strong.color)),
+                text_color: rgb!(255., 255., 255.),
+                border: Border {
+                    color: palette.primary.weak.color,
+                    width: 1.,
+                    radius: 0.3.into(),
+                },
+                ..Default::default()
+            }
+        } _ => {
+            button::Style {
+                background: Some(iced::Background::Color(palette.primary.base.color)),
+                text_color: rgb!(45., 45., 45.),
+                border: Border {
+                    color: palette.success.strong.color,
+                    width: 1.,
+                    radius: 0.3.into(),
+                },
+                ..Default::default()
+            }
+        }
+    }
+}
+
 pub fn btn_style_light_square(theme: &iced::Theme, _status: iced::widget::button::Status) -> button::Style {
     let palette = theme.palette();
     button::Style {
@@ -212,6 +252,108 @@ pub fn btn_style_paper(_theme: &iced::Theme, _status: iced::widget::button::Stat
             radius: 0.0.into(),
         },
         ..Default::default()
+    }
+}
+
+// I just copied over the default styles from Iced and made a few tweaks
+pub fn checkbox_style(theme: &iced::Theme, status: checkbox::Status) -> checkbox::Style {
+    let palette = theme.extended_palette();
+    match status {
+        checkbox::Status::Active { is_checked } => styled(
+            palette.success.strong.color,
+            palette.primary.base,
+            palette.success.strong.color,
+            palette.primary.base,
+            is_checked,
+        ),
+        checkbox::Status::Hovered { is_checked } => styled(
+            palette.primary.base.color,
+            palette.success.strong,
+            palette.primary.base.color,
+            palette.success.strong,
+            is_checked,
+        ),
+        checkbox::Status::Disabled { is_checked } => styled(
+            palette.background.weak.color,
+            palette.background.weak,
+            palette.danger.base.text,
+            palette.primary.strong,
+            is_checked,
+        ),
+    }
+}
+
+fn styled(
+    border_color: Color,
+    base: iced::theme::palette::Pair,
+    icon_color: Color,
+    // I might need this later
+    _accent: iced::theme::palette::Pair,
+    is_checked: bool,
+) -> checkbox::Style {
+    let (background, border) = if is_checked {
+        (base, border_color)
+    } else {
+        (base, border_color)
+    };
+
+    checkbox::Style {
+        background: iced::Background::Color(background.color),
+        icon_color,
+        border: Border {
+            radius: 2.0.into(),
+            width: 1.0,
+            color: border,
+        },
+        text_color: None,
+    }
+}
+
+pub fn radio_style(theme: &iced::Theme, status: radio::Status) -> radio::Style {
+    let palette = theme.extended_palette();
+
+    let active = radio::Style {
+        background: iced::Background::Color(palette.primary.base.color),
+        dot_color: palette.success.strong.color,
+        border_width: 1.0,
+        border_color: palette.success.strong.color,
+        text_color: None,
+    };
+
+    match status {
+        radio::Status::Active { .. } => active,
+        radio::Status::Hovered { .. } => radio::Style {
+            background: palette.primary.strong.color.into(),
+            ..active
+        },
+    }
+}
+
+pub fn slider_style(theme: &iced::Theme, status: slider::Status) -> slider::Style {
+    let palette = theme.extended_palette();
+
+    let color = match status {
+        slider::Status::Active => palette.primary.base.color,
+        slider::Status::Hovered => palette.primary.strong.color,
+        slider::Status::Dragged => palette.primary.weak.color,
+    };
+
+    slider::Style {
+        rail: slider::Rail {
+            backgrounds: (color.into(), palette.background.strong.color.into()),
+            width: 5.0,
+            border: Border {
+                radius: 2.0.into(),
+                width: 1.0,
+                color: palette.success.strong.color,
+            },
+        },
+        handle: slider::Handle {
+            shape: slider::HandleShape::Circle { radius: 8.0 },
+            background: palette.success.strong.color.into(),
+            border_color: color,
+            border_width: 2.0,
+        },
     }
 }
 
@@ -310,14 +452,21 @@ pub fn tab_style(theme: &iced::Theme, status: iced_aw::style::Status) -> tab_bar
     }
 }
 
-pub fn pick_list_style(theme: &iced::Theme, _status: iced::widget::pick_list::Status) -> pick_list::Style {
+pub fn pick_list_style(theme: &iced::Theme, status: iced::widget::pick_list::Status) -> pick_list::Style {
     let palette = theme.extended_palette();
 
+    let (bg, text) = match status {
+        pick_list::Status::Hovered => {
+            (palette.success.strong.color, rgb!(255, 255, 255))
+        } _ => {
+            (palette.primary.base.color, palette.danger.base.color)
+        }
+    };
     pick_list::Style {
-        text_color: palette.danger.base.color,
+        text_color: text,//palette.danger.base.color,
         placeholder_color: palette.success.weak.color,
         handle_color: palette.success.strong.color,
-        background: iced::Background::Color(palette.primary.base.color),
+        background: iced::Background::Color(bg),
         border: Border {
             color: palette.success.strong.color,
             width: 1.,

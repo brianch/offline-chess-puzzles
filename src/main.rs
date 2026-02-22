@@ -43,6 +43,8 @@ use settings::{SettingsMessage, SettingsTab};
 mod puzzles;
 use puzzles::{PuzzleMessage, PuzzleTab, GameStatus};
 
+use crate::styles::btn_style_simple;
+
 mod eval;
 mod export;
 mod lang;
@@ -1206,8 +1208,8 @@ fn gen_view<'a>(
 
     let game_mode_row = row![
         Text::new(lang::tr(lang, "mode")),
-        Radio::new(lang::tr(lang, "mode_puzzle"), config::GameMode::Puzzle, Some(game_mode), Message::SelectMode),
-        Radio::new(lang::tr(lang, "mode_analysis"), config::GameMode::Analysis, Some(game_mode), Message::SelectMode)
+        Radio::new(lang::tr(lang, "mode_puzzle"), config::GameMode::Puzzle, Some(game_mode), Message::SelectMode).style(styles::radio_style),
+        Radio::new(lang::tr(lang, "mode_analysis"), config::GameMode::Analysis, Some(game_mode), Message::SelectMode).style(styles::radio_style)
     ].spacing(10).padding(10).align_y(Alignment::Center);
 
     let fav_label = if is_fav {
@@ -1218,51 +1220,51 @@ fn gen_view<'a>(
     let mut navigation_row = Row::new().padding(3).spacing(10);
     if game_mode == config::GameMode::Analysis {
         if analysis_history_len > current_puzzle_move {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))).on_press(Message::GoBackMove));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))).on_press(Message::GoBackMove).style(btn_style_simple));
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "takeback"))).style(btn_style_simple));
         }
         if engine_started {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "stop_engine"))).on_press(Message::StartEngine));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "stop_engine"))).on_press(Message::StartEngine).style(btn_style_simple));
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "start_engine"))).on_press(Message::StartEngine));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "start_engine"))).on_press(Message::StartEngine).style(btn_style_simple));
         }
     } else {
         if has_previous {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))).on_press(Message::ShowPreviousPuzzle))
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))).on_press(Message::ShowPreviousPuzzle).style(btn_style_simple))
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "previous"))).style(btn_style_simple));
         }
         if has_more_puzzles {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))).on_press(Message::ShowNextPuzzle))
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))).on_press(Message::ShowNextPuzzle).style(btn_style_simple))
         } else {
-            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))));
+            navigation_row = navigation_row.push(Button::new(Text::new(lang::tr(lang, "next"))).style(btn_style_simple));
         }
         if game_status == GameStatus::NoPuzzles {
             navigation_row = navigation_row
-                .push(Button::new(Text::new(lang::tr(lang, "redo"))))
-                .push(Button::new(Text::new(fav_label)))
-                .push(Button::new(Text::new(lang::tr(lang, "hint"))));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))).style(btn_style_simple))
+                .push(Button::new(Text::new(fav_label)).style(btn_style_simple))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))).style(btn_style_simple));
         } else if game_status == GameStatus::PuzzleEnded {
             navigation_row = navigation_row
-                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle))
-                .push(Button::new(Text::new(lang::tr(lang, "hint"))));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle).style(btn_style_simple))
+                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle).style(btn_style_simple))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))).style(btn_style_simple));
         } else {
             navigation_row = navigation_row
-                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle))
-                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle))
-                .push(Button::new(Text::new(lang::tr(lang, "hint"))).on_press(Message::ShowHint));
+                .push(Button::new(Text::new(lang::tr(lang, "redo"))).on_press(Message::RedoPuzzle).style(btn_style_simple))
+                .push(Button::new(Text::new(fav_label)).on_press(Message::FavoritePuzzle).style(btn_style_simple))
+                .push(Button::new(Text::new(lang::tr(lang, "hint"))).on_press(Message::ShowHint).style(btn_style_simple));
         }
     }
 
     let (input_index, btn_go) = if game_status == GameStatus::Playing {
         (text_input(puzzle_number_ui, puzzle_number_ui).
             on_input(Message::PuzzleInputIndexChange).width(Length::Fixed(150.)),
-        button(text(lang::tr(lang, "go"))).on_press(Message::JumpToPuzzle))
+        button(text(lang::tr(lang, "go"))).on_press(Message::JumpToPuzzle).style(btn_style_simple))
     } else {
         (text_input(puzzle_number_ui, puzzle_number_ui).width(Length::Fixed(150.)),
-        button(text(lang::tr(lang, "go"))))
+        button(text(lang::tr(lang, "go"))).style(btn_style_simple))
     };
 
     let pagination_row = row![
@@ -1282,10 +1284,10 @@ fn gen_view<'a>(
         );
     }
     if  mini_ui {
-        let button_mini = Button::new(Text::new(">")).on_press(Message::MinimizeUI);
+        let button_mini = Button::new(Text::new(">")).on_press(Message::MinimizeUI).style(btn_style_simple);
         row![board_col,button_mini].spacing(5).align_y(Alignment::Start).into()
     } else {
-        let button_mini = Button::new(Text::new("<")).on_press(Message::MinimizeUI);
+        let button_mini = Button::new(Text::new("<")).on_press(Message::MinimizeUI).style(btn_style_simple);
         let tabs = Tabs::new(Message::TabSelected)
                 .push(TabId::Search, search_tab_label, search_tab)
                 .push(TabId::Settings, settings_tab_label, settings_tab)

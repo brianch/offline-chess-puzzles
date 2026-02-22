@@ -5,6 +5,7 @@ use chess::{Color, Piece};
 use iced_aw::TabLabel;
 use rfd::AsyncFileDialog;
 
+use crate::styles::btn_style_simple;
 use crate::{Message, Tab, config, lang};
 
 #[derive(Debug, Clone)]
@@ -107,8 +108,8 @@ impl Tab for PuzzleTab {
                     TextInput::new("",
                         &("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id),
                     ).on_input(PuzzleMessage::ChangeTextInputs),
-                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
-                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)),
+                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)).style(btn_style_simple),
+                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink("https://lichess.org/training/".to_owned() + &self.puzzles[self.current_puzzle].puzzle_id)).style(btn_style_simple),
 
                 ],
                 Text::new(lang::tr(&self.lang, "fen")),
@@ -117,7 +118,7 @@ impl Tab for PuzzleTab {
                         &self.current_puzzle_fen,
                         &self.current_puzzle_fen,
                     ).on_input(PuzzleMessage::ChangeTextInputs),
-                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.current_puzzle_fen.clone())),
+                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.current_puzzle_fen.clone())).style(btn_style_simple),
                 ],
                 Text::new(lang::tr(&self.lang, "rating") + &self.puzzles[self.current_puzzle].rating.to_string()),
                 Text::new(lang::tr(&self.lang, "rd") + &self.puzzles[self.current_puzzle].rating_deviation.to_string()),
@@ -131,12 +132,12 @@ impl Tab for PuzzleTab {
                         &self.puzzles[self.current_puzzle].game_url,
                         &self.puzzles[self.current_puzzle].game_url,
                     ).on_input(PuzzleMessage::ChangeTextInputs),
-                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())),
-                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink(self.puzzles[self.current_puzzle].game_url.clone())),
+                    Button::new(Text::new(lang::tr(&self.lang, "copy"))).on_press(PuzzleMessage::CopyText(self.puzzles[self.current_puzzle].game_url.clone())).style(btn_style_simple),
+                    Button::new(Text::new(lang::tr(&self.lang, "open"))).on_press(PuzzleMessage::OpenLink(self.puzzles[self.current_puzzle].game_url.clone())).style(btn_style_simple),
                 ],
-                Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot),
-                Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF),
-                Button::new(Text::new(lang::tr(&self.lang, "export_pgn"))).padding(5).on_press(PuzzleMessage::ExportToPGN),
+                Button::new(Text::new(lang::tr(&self.lang, "screenshot"))).on_press(PuzzleMessage::TakeScreenshot).style(btn_style_simple),
+                Button::new(Text::new(lang::tr(&self.lang, "export_pdf_btn"))).on_press(PuzzleMessage::ExportToPDF).style(btn_style_simple),
+                Button::new(Text::new(lang::tr(&self.lang, "export_pgn"))).padding(5).on_press(PuzzleMessage::ExportToPGN).style(btn_style_simple),
             ].padding([0, 30]).spacing(10).align_x(Alignment::Center))
         } else {
             Scrollable::new(col![
