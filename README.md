@@ -1,5 +1,5 @@
 # offline-chess-puzzles
-[![Build](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml/badge.svg)](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml)
+[![Build](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml/badge.svg)](https://github.com/brianch/offline-chess-puzzles/actions/workflows/build.yml) <a href='https://ko-fi.com/O4O7JPA8E' target='_blank'><img height='24' style='border:0px;height:24px;padding-left:10px' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 A simple tool to view and solve puzzles from the lichess puzzle database.
 
