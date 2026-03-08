@@ -1045,7 +1045,7 @@ fn gen_view<'a>(
             let light_square = (rank + file) % 2 != 0;
 
             let selected =
-                if game_mode == config::GameMode::Puzzle {
+                if game_mode == config::GameMode::Puzzle && game_status == GameStatus::Playing {
                     from_square == Some(pos)    ||
                     last_move_from == Some(pos) ||
                     last_move_to == Some(pos)   ||
