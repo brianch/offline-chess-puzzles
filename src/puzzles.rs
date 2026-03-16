@@ -69,7 +69,7 @@ impl PuzzleTab {
     }
 
     pub async fn export() -> Option<String> {
-        let file_path = AsyncFileDialog::new().save_file().await;
+        let file_path = AsyncFileDialog::new().add_filter("pdf",&["pdf"]).set_file_name("puzzles.pdf").save_file().await;
         file_path.map(|file_path| file_path.path().display().to_string())
     }
 
