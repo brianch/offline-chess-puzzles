@@ -41,7 +41,7 @@ king = K
 #Downloader
 db_not_found = Lichess Database niet aanwezig
 do_you_wanna_download = Wil je deze nu downloaden?
-download_size_info = de download is ongeveer 300 MB, and ruim 990 MB ongecomprimeerd
+download_size_info = de download is ongeveer 300 MB, and rond 1 GB ongecomprimeerd
 downloading = Downloaden...
 download_btn = Downloaden
 
@@ -82,6 +82,7 @@ get_first_puzzles1 = Haal de eerste
 get_first_puzzles2 =  {" "}puzzels
 export_pgn = Exporteer geselecteerde puzzels naar PGN
 engine_path = Bestandspad voor schaakprogramma (incl. ".exe"):
+select = Selecteer
 save = Sla instellingen op
 settings_saved = Instellingen opgeslagen!
 error_saving = Fout bij het opslaan van de instellingen

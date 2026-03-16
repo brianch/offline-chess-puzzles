@@ -43,7 +43,7 @@ king = R
 #Downloader
 db_not_found = La base de données Lichess n’est pas installée
 do_you_wanna_download = Voulez-vous la télécharger maintenant ?
-download_size_info = Le fichier à télécharger a une taille d’environ 300 Mo et sera décompressé (taille supérieure à 990 Mo).
+download_size_info = Le fichier à télécharger a une taille d’environ 300 Mo et, une fois décompressé, environ 1 Go.
 downloading = Téléchargement en cours...
 download_btn = Télécharger
 
@@ -82,8 +82,9 @@ show_coords = Montrer les coordonnées:
 pdf_number_of_pages = Limite de pages pour le PDF:
 get_first_puzzles1 = Accéder aux
 get_first_puzzles2 = {" "}premiers puzzles
-export_pgn = Exporter les puzzles actuels en PGN
+export_pgn = Exporter en PGN tous les puzzles actuels
 engine_path = Chemin d'accès du moteur (avec le nom du fichier .exe):
+select = Choisir
 save = Enregistrer les modifications
 settings_saved = Paramètres enregistrés !
 error_saving = Erreur lors de l'enregistrement du fichier de configuration.
@@ -102,7 +103,7 @@ times_played = Nombre de fois joué (sur Lichess):{" "}
 themes = Thèmes:
 url = URL de la partie:{" "}
 screenshot = Enregistrer en tant qu'image
-export_pdf_btn = Exporter en PDF les puzzles de la recherche
+export_pdf_btn = Exporter en PDF tous les puzzles actuels
 no_puzzle = Aucun puzzle n'est chargé
 
 pdf_black_to_move = ) Trait aux Noirs. Dernier coup:{" "}

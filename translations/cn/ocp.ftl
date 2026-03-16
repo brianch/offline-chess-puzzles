@@ -44,7 +44,7 @@ king = K
 
 db_not_found = 未找到Lichess数据库
 do_you_wanna_download = 您要现在下载吗？
-download_size_info = 下载文件约300MB，解压后超过990MB。
+download_size_info = 下载文件约 300MB，解压后约 1GB。
 downloading = 下载中...
 download_btn = 下载
 
@@ -86,6 +86,7 @@ get_first_puzzles1 = 获取前
 get_first_puzzles2 = {" "}个谜题
 export_pgn = 导出当前谜题为PGN文件
 engine_path = 引擎路径（含.exe文件名）:
+select = 选择
 save = 保存更改
 settings_saved = 设置已保存！
 error_saving = 保存配置文件时出错。
