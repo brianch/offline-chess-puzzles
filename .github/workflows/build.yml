@@ -19,7 +19,7 @@ jobs:
 
     name: Build Linux
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -41,7 +41,7 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-release-bin
           path: zip/
@@ -53,7 +53,7 @@ jobs:
 
     name: Build mac
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --verbose
       - name: Prepare directory to upload as an artifact
@@ -71,7 +71,7 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/release/offline-chess-puzzles zip/offline-chess-puzzles/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: macos-release-bin
           path: zip/
@@ -83,7 +83,7 @@ jobs:
 
     name: Build Windows 64-bit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
@@ -109,7 +109,7 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: windows-release
           path: zip/
@@ -121,7 +121,7 @@ jobs:
 
     name: Build Windows 32-bit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
@@ -147,7 +147,7 @@ jobs:
           cp LICENSE zip/offline-chess-puzzles/
           cp README.md zip/offline-chess-puzzles/
           cp target/i686-pc-windows-msvc/release/offline-chess-puzzles.exe zip/offline-chess-puzzles/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: windows-release-i686
           path: zip/
