@@ -288,7 +288,7 @@ impl Tab for SettingsTab {
                     &self.engine_path,
                     &self.engine_path,
                 ).on_input(SettingsMessage::ChangeEnginePath).width(200),
-                Button::new(Text::new("Select")).on_press(SettingsMessage::SearchEnginePressed).style(btn_style_simple),
+                Button::new(Text::new(lang::tr(&self.lang.lang, "select"))).on_press(SettingsMessage::SearchEnginePressed).style(btn_style_simple),
             ],
             Button::new(Text::new(lang::tr(&self.lang.lang, "save"))).padding(5).on_press(SettingsMessage::ChangePressed).style(btn_style_simple),
             Text::new(&self.settings_status).align_y(alignment::Vertical::Bottom),

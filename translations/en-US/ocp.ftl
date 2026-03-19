@@ -82,6 +82,7 @@ get_first_puzzles1 = Get the first
 get_first_puzzles2 =  {" "}puzzles
 export_pgn = Export current puzzles as PGN
 engine_path = Engine path (with .exe name):
+select = Select
 save = Save Changes
 settings_saved = Settings saved!
 error_saving = Error saving config file.
