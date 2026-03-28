@@ -61,15 +61,15 @@ impl PuzzleTab {
             } PuzzleMessage::TakeScreenshot => {
                 iced::window::screenshot(self.window_id.unwrap()).map(Message::ScreenshotCreated)
             } PuzzleMessage::ExportToPDF => {
-                Task::perform(PuzzleTab::export(), Message::ExportPDF)
+                Task::perform(PuzzleTab::export("pdf"), Message::ExportPDF)
             } PuzzleMessage::ExportToPGN => {
-                return Task::perform(PuzzleTab::export(), Message::ExportPGN);
+                return Task::perform(PuzzleTab::export("pgn"), Message::ExportPGN);
             }
         }
     }
 
-    pub async fn export() -> Option<String> {
-        let file_path = AsyncFileDialog::new().add_filter("pdf",&["pdf"]).set_file_name("puzzles.pdf").save_file().await;
+    pub async fn export(format: &str) -> Option<String> {
+        let file_path = AsyncFileDialog::new().add_filter(format,&[format]).set_file_name(String::from("puzzles.") + format).save_file().await;
         file_path.map(|file_path| file_path.path().display().to_string())
     }
 
