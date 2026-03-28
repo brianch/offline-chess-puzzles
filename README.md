@@ -33,7 +33,7 @@ cargo run --release
 If you are on Linux and the application fails to launch, you might need to use the Open GL or software renderer to draw the window. Try running the application with either of the following commands:
 `WGPU_BACKEND="gl" cargo run --release` (Open GL)
 or
-`ICED_BACKEND = "tiny-skia" cargo run --release` (Software)
+`ICED_BACKEND="tiny-skia" cargo run --release` (Software)
 
 ## Possible use cases:
 - Practice offline, it has filters by puzzle rating, theme and opening.
