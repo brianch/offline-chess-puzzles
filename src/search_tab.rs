@@ -52,8 +52,8 @@ pub enum TacticalThemes {
     All,
     Opening, Middlegame, Endgame, RookEndgame, BishopEndgame, PawnEndgame, KnightEndgame, QueenEndgame, QueenRookEndgame,
     AdvancedPawn, AtackingF2F7, CapturingDefender, DiscoveredAttack, DoubleCheck, ExposedKing, Fork, HangingPiece, KingsideAttack, Pin, QueensideAttack, Sacrifice, Skewer, TrappedPiece,
-    Attraction, Clearance, DefensiveMove, Deflection, Interference, Intermezzo, QuietMove, XRayAttack, Zugzwang,
-    Mate, MateIn1, MateIn2, MateIn3, MateIn4, MateIn5, AnastasiaMate, ArabianMate, BackRankMate, BalestraMate, BlindSwineMate, BodenMate, CornerMate, DoubleBishopMate, DovetailMate, HookMate, KillBoxMate, PillsburyMate, MorphysMate, OperaMate, TriangleMate, VukovicMate, SmotheredMate,
+    Attraction, Clearance, CollinearMove, DefensiveMove, Deflection, Interference, Intermezzo, QuietMove, XRayAttack, Zugzwang,
+    Mate, MateIn1, MateIn2, MateIn3, MateIn4, MateIn5, AnastasiaMate, ArabianMate, BackRankMate, BalestraMate, BlindSwineMate, BodenMate, CornerMate, DoubleBishopMate, DovetailMate, EpauletteMate, HookMate, KillBoxMate, PillsburyMate, MorphysMate, OperaMate, SwallowstailMate, TriangleMate, VukovicMate, SmotheredMate,
     Castling, EnPassant, Promotion, UnderPromotion,
     Equality, Advantage, Crushing,
     OneMove, Short, Long, VeryLong,
@@ -62,7 +62,7 @@ pub enum TacticalThemes {
 
 impl TacticalThemes {
 
-    const ALL: [TacticalThemes; 70] = [
+    const ALL: [TacticalThemes; 73] = [
         TacticalThemes::All,
         TacticalThemes::Opening, TacticalThemes::Middlegame, TacticalThemes::Endgame, TacticalThemes::RookEndgame,
         TacticalThemes::BishopEndgame, TacticalThemes::PawnEndgame, TacticalThemes::KnightEndgame,
@@ -74,15 +74,15 @@ impl TacticalThemes {
         TacticalThemes::QueensideAttack, TacticalThemes::Sacrifice, TacticalThemes::Skewer,
         TacticalThemes::TrappedPiece,
 
-        TacticalThemes::Attraction, TacticalThemes::Clearance, TacticalThemes::DefensiveMove,
+        TacticalThemes::Attraction, TacticalThemes::Clearance, TacticalThemes::CollinearMove, TacticalThemes::DefensiveMove,
         TacticalThemes::Deflection, TacticalThemes::Interference, TacticalThemes::Intermezzo,
         TacticalThemes::QuietMove, TacticalThemes::XRayAttack, TacticalThemes::Zugzwang,
 
         TacticalThemes::Mate, TacticalThemes::MateIn1, TacticalThemes::MateIn2, TacticalThemes::MateIn3,
         TacticalThemes::MateIn4, TacticalThemes::MateIn5, TacticalThemes::AnastasiaMate, TacticalThemes::ArabianMate,
         TacticalThemes::BackRankMate, TacticalThemes::BalestraMate, TacticalThemes::BlindSwineMate, TacticalThemes::BodenMate,
-        TacticalThemes::CornerMate, TacticalThemes::DoubleBishopMate, TacticalThemes::DovetailMate, TacticalThemes::HookMate,
-        TacticalThemes::KillBoxMate, TacticalThemes::PillsburyMate, TacticalThemes::MorphysMate, TacticalThemes::OperaMate, TacticalThemes::TriangleMate,
+        TacticalThemes::CornerMate, TacticalThemes::DoubleBishopMate, TacticalThemes::DovetailMate, TacticalThemes::EpauletteMate, TacticalThemes::HookMate,
+        TacticalThemes::KillBoxMate, TacticalThemes::PillsburyMate, TacticalThemes::MorphysMate, TacticalThemes::OperaMate, TacticalThemes::SwallowstailMate, TacticalThemes::TriangleMate,
         TacticalThemes::VukovicMate, TacticalThemes::SmotheredMate,
 
         TacticalThemes::Castling, TacticalThemes::EnPassant, TacticalThemes::Promotion,
@@ -132,6 +132,7 @@ impl TacticalThemes {
 
             TacticalThemes::Attraction => "attraction",
             TacticalThemes::Clearance => "clearance",
+            TacticalThemes::CollinearMove => "collinearMove",
             TacticalThemes::DefensiveMove => "defensiveMove",
             TacticalThemes::Deflection => "deflection",
             TacticalThemes::Interference => "interference",
@@ -155,11 +156,13 @@ impl TacticalThemes {
             TacticalThemes::CornerMate => "cornerMate",
             TacticalThemes::DoubleBishopMate => "doubleBishopMate",
             TacticalThemes::DovetailMate => "dovetailMate",
+            TacticalThemes::EpauletteMate => "epauletteMate",
             TacticalThemes::HookMate => "hookMate",
             TacticalThemes::KillBoxMate => "killBoxMate",
             TacticalThemes::PillsburyMate => "pillsburysMate",
             TacticalThemes::MorphysMate => "morphysMate",
             TacticalThemes::OperaMate => "operaMate",
+            TacticalThemes::SwallowstailMate => "swallowstailMate",
             TacticalThemes::TriangleMate => "triangleMate",
             TacticalThemes::VukovicMate => "vukovicMate",
             TacticalThemes::SmotheredMate => "smotheredMate",
