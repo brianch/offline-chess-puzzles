@@ -44,7 +44,7 @@ fn download_stream() -> impl Stream<Item = Message> {
                         match response {
                             Ok(response) => {
                                 if let Some(total) = response.content_length() {
-                                    let file = OpenOptions::new().append(true).read(true).create(true).open(&lichess_zst_file).expect("Unable to create lichess db archive.");
+                                    let file = OpenOptions::new().write(true).read(true).truncate(true).create(true).open(&lichess_zst_file).expect("Unable to create lichess db archive.");
                                     state = DownloadState::DownloadInProgress {
                                         response,
                                         file,
