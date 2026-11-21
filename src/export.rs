@@ -310,7 +310,7 @@ fn gen_diagram_operations(index: usize, puzzle: &config::Puzzle, start_x:i32, st
     ops
 }
 
-pub fn to_pgn(puzzles: &[config::Puzzle], lang: &lang::Language, path: String) {
+pub fn to_pgn(puzzles: &[config::Puzzle], _lang: &lang::Language, path: String) {
     let mut pgn_content = String::new();
 
     for puzzle in puzzles.iter() {
@@ -350,7 +350,7 @@ pub fn to_pgn(puzzles: &[config::Puzzle], lang: &lang::Language, path: String) {
             PuzzleTab::check_promotion(first_move)
         );
 
-        let san_move = config::coord_to_san(&board, String::from(first_move), lang).unwrap();
+        let san_move = config::coord_to_san(&board, String::from(first_move), &lang::Language::English).unwrap();
 
         if is_white_to_move {
             pgn_content.push_str(&format!("{}. {}", move_number, san_move));
@@ -371,7 +371,7 @@ pub fn to_pgn(puzzles: &[config::Puzzle], lang: &lang::Language, path: String) {
                 pgn_content.push(' ');
             }
 
-            let san_move = config::coord_to_san(&board, String::from(*chess_move), lang).unwrap();
+            let san_move = config::coord_to_san(&board, String::from(*chess_move), &lang::Language::English).unwrap();
             pgn_content.push_str(&san_move);
 
             // Apply the move to the board
