@@ -50,7 +50,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, min_popularity: i32, them
                 .filter(popularity.ge(min_popularity))
                 .filter(themes.like(theme_filter))
                 .filter(opening_filter)
-                .filter(game_url.like("%black%"))
+                .filter(game_url.not_like("%black%"))
                 .limit(limit)
                 .load::<Puzzle>(&mut conn);
         } else if side == OpeningSide::Black {
@@ -59,7 +59,7 @@ pub fn get_favorites(min_rating: i32, max_rating: i32, min_popularity: i32, them
                 .filter(popularity.ge(min_popularity))
                 .filter(themes.like(theme_filter))
                 .filter(opening_filter)
-                .filter(game_url.not_like("%black%"))
+                .filter(game_url.like("%black%"))
                 .limit(limit)
                 .load::<Puzzle>(&mut conn);
         } else {

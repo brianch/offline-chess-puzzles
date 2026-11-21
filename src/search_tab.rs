@@ -372,7 +372,7 @@ impl SearchTab {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result &&
                                     record.opening.contains(opening_tag) &&
-                                    !record.game_url.contains("black") &&
+                                    record.game_url.contains("black") &&
                                     record.rating >= min_rating && record.rating <= max_rating &&
                                     record.popularity >= min_popularity &&
                                     record.themes.contains(theme.get_tag_name()) {
@@ -386,7 +386,7 @@ impl SearchTab {
                         for result in reader.deserialize::<config::Puzzle>() {
                             if let Ok(record) = result &&
                                     record.opening.contains(opening_tag) &&
-                                    record.game_url.contains("black") &&
+                                    !record.game_url.contains("black") &&
                                     record.rating >= min_rating && record.rating <= max_rating &&
                                     record.popularity >= min_popularity &&
                                     record.themes.contains(theme.get_tag_name()) {
